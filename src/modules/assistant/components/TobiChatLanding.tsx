@@ -958,6 +958,21 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
     [input, isLoading, pdfProcessing, attachments, messages, queryContext],
   );
 
+  const handleFinishRecordingAndSend = useCallback(async () => {
+    const audioFile = await stopRecording();
+    if (!audioFile) return;
+
+    setPdfProcessing(true);
+    try {
+      const processed = await processMediaFile(audioFile);
+      void handleSend('Consulta grabada por nota de voz', processed);
+    } catch (err: any) {
+      alert(err?.message || 'Error al procesar el audio grabado.');
+    } finally {
+      setPdfProcessing(false);
+    }
+  }, [stopRecording, handleSend]);
+
   const handleClear = () => {
     setMessages([]);
     setInput('');
