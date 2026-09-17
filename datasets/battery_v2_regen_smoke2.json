@@ -1,0 +1,70 @@
+{
+  "generatedAt": "2026-09-16T15:01:10.807Z",
+  "provider": "groq",
+  "mode": "regen",
+  "sourcePool": "datasets\\tobi_battery_v2_excluded.json",
+  "batchesRequested": 2,
+  "batchesOk": 2,
+  "accepted": 4,
+  "cases": [
+    {
+      "id": "LIC-01",
+      "category": "Licencias - Vacaciones",
+      "title": "Cálculo de vacaciones para trabajador con 6 años",
+      "prompt": "Mi empleado lleva 6 años trabajando en la empresa y me pide saber cuántos días de vacaciones le corresponden según la legislación paraguaya. ¿Cuál es el período mínimo y qué artículo lo regula?",
+      "requiredRegex": [
+        "18 días",
+        "Art\\. 218"
+      ],
+      "forbiddenRegex": [
+        "20 días",
+        "Art\\. 150"
+      ]
+    },
+    {
+      "id": "LIC-02",
+      "category": "Licencias - Maternidad",
+      "title": "Pago de sueldo durante licencia de maternidad",
+      "prompt": "Una trabajadora embarazada de 30 semanas solicita saber cómo se calcula su salario durante la licencia de maternidad y si el IPS cubre alguna parte. ¿Qué determina la normativa vigente sobre la duración de la licencia y el pago?",
+      "requiredRegex": [
+        "18 semanas",
+        "Ley 5508/15"
+      ],
+      "forbiddenRegex": [
+        "12 semanas",
+        "Ley 13\\.722"
+      ]
+    },
+    {
+      "id": "TEL-01",
+      "category": "Teletrabajo y trabajo remoto",
+      "title": "Equipamiento en jornada mixta y costo del trabajo",
+      "prompt": "Un empleado trabaja 3 días en la oficina y 2 días en modalidad remota. El contrato establece que la empresa no asume costos de conectividad. ¿Es legal que la empresa le cobre al trabajador el 50% de la factura de internet si este utiliza su propio equipo y conexión para cumplir con la jornada remota, considerando la normativa laboral paraguaya vigente?",
+      "requiredRegex": [
+        "Art\\. 19",
+        "primacia de la realidad",
+        "Ley 213/93"
+      ],
+      "forbiddenRegex": [
+        "es legal cobrar",
+        "puede cobrar el 50%"
+      ]
+    },
+    {
+      "id": "SIN-01",
+      "category": "Sindicatos y fuero sindical",
+      "title": "Fuero gremial y despido por falta grave",
+      "prompt": "Un delegado sindical comete una falta grave comprobada. ¿Puede la empresa proceder a su despido inmediato sin la intervención de la Junta de Resolución de Conflictos de Trabajo, o el fuero gremial impide la terminación del vínculo aun ante la existencia de una falta grave?",
+      "requiredRegex": [
+        "Junta de Resoluci[oó]n de Conflictos",
+        "fuero gremial",
+        "falta grave"
+      ],
+      "forbiddenRegex": [
+        "despido inmediato sin",
+        "no guarda fuero"
+      ]
+    }
+  ],
+  "rejected": []
+}

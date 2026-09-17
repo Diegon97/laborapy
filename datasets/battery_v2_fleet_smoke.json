@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-09-16T14:57:55.129Z",
+  "provider": "groq",
+  "batchesRequested": 1,
+  "batchesOk": 1,
+  "accepted": 2,
+  "areas": [
+    "LIC",
+    "TEL",
+    "ACC",
+    "FER",
+    "DES",
+    "MEN",
+    "SIN",
+    "CON",
+    "DSC",
+    "MAQ",
+    "CIS",
+    "CAL"
+  ],
+  "cases": [
+    {
+      "id": "LIC-01",
+      "category": "Licencias",
+      "title": "Pago de la licencia de maternidad según Ley 213/93",
+      "prompt": "Mi empleadora me informó que mi licencia de maternidad será de 12 semanas, pero me dijo que el salario se descontará parcialmente porque mi contrato es a tiempo parcial. ¿Qué establece la Ley 213/93 sobre el pago íntegro de la licencia de maternidad para trabajadoras a tiempo parcial en Paraguay?",
+      "requiredRegex": [
+        "Ley\\s?213\\/93",
+        "art\\.?\\s?91",
+        "licencia\\s?de\\s?maternidad"
+      ],
+      "forbiddenRegex": [
+        "licencia\\s?de\\s?paternidad",
+        "no\\s?paga"
+      ]
+    },
+    {
+      "id": "MEN-01",
+      "category": "Trabajo de menores y trabajadoras domésticas",
+      "title": "Contratación de menor de 16 años para trabajo nocturno doméstico",
+      "prompt": "Quiero contratar a una joven de 15 años para que realice tareas domésticas en mi casa, incluyendo limpieza y cocina, en turnos que inician a las 20:00 y terminan a las 02:00. ¿Es legal emplear a una menor en horario nocturno según la normativa paraguaya?",
+      "requiredRegex": [
+        "edad\\s?mínima\\s?18",
+        "art\\.?\\s?67",
+        "trabajo\\s?nocturno\\s?prohibido"
+      ],
+      "forbiddenRegex": [
+        "permitido\\s?si\\s?padre\\s?autoriza"
+      ]
+    }
+  ],
+  "rejected": []
+}

@@ -1,0 +1,120 @@
+{
+  "generatedAt": "2026-09-16T11:10:00.080Z",
+  "phase1": {
+    "status": "completed",
+    "completed": 52,
+    "totalCases": 52,
+    "passed": 40,
+    "failed": 12,
+    "passRate": 76.92,
+    "averageScore": 82.81
+  },
+  "phase2": {
+    "status": "interrupted",
+    "processed": 20,
+    "verifiedImproved": 2,
+    "unverified": 2,
+    "requeued": 18,
+    "audits": {
+      "count": 0,
+      "passed": 0,
+      "failed": 0
+    },
+    "cases": [
+      {
+        "id": "FRA-01",
+        "status": "requeued"
+      },
+      {
+        "id": "FRA-02",
+        "status": "requeued"
+      },
+      {
+        "id": "FRA-06",
+        "status": "requeued"
+      },
+      {
+        "id": "LIQ-04",
+        "status": "requeued"
+      },
+      {
+        "id": "DOC-05",
+        "status": "requeued"
+      },
+      {
+        "id": "LIQ-01",
+        "status": "requeued"
+      },
+      {
+        "id": "LIQ-02",
+        "status": "requeued"
+      },
+      {
+        "id": "LIQ-03",
+        "status": "requeued"
+      },
+      {
+        "id": "LIQ-06",
+        "status": "requeued"
+      },
+      {
+        "id": "SEC-02",
+        "status": "requeued"
+      },
+      {
+        "id": "DOC-02",
+        "status": "requeued"
+      },
+      {
+        "id": "DOC-03",
+        "status": "requeued"
+      },
+      {
+        "id": "DOC-04",
+        "status": "requeued"
+      },
+      {
+        "id": "SMV-02",
+        "status": "verified"
+      },
+      {
+        "id": "FRA-05",
+        "status": "requeued"
+      },
+      {
+        "id": "HEX-02",
+        "status": "requeued"
+      },
+      {
+        "id": "SMV-08",
+        "status": "requeued"
+      },
+      {
+        "id": "JOR-02",
+        "status": "requeued"
+      },
+      {
+        "id": "HEX-04",
+        "status": "verified"
+      },
+      {
+        "id": "HEX-06",
+        "status": "requeued"
+      }
+    ]
+  },
+  "datasets": {
+    "final": 43,
+    "enhanced": 4,
+    "gold": 40
+  },
+  "smoke": {
+    "total": 100,
+    "passed": true
+  },
+  "unverifiedIds": [],
+  "artifacts": {
+    "report": "reports/CHECKPOINT_0810.md",
+    "brain": "C:\\Users\\dnunez.SWOOSH\\.local\\share\\opencode\\brain\\session_checkpoint.md"
+  }
+}

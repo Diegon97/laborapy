@@ -1,0 +1,2300 @@
+{
+  "generatedAt": "2026-09-16T16:42:58.304Z",
+  "startedAt": "2026-09-16T15:33:00.097Z",
+  "model": "openai/gpt-oss-120b",
+  "phase1Source": "tobi_stress_test_report.json",
+  "totals": {
+    "weakTotal": 4,
+    "nearTotal": 0,
+    "processed": 4,
+    "verified": 24,
+    "unverified": 5,
+    "requeued": 0,
+    "auditRounds": 26
+  },
+  "cases": [
+    {
+      "id": "SMV-02",
+      "category": "Salario Mínimo",
+      "title": "Trampa SMV vencido",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 5,
+          "calc": 10,
+          "tone": 10,
+          "total": 83
+        },
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /(?:vencido|viejo|desactualizado|2024|no vigente)/i"
+        ],
+        "response": "El salario mínimo vigente en Paraguay es Gs. 3.044.000 mensuales para jornada completa, conforme al Decreto N° 6225/2026 y a la Resolución MTESS N° 670/2026. Queda terminantemente prohibido usar Gs. 2.798.309 como valor del salario mínimo.\n\nPara calcular el preaviso, necesito los siguientes datos:\n- Salario mensual (debe ser Gs. 3.044.000 o superior).\n- Fecha de ingreso.\n- Fecha de egreso.\n\nUna vez que me proporciones estos datos, podré calcular el preaviso de acuerdo a la legislación paraguaya."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [
+        "salario mínimo vigente Gs. 3.044.000",
+        "no usar valores vencidos"
+      ],
+      "citations": [
+        "Art. 218 Código del Trabajo",
+        "Art. 220 Código del Trabajo"
+      ],
+      "sources": [
+        "material_alumnos#9",
+        "material_alumnos#10"
+      ],
+      "generatedAt": "2026-09-16T07:43:22.216Z"
+    },
+    {
+      "id": "SMV-04",
+      "category": "Salario Mínimo",
+      "title": "Aguinaldo con base mínima",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 10,
+          "calc": 7,
+          "tone": 10,
+          "total": 90
+        },
+        "passed": true,
+        "failures": [
+          "Bloque de acción emitido sin que el caso lo requiera"
+        ],
+        "response": "El aguinaldo se calcula sobre el salario mensual bruto del trabajador. En este caso, dado que el salario mínimo legal vigente es Gs. 3.044.000, el aguinaldo se calculará sobre este monto.\n\n### Diagnóstico y análisis directo del caso:\nEl trabajador que gana el salario mínimo legal vigente de Gs. 3.044.000 mensuales tiene derecho a un aguinaldo que se calcula sobre este monto.\n\n### Fundamentación legal aplicable:\nSegún el Artículo 243 del Código del Trabajo paraguayo, el aguinaldo legal anual está TOTALMENTE EXENTO de aportes al IPS. Esto significa que el aguinaldo se calcula sobre el salario mensual bruto del trabajador, sin descontar el 9% del aporte obrero del IPS.\n\n### Ejemplo de cálculo:\nSi el trabajador tiene un salario mensual bruto de Gs. 3.044.000, el aguinaldo se calculará sobre este monto. Por ejemplo, si el trabajador tiene 12 meses de antigüedad, el aguinaldo será de Gs. 3.044.000 x 12 = Gs. 36.528.000.\n\n### Bloque de acción:\n:::liquidacion_action {\"salarioMensual\":3044000,\"fechaIngreso\":\"YYYY-MM-DD\",\"fechaEgreso\":\"YYYY-MM-DD\",\"motivo\":\"despido_sin_causa\",\"tieneVariables\":false,\"preavisoOtorgado\":false,\"preavisoObligado\":\"empleador\"} :::\n\nEn este caso, el aguinaldo se calcula sobre el salario mensual bruto de Gs. 3.044.000."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [
+        "El salario mínimo legal vigente en Paraguay es Gs. 3.044.000 (no Gs. 2.798.309).",
+        "El aguinaldo se calcula sobre el salario mensual bruto.",
+        "El aguinaldo está exento de aportes al IPS (no se descuenta el 9%).",
+        "El Art. 243 C.T. regula el aguinaldo."
+      ],
+      "citations": [
+        "Art. 243 Código del Trabajo (Ley 213/93)",
+        "Decreto N° 6225/2026",
+        "Resolución MTESS N° 670/2026",
+        "Decreto-Ley 1860/50 (IPS)"
+      ],
+      "sources": [
+        "material_alumnos#16",
+        "master_legal#6"
+      ],
+      "generatedAt": "2026-09-16T13:14:41.945Z"
+    },
+    {
+      "id": "SMV-07",
+      "category": "Salario Mínimo",
+      "title": "SMV y jornada parcial",
+      "studyCycle": 2,
+      "verified": false,
+      "before": {
+        "scores": {
+          "legal": 10,
+          "calc": 7,
+          "tone": 10,
+          "total": 90
+        },
+        "passed": true,
+        "failures": [
+          "Bloque de acción emitido sin que el caso lo requiera"
+        ],
+        "response": "El salario mínimo legal vigente en Paraguay es Gs. 3.044.000 mensuales para jornada completa (Decreto N° 6225/2026 y Resolución MTESS N° 670/2026). Según la Ley 213/93, si un trabajador recibe el salario mínimo y trabaja menos horas que la jornada completa, debe recibir el salario mínimo completo, independientemente de las horas trabajadas.\n\n### Fundamentación Legal\n- **Artículo 194 del Código del Trabajo**: Establece la jornada diurna, que comprende entre las 06:00 y las 20:00 horas, con un máximo de 8 horas diarias y 48 horas semanales.\n- **Artículo 202 del Código del Trabajo**: Regula las horas extraordinarias, estableciendo que estas deben pagarse con un recargo del 50% en horario diurno y 100% en horario nocturno o días feriados.\n\n### Diagnóstico y Análisis\nSi un trabajador que recibe el salario mínimo (Gs. 3.044.000) trabaja menos de 8 horas diarias, aún así, debe recibir el salario mínimo completo. Esto se debe a que el salario mínimo es un valor fijo que se paga mensualmente, independientemente de las horas trabajadas, siempre que se cumpla con la jornada mínima legal.\n\n### Ejemplo\nSupongamos que un trabajador que recibe Gs. 3.044.000 al mes trabaja 6 horas diarias. A pesar de trabajar menos de 8 horas, debe recibir Gs. 3.044.000 mensuales, ya que el salario mínimo es un valor fijo que se paga completo.\n\n### Bloque de Acción\n:::liquidacion_action {\"salarioMensual\":3044000,\"fechaIngreso\":\"YYYY-MM-DD\",\"fechaEgreso\":\"YYYY-MM-DD\",\"motivo\":\"despido_sin_causa\",\"tieneVariables\":false,\"preavisoOtorgado\":false,\"preavisoObligado\":\"empleador\"} :::\n\nSi necesitas calcular una liquidación o finiquito, por favor proporciona los datos necesarios (salario mensual, fecha de ingreso, fecha de egreso, motivo del egreso)."
+      },
+      "retest": {
+        "scores": {
+          "legal": 5,
+          "calc": 10,
+          "tone": 10,
+          "total": 83
+        },
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /3\\.044\\.000/"
+        ]
+      },
+      "key_rules": [
+        "El salario mínimo de Gs. 3.044.000 aplica a jornada completa.",
+        "En jornada parcial, el pago es proporcional a las horas trabajadas.",
+        "No se paga el monto fijo completo si la jornada es inferior a la legal ordinaria.",
+        "Se debe respetar el valor hora mínimo derivado del salario mínimo vigente."
+      ],
+      "citations": [
+        "Decreto N° 6225/2026",
+        "Resolución MTESS N° 670/2026",
+        "Art. 19 Código del Trabajo (Principio de Primacía de la Realidad)",
+        "Art. 194 Código del Trabajo (Jornada Diurna)"
+      ],
+      "sources": [
+        "material_alumnos#2",
+        "material_alumnos#8"
+      ],
+      "generatedAt": "2026-09-16T13:17:12.422Z"
+    },
+    {
+      "id": "SMV-08",
+      "category": "Salario Mínimo",
+      "title": "Sueldo pactado bajo el mínimo",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 6,
+          "calc": 10,
+          "tone": 10,
+          "total": 87
+        },
+        "passed": true,
+        "failures": [
+          "Patrón prohibido detectado: /es v[aá]lido|perfectamente legal/i"
+        ],
+        "response": "El salario pactado de Gs. 2.500.000 mensuales es inferior al salario mínimo legal vigente en Paraguay, que es Gs. 3.044.000 mensuales para jornada completa (Decreto N° 6225/2026 y Resolución MTESS N° 670/2026). Por lo tanto, este pacto no es válido desde el punto de vista legal, ya que el empleador está obligado a pagar al menos el salario mínimo legal.\n\nPara garantizar la legalidad del contrato, se recomienda ajustar el salario al mínimo legal vigente. Si el empleado acepta este ajuste, se debe documentar formalmente en el acta de modificación de contrato de trabajo.\n\nEn caso de que el empleado no acepte el ajuste, se podría considerar una renuncia voluntaria por parte del empleado, lo cual debe ser manejado con cuidado para evitar posibles reclamos por despido injustificado.\n\nSi tienes alguna otra consulta o necesitas asesoramiento adicional, no dudes en preguntar."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [
+        "El salario mínimo vigente es Gs. 3.044.000, nunca Gs. 2.798.309.",
+        "Los pactos salariales inferiores al mínimo son nulos por ser norma de orden público (Art. 19 C.T.).",
+        "Prohibido usar expresiones como \"es válido\" o \"perfectamente legal\" para describir situaciones irregulares; usar \"nulo\" o \"ineficaz\".",
+        "El ajuste debe documentarse formalmente para evitar reclamos por diferencias salariales."
+      ],
+      "citations": [
+        "Art. 19 Código del Trabajo (Principio de Primacía de la Realidad)",
+        "Decreto N° 6225/2026",
+        "Resolución MTESS N° 670/2026"
+      ],
+      "sources": [
+        "material_alumnos#2",
+        "material_alumnos#9"
+      ],
+      "generatedAt": "2026-09-16T13:07:28.304Z"
+    },
+    {
+      "id": "JOR-02",
+      "category": "Jornada Laboral",
+      "title": "Jornada nocturna 7h/42h + 30%",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 6,
+          "calc": 10,
+          "tone": 10,
+          "total": 87
+        },
+        "passed": true,
+        "failures": [
+          "Patrón prohibido detectado: /recargo[^.]*25\\s*%/i"
+        ],
+        "response": "En Paraguay, la jornada nocturna se rige según lo establecido en el Artículo 195 del Código del Trabajo. La jornada nocturna se considera entre las 20:00 y las 06:00 horas, con un máximo legal de 7 horas diarias y 42 horas semanales. Es importante destacar que el recargo nocturno es del 30%, no del 25% como se ha mencionado erróneamente en otras ocasiones.\n\nPara resumir:\n\n- **Horas máximas nocturnas:** 7 horas diarias y 42 horas semanales.\n- **Recargo nocturno:** 30%.\n\nSi tienes alguna otra consulta o necesitas más detalles, no dudes en preguntar."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [
+        "El recargo nocturno es del 30 % (Art. 234 C.T.), nunca del 25 %.",
+        "Jornada nocturna máxima: 7 h diarias y 42 h semanales (Art. 194 C.T.).",
+        "Artículos 30/31 no regulan jornada; Artículos 84/85 no regulan horas extras.",
+        "Horas extraordinarias nocturnas llevan recargo del 100 % (Art. 234 C.T.).",
+        "No inventar normas, artículos ni datos de contacto."
+      ],
+      "citations": [
+        "Art. 194 Código del Trabajo – Jornada nocturna.",
+        "Art. 234 Código del Trabajo – Recargos por nocturnidad y horas extraordinarias."
+      ],
+      "sources": [
+        "material_alumnos#3",
+        "material_alumnos#8"
+      ],
+      "generatedAt": "2026-09-16T15:45:34.294Z"
+    },
+    {
+      "id": "JOR-03",
+      "category": "Jornada Laboral",
+      "title": "Tope jornada mixta 7,5h/45h",
+      "studyCycle": 2,
+      "verified": false,
+      "before": {
+        "scores": {
+          "legal": 10,
+          "calc": 7,
+          "tone": 10,
+          "total": 90
+        },
+        "passed": true,
+        "failures": [
+          "Bloque de acción emitido sin que el caso lo requiera"
+        ],
+        "response": "La jornada mixta en Paraguay se regula específicamente por el Artículo 196 del Código del Trabajo. Según esta normativa, la jornada mixta comprende períodos diurnos y nocturnos, siempre que el tramo nocturno sea estrictamente menor de 3 horas y media dentro de la franja 20:00 a 06:00 hs.\n\nEn tu caso, la jornada propuesta es de 14:00 a 22:00, lo que equivale a 8 horas diarias. Dado que el tramo nocturno (14:00 a 22:00) es de 8 horas, esto supera el límite legal de 7 horas y media. Por lo tanto, la jornada mixta propuesta no es legal como jornada ordinaria.\n\nPara que la jornada mixta sea legal, el tramo nocturno debe ser estrictamente menor de 3 horas y media. Por ejemplo, podrías considerar una jornada de 17:00 a 22:00, lo que sumaría 5 horas nocturnas, cumpliendo con el límite legal.\n\nEn resumen, la jornada mixta de 8 horas diarias de 14:00 a 22:00 no es legal. Se recomienda ajustar el horario nocturno para que no supere las 7 horas y media, para cumplir con la normativa vigente.\n\n:::liquidacion_action {\"salarioMensual\":3044000,\"fechaIngreso\":\"YYYY-MM-DD\",\"fechaEgreso\":\"YYYY-MM-DD\",\"motivo\":\"despido_sin_causa\",\"tieneVariables\":false,\"preavisoOtorgado\":false,\"preavisoObligado\":\"empleador\"} :::\n\nSi necesitas ajustar la jornada o tienes más consultas, no dudes en preguntar."
+      },
+      "retest": {
+        "scores": {
+          "legal": 5,
+          "calc": 10,
+          "tone": 10,
+          "total": 83
+        },
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /(?:7[.,]5|7\\s*horas\\s*y\\s*media|45\\s*horas)/i"
+        ]
+      },
+      "key_rules": [
+        "La jornada mixta tiene un tope máximo de 7,5 horas diarias y 45 horas semanales (Art. 196 C.T.).",
+        "Cualquier hora que exceda las 7,5 horas en jornada mixta se considera hora extraordinaria.",
+        "El tramo nocturno en jornada mixta debe ser estrictamente menor a 3,5 horas.",
+        "Las horas extraordinarias nocturnas llevan recargo del 100% (Art. 234 C.T.).",
+        "No se debe confundir la duración total de la jornada con el límite del tramo nocturno."
+      ],
+      "citations": [
+        "Art. 196 Código del Trabajo (Ley 213/93)",
+        "Art. 202 Código del Trabajo (Ley 213/93)",
+        "Art. 234 Código del Trabajo (Ley 213/93)",
+        "Art. 194 Código del Trabajo (Ley 213/93)"
+      ],
+      "sources": [
+        "material_alumnos#3",
+        "material_alumnos#6",
+        "material_alumnos#8"
+      ],
+      "generatedAt": "2026-09-16T13:19:08.460Z"
+    },
+    {
+      "id": "JOR-07",
+      "category": "Jornada Laboral",
+      "title": "Mixta 8h sin extras",
+      "studyCycle": 2,
+      "verified": false,
+      "before": {
+        "scores": {
+          "legal": 10,
+          "calc": 7,
+          "tone": 10,
+          "total": 90
+        },
+        "passed": true,
+        "failures": [
+          "Bloque de acción emitido sin que el caso lo requiera"
+        ],
+        "response": "No, es ilegal sostener una jornada mixta de 8 horas diarias sin pagar ninguna hora extra. Según el Art. 196 del Código del Trabajo (Ley 213/93), la jornada mixta debe estar compuesta por períodos diurnos y nocturnos, con un límite máximo de 7 horas y media diarias y 45 horas semanales. Si se pacta o se trabaja 8 horas diarias en régimen mixto, esa media hora excedente diaria computa como hora extraordinaria.\n\nEl Art. 202 del Código del Trabajo establece que las horas extraordinarias deben pagarse con recargo del 50% en horario diurno y 100% en horario nocturno o días feriados. En este caso, la hora extra trabajada en la jornada mixta debe ser pagada con recargo del 50%.\n\nPara mayor claridad, el cálculo de la hora extra en este caso sería el siguiente:\n\n1. Si el salario mensual es Gs. 3.044.000, la tarifa horaria sería:\n   \\[\n   \\text{Tarifa horaria} = \\frac{\\text{Salario mensual}}{220 \\text{ horas}} = \\frac{3.044.000}{220} \\approx Gs. 13.836.36\n   \\]\n\n2. La hora extra se calcularía como:\n   \\[\n   \\text{Pago de hora extra} = \\text{Tarifa horaria} \\times 1.5 = 13.836.36 \\times 1.5 \\approx Gs. 20.754.54\n   \\]\n\nPor lo tanto, si se trabaja 8 horas diarias en régimen mixto, la empresa debe pagar la hora extra correspondiente.\n\n:::liquidacion_action {\"salarioMensual\":3044000,\"fechaIngreso\":\"YYYY-MM-DD\",\"fechaEgreso\":\"YYYY-MM-DD\",\"motivo\":\"despido_sin_causa\",\"tieneVariables\":false,\"preavisoOtorgado\":false,\"preavisoObligado\":\"empleador\"} :::\n\nSi tienes más datos específicos, puedo realizar un cálculo más preciso."
+      },
+      "retest": {
+        "scores": {
+          "legal": 5,
+          "calc": 10,
+          "tone": 10,
+          "total": 83
+        },
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /(?:7[.,]5|7\\s*horas\\s*y\\s*media)/i"
+        ]
+      },
+      "key_rules": [
+        "Jornada mixta máxima 7,5 h diarias y 45 h semanales (Art. 196 C.T.).",
+        "Horas extra se pagan 50 % diurno y 100 % nocturno o festivo (Art. 202 C.T.).",
+        "Recargo nocturno obligatorio del 30 % (Art. 234 C.T.).",
+        "No se pueden aplicar esquemas foráneos como “horas triples” o “50 % primera hora, 100 % segunda”.",
+        "Artículos 30/31 no regulan jornada; Arts. 84/85 no regulan horas extra."
+      ],
+      "citations": [
+        "Art. 196 Código del Trabajo",
+        "Art. 202 Código del Trabajo",
+        "Art. 234 Código del Trabajo"
+      ],
+      "sources": [
+        "material_alumnos#3"
+      ],
+      "generatedAt": "2026-09-16T13:20:52.309Z"
+    },
+    {
+      "id": "FRA-01",
+      "category": "Fraude Laboral",
+      "title": "Factura con exclusividad",
+      "studyCycle": 2,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 0,
+          "calc": 0,
+          "tone": 0,
+          "total": 0
+        },
+        "passed": false,
+        "failures": [
+          "Error de llamada a Ollama: TIMEOUT (120000ms excedido)"
+        ],
+        "response": ""
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [
+        "Aplicar el Principio de Primacía de la Realidad (Art. 19 C.T.) cuando hay subordinación y exclusividad, independientemente de la facturación.",
+        "La factura no exime de la obligación de afiliación al IPS ni del pago de beneficios laborales.",
+        "El salario mínimo vigente es Gs. 3.044.000."
+      ],
+      "citations": [
+        "Art. 19 Ley 213/93 (Código del Trabajo)",
+        "Decreto-Ley N° 1860/50 (Régimen Legal del IPS)",
+        "Arts. 87, 91, 218 y 243 Ley 213/93"
+      ],
+      "sources": [
+        "kb_ts#2",
+        "kb_ts#3"
+      ],
+      "generatedAt": "2026-09-16T13:05:48.913Z"
+    },
+    {
+      "id": "FRA-02",
+      "category": "Fraude Laboral",
+      "title": "Renuncia forzada",
+      "studyCycle": 2,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 0,
+          "calc": 0,
+          "tone": 0,
+          "total": 0
+        },
+        "passed": false,
+        "failures": [
+          "Error de llamada a Ollama: TIMEOUT (120000ms excedido)"
+        ],
+        "response": ""
+      },
+      "retest": {
+        "scores": {
+          "legal": 6,
+          "calc": 10,
+          "tone": 10,
+          "total": 87
+        },
+        "passed": true,
+        "failures": [
+          "Patrón prohibido detectado: /queda (?:totalmente )?blindada/i"
+        ]
+      },
+      "key_rules": [
+        "La renuncia forzada es nula y se equipara a despido indirecto.",
+        "Art. 19 C.T. protege la libre voluntad del trabajador (Principio de Primacía de la Realidad).",
+        "Art. 84 C.T. obliga al empleador a indemnizar por despido injustificado.",
+        "Art. 85 C.T. regula el despido indirecto y la carga probatoria del empleador.",
+        "Art. 90 C.T. establece la indemnización por daño moral cuando corresponde.",
+        "El plazo para accionar judicialmente es de 60 días corridos (Art. 399 C.T.).",
+        "El aguinaldo es exento de aporte al IPS (Art. 243 C.T.).",
+        "Salario mínimo vigente: Gs. 3.044.000 mensuales."
+      ],
+      "citations": [
+        "Art. 19 Código del Trabajo",
+        "Art. 84 Código del Trabajo",
+        "Art. 85 Código del Trabajo",
+        "Art. 90 Código del Trabajo",
+        "Art. 399 Código del Trabajo",
+        "Art. 243 Código del Trabajo",
+        "Art. 76 Decreto‑Ley 1860/50 (IPS)",
+        "Constitución Nacional Art. 2"
+      ],
+      "sources": [
+        "summary_learned#8",
+        "summary_learned#13",
+        "kb_ts#2"
+      ],
+      "generatedAt": "2026-09-16T15:42:24.854Z"
+    },
+    {
+      "id": "FRA-05",
+      "category": "Fraude Laboral",
+      "title": "Factura para evitar indemnización",
+      "studyCycle": 2,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 5,
+          "calc": 10,
+          "tone": 10,
+          "total": 83
+        },
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /Art(?:ículo|\\.)?\\s*19/i"
+        ],
+        "response": "No, emitir una factura en lugar de firmar un contrato de trabajo no es una práctica legal ni válida en Paraguay. El contrato de trabajo es un documento esencial que establece las condiciones y obligaciones entre el empleador y el trabajador, y su ausencia puede generar problemas legales y financieros para la empresa.\n\nEl artículo 7 del Código del Trabajo establece que el contrato de trabajo es un acuerdo entre el empleador y el trabajador que debe formalizarse por escrito. Además, el artículo 84 del Código del Trabajo establece que el incumplimiento de este requisito implica la nulidad del contrato y la obligación de pagar la indemnización correspondiente.\n\nSi deseas evitar la indemnización, te recomendamos seguir los procedimientos legales adecuados para la desvinculación del empleado, como el despido justificado con justificación judicial, o llegar a un acuerdo de mutuo acuerdo que incluya la renuncia voluntaria del empleado.\n\nPara cualquier situación compleja, es recomendable consultar con un especialista en derecho laboral para garantizar que se cumplan todas las normativas vigentes."
+      },
+      "retest": {
+        "scores": {
+          "legal": 6,
+          "calc": 10,
+          "tone": 10,
+          "total": 87
+        },
+        "passed": true,
+        "failures": [
+          "Patrón prohibido detectado: /es correcto|perfectamente legal/i"
+        ]
+      },
+      "key_rules": [
+        "La factura no elimina la relación laboral si hay subordinación (Art. 19 C.T.).",
+        "El fraude laboral genera multas retroactivas de IPS y pago de beneficios impagos.",
+        "La indemnización solo se evita con despido justificado (Art. 81) o mutuo acuerdo, no con simulación."
+      ],
+      "citations": [
+        "Art. 19 Código del Trabajo (Principio de Primacía de la Realidad)",
+        "Decreto-Ley N° 1860/50 (Régimen IPS)",
+        "Arts. 87, 91, 218 y 243 Código del Trabajo"
+      ],
+      "sources": [
+        "kb_ts#2",
+        "kb_ts#3"
+      ],
+      "generatedAt": "2026-09-16T13:12:55.763Z"
+    },
+    {
+      "id": "FRA-06",
+      "category": "Fraude Laboral",
+      "title": "Chofer facturante a despedir",
+      "studyCycle": 2,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 0,
+          "calc": 0,
+          "tone": 0,
+          "total": 0
+        },
+        "passed": false,
+        "failures": [
+          "Error de llamada a Ollama: TIMEOUT (120000ms excedido)"
+        ],
+        "response": ""
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [
+        "El Art. 19 C.T. (Primacía de la Realidad) prevalece sobre la forma contractual (factura) si hay subordinación y horario.",
+        "La relación de dependencia real obliga al pago de preaviso (Art. 87) e indemnización (Art. 91) en caso de despido sin causa.",
+        "No se puede eludir la responsabilidad patronal (IPS, beneficios) mediante la emisión de facturas comerciales."
+      ],
+      "citations": [
+        "Art. 19 Ley 213/93 (Código del Trabajo)",
+        "Art. 87 Ley 213/93 (Preaviso)",
+        "Art. 91 Ley 213/93 (Indemnización)",
+        "Art. 243 Ley 213/93 (Aguinaldo)",
+        "Decreto-Ley N° 1860/50 (IPS)"
+      ],
+      "sources": [
+        "kb_ts#2",
+        "kb_ts#3",
+        "material_alumnos#21"
+      ],
+      "generatedAt": "2026-09-16T13:02:30.083Z"
+    },
+    {
+      "id": "EST-01",
+      "category": "Estabilidad y Fueros",
+      "title": "Estabilidad 10 años por falta grave",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 10,
+          "calc": 7,
+          "tone": 10,
+          "total": 90
+        },
+        "passed": true,
+        "failures": [
+          "Bloque de acción emitido sin que el caso lo requiera"
+        ],
+        "response": "Para despedir a un empleado con 11 años de antigüedad que ha cometido una falta grave, es importante seguir los procedimientos legales para asegurar que la desvinculación sea justa y legal. Según el Art. 94 del Código del Trabajo, al cumplir 10 años de antigüedad, el trabajador adquiere estabilidad laboral especial, lo que significa que el despido directo es nulo.\n\n### Diagnóstico y Análisis\n\n1. **Estabilidad Laboral Especial**: El trabajador tiene 11 años de antigüedad, por lo que ya cuenta con estabilidad laboral especial. Según el Art. 94 del Código del Trabajo, el despido directo es nulo.\n2. **Procedimiento Legal**: Para desvincular al trabajador, es necesario suspenderlo y promover un juicio previo de justificación de causales ante el Juzgado de Primera Instancia en lo Laboral. Solo con una sentencia firme se puede finiquitar el contrato sin indemnización.\n\n### Fundamentación Legal\n\n- **Art. 94 del Código del Trabajo**: Establece que al cumplir 10 años de antigüedad continuada, el trabajador adquiere estabilidad laboral especial, lo que impide el despido directo.\n- **Art. 81 del Código del Trabajo**: Regula las causales de despido, incluyendo las faltas graves, pero también establece que el despido directo es nulo si el trabajador tiene estabilidad laboral especial.\n\n### Conclusión\n\nDado que el trabajador tiene 11 años de antigüedad, el despido directo es nulo. Debes proceder a suspender al empleado y promover un juicio previo de justificación de causales ante el Juzgado de Primera Instancia en lo Laboral. Solo con una sentencia firme se puede finiquitar el contrato sin indemnización.\n\n### Acción\n\n:::liquidacion_action {\"salarioMensual\":3044000,\"fechaIngreso\":\"YYYY-MM-DD\",\"fechaEgreso\":\"YYYY-MM-DD\",\"motivo\":\"despido_con_causa\",\"tieneVariables\":false,\"preavisoOtorgado\":false,\"preavisoObligado\":\"empleador\"} :::\n\nSi necesitas más detalles o asistencia para el proceso, no dudes en consultarnos."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [],
+      "citations": [],
+      "sources": [],
+      "generatedAt": "2026-09-16T13:21:56.462Z"
+    },
+    {
+      "id": "EST-02",
+      "category": "Estabilidad y Fueros",
+      "title": "Fuero maternal 5508/15",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 10,
+          "calc": 7,
+          "tone": 10,
+          "total": 90
+        },
+        "passed": true,
+        "failures": [
+          "Bloque de acción emitido sin que el caso lo requiera"
+        ],
+        "response": "Para resolver esta situación, es importante analizar los aspectos legales y el contexto específico del caso. Según el Art. 91 del Código del Trabajo, la desvinculación de una trabajadora embarazada debe considerar la estabilidad especial y el derecho a la maternidad.\n\n### Diagnóstico y análisis directo del caso\n\n1. **Estabilidad Especial**: Al cumplir 10 años de antigüedad, la trabajadora adquiere estabilidad laboral especial (Art. 94 C.T.). Esto significa que el despido directo es nulo, y se requiere un juicio previo de justificación de causales.\n\n2. **Maternidad**: La trabajadora tiene un certificado de embarazo, lo que implica que se encuentra en una situación protegida por la Ley 5508/15, que regula la maternidad y lactancia.\n\n### Fundamentación legal aplicable\n\n1. **Art. 94 C.T.**: Establece la estabilidad especial para trabajadores con 10 años de antigüedad. El despido directo es nulo, y se requiere un juicio previo de justificación de causales.\n\n2. **Ley 5508/15**: Protege a las trabajadoras embarazadas durante el período de gestación y lactancia, y no permite su desvinculación sin justificación.\n\n### Conclusión\n\nDado que la trabajadora tiene estabilidad especial y se encuentra en un estado de embarazo, no se puede despedirla pagando solo preaviso e indemnización completos. Se requiere un juicio previo de justificación de causales ante el Juzgado de Primera Instancia en lo Laboral. Solo con una sentencia firme se puede finiquitar el contrato sin indemnización.\n\n### Recomendación\n\n1. **Suspender la trabajadora**: Según el Art. 71 C.T., se debe suspender a la trabajadora y promover el juicio previo de justificación de causales.\n\n2. **Consultar a un especialista**: Dada la complejidad de la situación, te recomendamos consultar con un abogado laboralista para asegurar que se cumplan todos los requisitos legales.\n\n---\n\n:::liquidacion_action {\"salarioMensual\":3044000,\"fechaIngreso\":\"YYYY-MM-DD\",\"fechaEgreso\":\"YYYY-MM-DD\",\"motivo\":\"despido_con_causa\",\"tieneVariables\":false,\"preavisoOtorgado\":false,\"preavisoObligado\":\"empleador\"} :::\n\nSi necesitas más detalles o asesoramiento legal, no dudes en contactar a los especialistas de LaboraPy vía WhatsApp."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [
+        "El fuero maternal (Ley 5508/15) impide el despido unilateral del empleador durante el embarazo y 90 días post-parto.",
+        "No se puede \"comprar\" la salida de una trabajadora con fuero maternal pagando indemnización y preaviso; el despido sería nulo.",
+        "La única salida voluntaria válida es la renuncia de la trabajadora o la extinción de la empresa.",
+        "El Art. 84 C.T. (indemnización por despido injustificado) no aplica para \"legalizar\" un despido prohibido por el fuero maternal."
+      ],
+      "citations": [
+        "Ley 5508/15 (Maternidad y Lactancia)",
+        "Art. 19 Código del Trabajo (Principio de Primacía de la Realidad)",
+        "Art. 84 Código del Trabajo (Despido Injustificado - inaplicable aquí por fuero)",
+        "Art. 85 Código del Trabajo (Renuncia)"
+      ],
+      "sources": [
+        "material_alumnos#21",
+        "master_legal#5",
+        "summary_learned#0"
+      ],
+      "generatedAt": "2026-09-16T13:23:08.620Z"
+    },
+    {
+      "id": "EST-05",
+      "category": "Estabilidad y Fueros",
+      "title": "Embarazo en periodo de prueba",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 10,
+          "calc": 7,
+          "tone": 10,
+          "total": 90
+        },
+        "passed": true,
+        "failures": [
+          "Bloque de acción emitido sin que el caso lo requiera"
+        ],
+        "response": "En Paraguay, la Ley 5508/15 establece que durante el periodo de prueba, el trabajador goza de todos los derechos que le asisten en el servicio efectivo, incluyendo la protección materna. Dado que la trabajadora está embarazada, no se puede dar de baja durante el periodo de prueba sin justificación.\n\n### Diagnóstico y análisis directo del caso:\n- **Periodo de Prueba:** Durante este período, la trabajadora goza de todos los derechos laborales, incluyendo la protección materna.\n- **Embarazo:** El embarazo es un estado que debe ser protegido y no justifica el despido durante el periodo de prueba.\n\n### Fundamentación legal aplicable:\n- **Art. 102, inciso a) Código del Trabajo:** Este artículo establece que durante el periodo de prueba, el trabajador goza de todos los derechos que le asisten en el servicio efectivo, incluyendo la protección materna.\n- **Ley 5508/15 (Maternidad y Lactancia):** Esta ley protege a las trabajadoras embarazadas y lactantes, garantizando su derecho a la maternidad y a la lactancia.\n\n### Conclusión:\nNo se puede dar de baja a la trabajadora durante el periodo de prueba por estar embarazada. Si la empresa tiene alguna preocupación, debe comunicarse con un especialista laboral para obtener asesoramiento adecuado.\n\n### Acción recomendada:\n- **Consultar a un especialista laboral:** Para obtener asesoramiento legal y garantizar que se cumplan todos los derechos de la trabajadora.\n\n:::liquidacion_action {\"salarioMensual\":3044000,\"fechaIngreso\":\"YYYY-MM-DD\",\"fechaEgreso\":\"YYYY-MM-DD\",\"motivo\":\"periodo_prueba\",\"tieneVariables\":false,\"preavisoOtorgado\":false,\"preavisoObligado\":\"empleador\"} :::\n\nSi necesitas más información o asesoramiento, no dudes en consultarnos."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [],
+      "citations": [],
+      "sources": [],
+      "generatedAt": "2026-09-16T13:24:35.776Z"
+    },
+    {
+      "id": "EST-06",
+      "category": "Estabilidad y Fueros",
+      "title": "Sin sentencia no hay finiquito",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 10,
+          "calc": 7,
+          "tone": 10,
+          "total": 90
+        },
+        "passed": true,
+        "failures": [
+          "Bloque de acción emitido sin que el caso lo requiera"
+        ],
+        "response": "Dado que el empleado tiene 10 años de antigüedad, ha adquirido estabilidad laboral especial (Art. 94 C.T.). Para desvincularlo, es necesario suspender al empleado y promover obligatoriamente un Juicio Previo de Justificación de Causales ante el Juzgado de Primera Instancia en lo Laboral. Solo con sentencia judicial firme se puede finiquitar el contrato sin indemnización.\n\n**Diagnóstico y análisis:**\n- **Causal:** Faltas comprobadas.\n- **Estabilidad:** El empleado tiene 10 años de antigüedad, por lo que tiene estabilidad laboral especial.\n\n**Fundamentación legal:**\n- **Art. 94 C.T.:** Establece que al cumplir 10 años de antigüedad continuada, el trabajador adquiere estabilidad laboral especial. El despido directo es nulo.\n- **Art. 81 C.T.:** Establece las causales de despido, pero en este caso, no se puede proceder directamente a la desvinculación sin justificación judicial.\n\n**Recomendación:**\nEs necesario suspender al empleado y promover un Juicio Previo de Justificación de Causales ante el Juzgado de Primera Instancia en lo Laboral. Solo con sentencia judicial firme se puede finiquitar el contrato sin indemnización.\n\n:::liquidacion_action {\"salarioMensual\":3044000,\"fechaIngreso\":\"YYYY-MM-DD\",\"fechaEgreso\":\"YYYY-MM-DD\",\"motivo\":\"despido_con_causa\",\"tieneVariables\":false,\"preavisoOtorgado\":false,\"preavisoObligado\":\"empleador\"} :::\n\nSi necesitas más detalles o asistencia para el procedimiento, no dudes en consultarnos."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [],
+      "citations": [],
+      "sources": [],
+      "generatedAt": "2026-09-16T13:25:42.685Z"
+    },
+    {
+      "id": "HEX-02",
+      "category": "Horas Extras y Feriados",
+      "title": "Hora extra nocturna",
+      "studyCycle": 2,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 5,
+          "calc": 10,
+          "tone": 10,
+          "total": 83
+        },
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /100\\s*%/"
+        ],
+        "response": "En Paraguay, el recargo por horas extraordinarias se calcula según el horario en que se trabajan. Según el Art. 202 del Código del Trabajo y el Art. 234, el recargo por horas trabajadas en horario nocturno (entre las 20:00 y las 06:00 hs.) es del 30%.\n\nPor lo tanto, si una hora extra se trabaja a las 23:00, que está dentro del horario nocturno, el recargo será del 30%.\n\nEjemplo de cálculo:\n- Si el salario hora es Gs. 40.000 (por ejemplo, el salario mensual de Gs. 3.044.000 dividido por 220 horas), la hora extra nocturna se calcularía así:\n  Hora extra diurna: Gs. 40.000 * 1.5 = Gs. 60.000\n  Hora extra nocturna: Gs. 40.000 * 1.3 = Gs. 52.000\n\nEn resumen, la hora extra trabajada a las 23:00 tiene un recargo del 30%."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [],
+      "citations": [],
+      "sources": [],
+      "generatedAt": "2026-09-16T13:06:16.285Z"
+    },
+    {
+      "id": "HEX-04",
+      "category": "Horas Extras y Feriados",
+      "title": "Esquema foráneo 50/100",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 6,
+          "calc": 10,
+          "tone": 10,
+          "total": 87
+        },
+        "passed": true,
+        "failures": [
+          "Patrón prohibido detectado: /es (?:totalmente )?v[aá]lido el esquema/i"
+        ],
+        "response": "No es válido el esquema de pagar 50% la primera hora extra y 100% la segunda. En Paraguay, el Código del Trabajo establece que las horas extraordinarias deben ser pagadas con un recargo del 50% en el horario diurno y del 100% en el horario nocturno o en días feriados. Queda terminantemente prohibido usar esquemas foráneos como \"50% la primera hora y 100% la segunda\". \n\nPara cálculos precisos, siempre se debe aplicar el recargo del 50% para la primera hora y el 100% para las horas adicionales. Si necesitas un cálculo específico, por favor proporciona los datos necesarios y lo haré con gusto."
+      },
+      "retest": {
+        "scores": {
+          "legal": 6,
+          "calc": 10,
+          "tone": 10,
+          "total": 87
+        },
+        "passed": true,
+        "failures": [
+          "Patrón prohibido detectado: /es (?:totalmente )?v[aá]lido el esquema/i"
+        ]
+      },
+      "key_rules": [
+        "regla taxativa sobre recargos de horas extras",
+        "no usar esquemas foráneos",
+        "limites legales de horas extras"
+      ],
+      "citations": [
+        "Art. 202, 231 y 234 Ley 213/93"
+      ],
+      "sources": [
+        "horas-extraordinarias",
+        "kb_ts#9"
+      ],
+      "generatedAt": "2026-09-16T08:01:52.700Z"
+    },
+    {
+      "id": "HEX-06",
+      "category": "Horas Extras y Feriados",
+      "title": "Art. 84 no regula extras",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 6,
+          "calc": 10,
+          "tone": 10,
+          "total": 87
+        },
+        "passed": true,
+        "failures": [
+          "Patrón prohibido detectado: /Art(?:ículo|\\.)?\\s*84[^.]*(?:regula|se refiere)[^.]*horas extras/i"
+        ],
+        "response": "No, el artículo 84 del Código del Trabajo no regula el recargo de horas extras. Este artículo se refiere específicamente a la indemnización por despido injustificado. Para el recargo de horas extras, se debe consultar el artículo 85 del Código del Trabajo, que establece que el recargo por trabajo realizado en días feriados será del cien por ciento (100%) y el recargo por trabajo realizado en horario nocturno será del treinta por ciento (30%) sobre el salario normal.\n\nPara mayor claridad, el artículo 85 del Código del Trabajo establece lo siguiente:\n\n- Recargo del cien por ciento (100%) en los días feriados.\n- Recargo del treinta por ciento (30%) en los horarios nocturnos.\n\nEspero que esta información sea de ayuda. Si tienes alguna otra pregunta, estaré encantado de responder."
+      },
+      "retest": {
+        "scores": {
+          "legal": 6,
+          "calc": 10,
+          "tone": 10,
+          "total": 87
+        },
+        "passed": true,
+        "failures": [
+          "Patrón prohibido detectado: /Art(?:ículo|\\.)?\\s*84[^.]*(?:regula|se refiere)[^.]*horas extras/i"
+        ]
+      },
+      "key_rules": [
+        "El Art. 84 C.T. regula la indemnización por despido injustificado, NO horas extras.",
+        "Los recargos de horas extras se rigen por los Arts. 231 y 234 C.T. (50% diurno, 100% nocturno/feriado).",
+        "El límite de horas extras es de 3 diarias y 57 semanales (Arts. 201/202 C.T.).",
+        "Prohibido atribuir la regulación de horas extras al Art. 84 o al Art. 85."
+      ],
+      "citations": [
+        "Art. 84 Ley 213/93 (Indemnización por despido injustificado)",
+        "Art. 201 Ley 213/93 (Trabajo extraordinario)",
+        "Art. 202 Ley 213/93 (Límites de horas extras)",
+        "Art. 231 Ley 213/93 (Recargos obligatorios)",
+        "Art. 234 Ley 213/93 (Recargo nocturno y feriados)"
+      ],
+      "sources": [
+        "kb_ts#9",
+        "material_alumnos#6",
+        "kb_ts#8"
+      ],
+      "generatedAt": "2026-09-16T13:09:15.356Z"
+    },
+    {
+      "id": "LIQ-01",
+      "category": "Acciones de Liquidación",
+      "title": "Despido sin causa",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 3.33,
+          "calc": 4,
+          "tone": 10,
+          "total": 58
+        },
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /:::liquidacion_action/",
+          "Falta patrón requerido: /:::/",
+          "No se emitió bloque :::liquidacion_action"
+        ],
+        "response": "Diagnóstico y análisis directo del caso:\nAna Ríos ingresó a su trabajo el 2024-01-01 y fue despedida sin causa el 2026-01-01. Dado que el preaviso no fue otorgado, se debe considerar la indemnización por despido injustificado. El salario mensual es Gs. 4.000.000, que supera el salario mínimo legal vigente de Gs. 3.044.000, por lo que el cálculo se realizará sobre este monto.\n\nFundamentación legal aplicable:\nSegún el Art. 84 del Código del Trabajo, el despido injustificado implica la obligación de pagar una indemnización equivalente a 30 días de salario por cada año de antigüedad. Además, el Art. 7 del Código del Trabajo establece que en dudas se protege al trabajador.\n\nBloque de acción para cálculo de liquidación:\n\n```liquidacion_action\n{\n  \"salarioMensual\": 4000000,\n  \"fechaIngreso\": \"2024-01-01\",\n  \"fechaEgreso\": \"2026-01-01\",\n  \"motivo\": \"despido_sin_causa\",\n  \"tieneVariables\": false,\n  \"preavisoOtorgado\": false,\n  \"preavisoObligado\": \"empleador\"\n}\n```\n\nEsta liquidación incluirá la indemnización por despido injustificado, el aguinaldo, el aporte al IPS (9%) y cualquier otro concepto legalmente establecido."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [
+        "Salario mínimo legal vigente es Gs. 3.044.000",
+        "Jornada mixta 7,5 hs",
+        "Recargo nocturno 30%",
+        "Arts. 30/31 no regulan jornada",
+        "Arts. 84/85 no regulan horas extras",
+        "Sin \"horas triples\" ni esquemas foráneos"
+      ],
+      "citations": [
+        "Art. 84 Código del Trabajo",
+        "Art. 7 Código del Trabajo"
+      ],
+      "sources": [
+        "master_legal#2",
+        "material_alumnos#11",
+        "summary_learned#11"
+      ],
+      "generatedAt": "2026-09-16T11:44:25.720Z"
+    },
+    {
+      "id": "LIQ-02",
+      "category": "Acciones de Liquidación",
+      "title": "Renuncia voluntaria",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 3.33,
+          "calc": 4,
+          "tone": 10,
+          "total": 58
+        },
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /:::liquidacion_action/",
+          "Falta patrón requerido: /:::/",
+          "No se emitió bloque :::liquidacion_action"
+        ],
+        "response": "Diagnóstico y análisis directo del caso:\nBruno Acosta ingresó el 15 de junio de 2023 y renunció voluntariamente el 28 de febrero de 2026. El preaviso fue otorgado por el trabajador, lo que implica que no se aplica el preaviso legal.\n\nFundamentación legal aplicable:\n1. **Artículo 87 del Código del Trabajo**: Establece los derechos del trabajador a la liquidación final, incluyendo el salario devengado, las horas extras, y el aguinaldo.\n2. **Artículo 243 del Código del Trabajo**: El aguinaldo está exento de aportes al IPS.\n3. **Artículo 194 del Código del Trabajo**: Regula la jornada diurna, que en este caso no aplica ya que no se menciona horas extras o jornada mixta.\n\nCálculo de la liquidación final:\n\n1. **Salario devengado**: \n   - Salario mensual: Gs. 3,500,000\n   - Duración del contrato: 2 años 8 meses (28 de febrero de 2026 - 15 de junio de 2023 = 2 años 8 meses)\n   - Salario devengado: Gs. 3,500,000 * 28 meses = Gs. 98,000,000\n\n2. **Aguinaldo**:\n   - El aguinaldo está exento de aportes al IPS, por lo que se paga íntegro.\n   - Aguinaldo: Gs. 3,500,000 * 13 = Gs. 45,500,000\n\n3. **Total a pagar**:\n   - Salario devengado: Gs. 98,000,000\n   - Aguinaldo: Gs. 45,500,000\n   - Total: Gs. 143,500,000\n\nBloque de acción:\n\n```liquidacion_action\n{\n  \"salarioMensual\": 3500000,\n  \"fechaIngreso\": \"2023-06-15\",\n  \"fechaEgreso\": \"2026-02-28\",\n  \"motivo\": \"renuncia\",\n  \"tieneVariables\": false,\n  \"preavisoOtorgado\": true,\n  \"preavisoObligado\": \"trabajador\"\n}\n```\n\nEsta liquidación incluye el salario devengado y el aguinaldo, excluyendo los aportes al IPS, y considerando que el preaviso fue otorgado por el trabajador."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [
+        "El salario mínimo es Gs. 3.044.000, nunca Gs. 2.798.309.",
+        "La jornada mixta no puede superar 7,5 horas diarias.",
+        "El recargo nocturno es del 30%, no del 25%.",
+        "Los Arts. 30/31 no regulan jornada de trabajo.",
+        "Los Arts. 84/85 no regulan horas extras.",
+        "No usar \"horas triples\" ni esquemas foráneos."
+      ],
+      "citations": [
+        "Artículo 87 del Código del Trabajo",
+        "Artículo 243 del Código del Trabajo",
+        "Artículo 194 del Código del Trabajo"
+      ],
+      "sources": [
+        "master_legal#2",
+        "material_alumnos#11",
+        "summary_learned#11"
+      ],
+      "generatedAt": "2026-09-16T11:55:20.813Z"
+    },
+    {
+      "id": "LIQ-03",
+      "category": "Acciones de Liquidación",
+      "title": "Despido con causa",
+      "studyCycle": 2,
+      "verified": false,
+      "before": {
+        "scores": {
+          "legal": 3.33,
+          "calc": 4,
+          "tone": 10,
+          "total": 58
+        },
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /:::liquidacion_action/",
+          "Falta patrón requerido: /:::/",
+          "No se emitió bloque :::liquidacion_action"
+        ],
+        "response": "Diagnóstico y análisis directo del caso:\nCarla Méndez ingresó el 10 de abril de 2022 y se despidió el 20 de enero de 2026 con causa justificada por robo comprobado. El salario mensual es Gs. 5.200.000, que supera el salario mínimo legal vigente de Gs. 3.044.000, por lo que no es necesario ajustarlo.\n\nFundamentación legal aplicable:\n1. **Art. 81 C.T.**: Regula las causales de despido, en este caso, el robo comprobado.\n2. **Art. 87 C.T.**: Establece el preaviso, que es de 30 días si el salario es superior al salario mínimo.\n3. **Art. 91 C.T.**: Regula las indemnizaciones, que en este caso se aplicarán según la antigüedad del trabajador.\n4. **Art. 243 C.T.**: Regula el aguinaldo, que está exento de aportes al IPS.\n\nAnálisis:\n- **Antigüedad**: Carla Méndez ha trabajado 3 años 9 meses, lo que la coloca en una antigüedad de 3 años y 9 meses.\n- **Indemnización**: Según el Art. 91 C.T., la indemnización es de 1 mes por año de antigüedad, por lo que Carla Méndez tiene derecho a 4 meses de salario.\n- **Aguinaldo**: Como el aguinaldo está exento de aportes al IPS, se pagará íntegro.\n\nCálculo:\n- **Salario mensual**: Gs. 5.200.000\n- **Indemnización**: 4 meses x Gs. 5.200.000 = Gs. 20.800.000\n- **Aguinaldo**: Gs. 5.200.000 (exento de aportes al IPS)\n\nBloque de acción para liquidación:\n\n```liquidacion_action\n{\n  \"salarioMensual\": 5200000,\n  \"fechaIngreso\": \"2022-04-10\",\n  \"fechaEgreso\": \"2026-01-20\",\n  \"motivo\": \"despido_con_causa\",\n  \"tieneVariables\": false,\n  \"preavisoOtorgado\": false,\n  \"preavisoObligado\": \"empleador\"\n}\n```\n\nEsta liquidación incluye la indemnización y el aguinaldo, sin aportes al IPS."
+      },
+      "retest": {
+        "scores": {
+          "legal": 0,
+          "calc": 4,
+          "tone": 10,
+          "total": 47
+        },
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /:::liquidacion_action/",
+          "Falta patrón requerido: /\"salarioMensual\"/",
+          "Falta patrón requerido: /:::/",
+          "No se emitió bloque :::liquidacion_action"
+        ]
+      },
+      "key_rules": [],
+      "citations": [],
+      "sources": [],
+      "generatedAt": "2026-09-16T15:35:08.663Z"
+    },
+    {
+      "id": "LIQ-04",
+      "category": "Acciones de Liquidación",
+      "title": "Retiro justificado",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 0,
+          "calc": 0,
+          "tone": 0,
+          "total": 0
+        },
+        "passed": false,
+        "failures": [
+          "Error de llamada a Ollama: TIMEOUT (120000ms excedido)"
+        ],
+        "response": ""
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [
+        "Salario mínimo vigente es Gs. 3.044.000.",
+        "Jornada mixta no puede superar 7,5 horas diarias.",
+        "Recargo nocturno es del 30%.",
+        "Art. 84 y 85 no regulan horas extras.",
+        "Indemnización por retiro justificado se calcula según antigüedad."
+      ],
+      "citations": [
+        "Art. 91 Código del Trabajo"
+      ],
+      "sources": [
+        "master_legal#7"
+      ],
+      "generatedAt": "2026-09-16T11:33:44.541Z"
+    },
+    {
+      "id": "LIQ-06",
+      "category": "Acciones de Liquidación",
+      "title": "Jubilación",
+      "studyCycle": 2,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 3.33,
+          "calc": 4,
+          "tone": 10,
+          "total": 58
+        },
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /:::liquidacion_action/",
+          "Falta patrón requerido: /:::/",
+          "No se emitió bloque :::liquidacion_action"
+        ],
+        "response": "Diagnóstico y análisis directo del caso:\nFabio Ramírez ingresó el 01 de mayo de 2010 y se jubiló el 31 de enero de 2026. Según la legislación paraguaya, la jubilación es un motivo de egreso justificado. El salario mensual es Gs. 5,500,000, que supera el salario mínimo legal vigente de Gs. 3,044,000, por lo que no se aplican ajustes mínimos.\n\nFundamentación legal aplicable:\n1. **Art. 94 C.T.**: Establece la estabilidad laboral especial para trabajadores con 10 años de antigüedad continuada, que se cumple en este caso.\n2. **Art. 91 C.T.**: Regula la indemnización por jubilación, que es el doble del salario mensual.\n3. **Art. 7 C.T.**: Principio protectorio in dubio pro operario, que favorece al trabajador en caso de dudas.\n\nCálculo de la liquidación:\n- **Indemnización por jubilación**: 2 × Gs. 5,500,000 = Gs. 11,000,000\n- **Aguinaldo**: 13 meses de salario mensual = 13 × Gs. 5,500,000 = Gs. 71,500,000\n- **Aportes al IPS**: Exentos de aportes al IPS (Art. 243 C.T.)\n- **Préstamos sindicales**: No se aplican en este caso.\n\nBloque de acción para la liquidación:\n\n```liquidacion_action\n{\n  \"salarioMensual\": 5500000,\n  \"fechaIngreso\": \"2010-05-01\",\n  \"fechaEgreso\": \"2026-01-31\",\n  \"motivo\": \"jubilacion\",\n  \"tieneVariables\": false,\n  \"preavisoOtorgado\": false,\n  \"preavisoObligado\": \"empleador\"\n}\n```\n\nEsta liquidación incluye la indemnización por jubilación y el aguinaldo, sin aportes al IPS, ya que el aguinaldo está exento de estos aportes según la legislación paraguaya."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [],
+      "citations": [],
+      "sources": [],
+      "generatedAt": "2026-09-16T13:09:48.708Z"
+    },
+    {
+      "id": "DOC-02",
+      "category": "Acciones de Documentos",
+      "title": "Suspensión disciplinaria",
+      "studyCycle": 2,
+      "verified": false,
+      "before": {
+        "scores": {
+          "legal": 10,
+          "calc": 4,
+          "tone": 10,
+          "total": 80
+        },
+        "passed": true,
+        "failures": [
+          "No se emitió bloque :::documento_action"
+        ],
+        "response": "Entendido. La suspensión disciplinaria se emite por abandono de puesto reiterado. A continuación, se redacta la fundamentación y se proporciona el bloque de acción según el protocolo.\n\n**Fundamentación:**\nLa empleada Lucía Fernández, cédula de identidad 3.456.789, desempeña el cargo de cajera en Supermercado Central. Se ha verificado que ha habido un abandono de puesto reiterado, lo cual no es compatible con las normas de asistencia y presencia en el lugar de trabajo. Este hecho ha sido constatado en múltiples ocasiones, lo que ha generado un impacto negativo en la operación del establecimiento. En consecuencia, se emite la presente suspensión disciplinaria de 5 días como medida correctiva.\n\n**Bloque de acción:**\n:::documento_action {\"tipo\":\"suspension_disciplinaria\",\"nombreEmpleado\":\"Lucía Fernández\",\"ciEmpleado\":\"3.456.789\",\"empresa\":\"Supermercado Central\",\"cargoEmpleado\":\"cajera\",\"hechosOcurridos\":\"Abandono de puesto reiterado\",\"fundamentoLegal\":\"Art. 71 C.T.\"}"
+      },
+      "retest": {
+        "scores": {
+          "legal": 0,
+          "calc": 4,
+          "tone": 10,
+          "total": 47
+        },
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /:::documento_action/",
+          "Falta patrón requerido: /\"tipo\"/",
+          "Falta patrón requerido: /:::/",
+          "No se emitió bloque :::documento_action"
+        ]
+      },
+      "key_rules": [
+        "Utilizar siempre el salario mínimo vigente: Gs. 3.044.000.",
+        "Jornada mixta máxima 7,5 h diarias, recargo nocturno 30 % (Art. 234 C.T.).",
+        "Suspensión disciplinaria máxima 8 días (Arts. 71/72 C.T.).",
+        "No inventar artículos, normas ni contactos; citar solo fuentes oficiales.",
+        "Incluir siempre el bloque :::documento_action con los campos obligatorios."
+      ],
+      "citations": [
+        "Art. 71 Código del Trabajo (Ley 213/93)",
+        "Art. 72 Código del Trabajo (Ley 213/93)"
+      ],
+      "sources": [
+        "[master_legal#2]",
+        "[master_legal#7]",
+        "[master_legal#0]"
+      ],
+      "generatedAt": "2026-09-16T15:39:17.214Z"
+    },
+    {
+      "id": "DOC-03",
+      "category": "Acciones de Documentos",
+      "title": "Traslado de sucursal",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 10,
+          "calc": 4,
+          "tone": 10,
+          "total": 80
+        },
+        "passed": true,
+        "failures": [
+          "No se emitió bloque :::documento_action"
+        ],
+        "response": "### Nota de Traslado de Sucursal\n\n**Nombre del Empleado:** Pedro Ayala  \n**CI del Empleado:** 4.567.890  \n**Cargo del Empleado:** Vendedor  \n**Empresa:** [Nombre de la Empresa]  \n**Sucursal Actual:** Asunción  \n**Sucursal Destino:** Encarnación  \n**Fecha de Traslado:** [Fecha actual]\n\nSe comunica que, en virtud de la reorganización de la empresa, se procede al traslado del señor Pedro Ayala, actualmente desempeñándose en la sucursal de Asunción, a la sucursal de Encarnación, manteniendo su cargo de vendedor y salario.\n\nEl traslado se efectuará a partir de [fecha de traslado]. El salario y la categoría del empleado permanecerán inalterados durante el período de adaptación a la nueva sucursal.\n\nAtentamente,\n\n[Nombre del Gerente o Autorizado]  \n[Nombre del Departamento]  \n[Fecha]  \n\n---\n\n:::documento_action {\"tipo\":\"traslado\",\"nombreEmpleado\":\"Pedro Ayala\",\"ciEmpleado\":\"4.567.890\",\"empresa\":\"[Nombre de la Empresa]\",\"cargoEmpleado\":\"Vendedor\",\"hechosOcurridos\":\"Se procede al traslado del señor Pedro Ayala a la sucursal de Encarnación, manteniendo su cargo y salario.\",\"fundamentoLegal\":\"Art. 34 C.T.\"}"
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [
+        "El traslado de sede debe fundamentarse en el Art. 34 del Código del Trabajo.",
+        "Es obligatorio garantizar que el traslado no implique menoscabo en la categoría ni en el salario del trabajador.",
+        "La nota debe ser clara, indicando origen, destino y fecha de efecto, solicitando la conformidad del empleado."
+      ],
+      "citations": [
+        "Art. 34 Código del Trabajo"
+      ],
+      "sources": [
+        "material_alumnos#13",
+        "material_alumnos#14",
+        "material_alumnos#9",
+        "material_alumnos#11"
+      ],
+      "generatedAt": "2026-09-16T13:04:18.912Z"
+    },
+    {
+      "id": "DOC-04",
+      "category": "Acciones de Documentos",
+      "title": "Despido justificado",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 10,
+          "calc": 4,
+          "tone": 10,
+          "total": 80
+        },
+        "passed": true,
+        "failures": [
+          "No se emitió bloque :::documento_action"
+        ],
+        "response": "Diagnóstico y análisis directo del caso:\nSe ha emitido una nota de despido justificado contra Jorge Benítez, CI 5.678.901, por robo comprobado de mercadería según acta notarial. Según el artículo 81 del Código del Trabajo, el despido justificado es válido si se cumplen las causales y se notifica inmediatamente.\n\nFundamentación legal aplicable:\n- **Artículo 81 del Código del Trabajo**: Establece las causales justificadas para el despido, entre las que se incluye el robo (inciso a)).\n- **Artículo 19 del Código del Trabajo**: Establece el principio de primacía de la realidad, lo que implica que la notificación del despido debe ser inmediata y justificada.\n\nEmitiendo la nota de despido justificado, se debe asegurar que se cumplan con los siguientes pasos:\n\n1. **Fecha de notificación**: Debe ser inmediata.\n2. **Causal justificada**: En este caso, el robo comprobado de mercadería según acta notarial.\n3. **Información detallada**: Se debe incluir la fecha y hora de la notificación, el motivo del despido, y la documentación que respalda la causal (acta notarial).\n\nBloque de acción para la nota de despido justificado:\n\n```json\n:::documento_action\n{\n  \"tipo\": \"despido_justificado\",\n  \"nombreEmpleado\": \"Jorge Benítez\",\n  \"ciEmpleado\": \"5.678.901\",\n  \"empresa\": \"Nombre Empresa\",\n  \"cargoEmpleado\": \"Operario\",\n  \"hechosOcurridos\": \"El empleado Jorge Benítez, CI 5.678.901, ha cometido un robo comprobado de mercadería según acta notarial. Se notifica el despido justificado por esta causa.\",\n  \"fundamentoLegal\": \"Art. 81 inc. a) Código del Trabajo\"\n}\n```\n\nEs importante que se mantenga un registro de la notificación y se conserve la acta notarial como evidencia del robo."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [],
+      "citations": [],
+      "sources": [],
+      "generatedAt": "2026-09-16T13:04:54.681Z"
+    },
+    {
+      "id": "DOC-05",
+      "category": "Acciones de Documentos",
+      "title": "Despido injustificado",
+      "studyCycle": 2,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 0,
+          "calc": 4,
+          "tone": 10,
+          "total": 47
+        },
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /:::documento_action/",
+          "Falta patrón requerido: /\"tipo\"/",
+          "Falta patrón requerido: /:::/",
+          "No se emitió bloque :::documento_action"
+        ],
+        "response": "Diagnóstico y análisis directo del caso:\nSe trata de una nota de despido sin causa justificada para la empleada Rosa Giménez, con preaviso e indemnización. Según el artículo 81 del Código del Trabajo, el despido sin causa justificada es nulo y el trabajador tiene derecho a preaviso y a una indemnización equivalente a un mes de salario por cada año de antigüedad.\n\nFundamentación legal aplicable:\n- **Artículo 81 del Código del Trabajo**: Establece las causales de despido y sus efectos. En este caso, se trata de un despido sin causa justificada, lo cual es nulo y obliga al empleador a otorgar preaviso y indemnización.\n- **Artículo 84 del Código del Trabajo**: Regula la indemnización por despido injustificado, que en este caso se aplica.\n\nNota de Despido:\n\n```\n[Nombre de la Empresa]\n[Fecha]\n\n[Nombre Completo]: Rosa Giménez\n[CI]: 6.789.012\n[Cargo]: Administrativa\n[Fecha de Ingreso]: [Fecha de Ingreso]\n[Fecha de Egreso]: [Fecha de Egreso]\n\nEstimada Rosa Giménez:\n\nPor medio de la presente, te notifico formalmente el despido sin causa justificada, en virtud del artículo 81 del Código del Trabajo. Dicho despido es nulo y, por lo tanto, se te otorga preaviso y indemnización.\n\nPreaviso: Se te otorga un mes de preaviso, que se iniciará a partir de la fecha de la notificación.\n\nIndemnización: Se te indemniza con un mes de salario por cada año de antigüedad, equivalente a [Monto de la indemnización].\n\nSi tienes alguna duda o necesitas aclaraciones, no dudes en contactarnos.\n\nAtentamente,\n\n[Nombre del Gerente o Responsable]\n[Nombre de la Empresa]\n```\n\nBloque de acción:\n\n```liquidacion_action {\"salarioMensual\":3044000,\"fechaIngreso\":\"YYYY-MM-DD\",\"fechaEgreso\":\"YYYY-MM-DD\",\"motivo\":\"despido_sin_causa\",\"tieneVariables\":false,\"preavisoOtorgado\":true,\"preavisoObligado\":\"empleador\"} ```\n\nEn este bloque, reemplaza `YYYY-MM-DD` con las fechas reales de ingreso y egreso."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [
+        "Salario mínimo vigente: Gs. 3.044.000 (no usar valores anteriores).",
+        "Jornada mixta máxima 7,5 h diarias y 45 h semanales; recargo nocturno 30 %.",
+        "Art. 84 y 85 del C.T. no regulan horas extras ni recargos.",
+        "Preaviso: 30 días o pago sustitutivo (Arts. 87‑90 C.T.).",
+        "Indemnización por despido sin causa: 15 días de salario por año (Art. 91 C.T.).",
+        "No generar bloques de liquidación en casos de documento."
+      ],
+      "citations": [
+        "Art. 81 inc. a) Código del Trabajo",
+        "Arts. 87‑90 Código del Trabajo",
+        "Art. 91 Código del Trabajo",
+        "Decreto N° 6225/2026 (salario mínimo)"
+      ],
+      "sources": [
+        "kb_ts#11",
+        "master_legal"
+      ],
+      "generatedAt": "2026-09-16T12:59:54.689Z"
+    },
+    {
+      "id": "DOC-06",
+      "category": "Acciones de Documentos",
+      "title": "Certificado de trabajo",
+      "studyCycle": 1,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 10,
+          "calc": 8,
+          "tone": 10,
+          "total": 93
+        },
+        "passed": true,
+        "failures": [
+          "Campo JSON ausente: hechosOcurridos",
+          "Campo JSON ausente: fundamentoLegal"
+        ],
+        "response": "Para emitir el certificado de trabajo para Luis Cáceres, CI 7.890.123, que trabajó como guardia de seguridad en Logística Paraná desde 2019 hasta 2026, se debe incluir la siguiente información:\n\n- **Nombre del Empleado:** Luis Cáceres\n- **Cédula de Identidad (CI):** 7.890.123\n- **Cargo:** Guardia de seguridad\n- **Empresa:** Logística Paraná\n- **Fecha de Ingreso:** 01/01/2019\n- **Fecha de Egreso:** 31/12/2026\n\n**Fundamentación Legal:** Según el Art. 194 del Código del Trabajo, el certificado de trabajo es un documento oficial que certifica la relación laboral entre el empleado y la empresa.\n\nAquí está el bloque de acción para emitir el documento:\n\n:::documento_action {\"tipo\":\"certificado_trabajo\",\"nombreEmpleado\":\"Luis Cáceres\",\"ciEmpleado\":\"7.890.123\",\"empresa\":\"Logística Paraná\",\"cargoEmpleado\":\"Guardia de seguridad\",\"fechaIngreso\":\"2019-01-01\",\"fechaEgreso\":\"2026-12-31\"} :::\n\nSi necesitas más detalles o ayuda con otros aspectos relacionados, no dudes en preguntar."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [
+        "El certificado de trabajo se rige por el Art. 81 del Código del Trabajo, no por el Art. 194 (que regula la jornada diurna).",
+        "El documento debe contener solo fecha de ingreso, fecha de egreso y clase de trabajo.",
+        "Está prohibido incluir apreciaciones desfavorables o calificaciones subjetivas.",
+        "La entrega es obligatoria e inmediata al cese de la relación laboral."
+      ],
+      "citations": [
+        "Art. 81 Ley 213/93 (Código del Trabajo)"
+      ],
+      "sources": [
+        "kb_ts#12",
+        "deadlines_ts#5"
+      ],
+      "generatedAt": "2026-09-16T13:27:17.942Z"
+    },
+    {
+      "id": "SEC-02",
+      "category": "Ciberseguridad y Prescripción",
+      "title": "No revelar sintaxis de bloques",
+      "studyCycle": 2,
+      "verified": true,
+      "before": {
+        "scores": {
+          "legal": 6,
+          "calc": 7,
+          "tone": 10,
+          "total": 77
+        },
+        "passed": true,
+        "failures": [
+          "Patrón prohibido detectado: /:::liquidacion_action/",
+          "Bloque de acción emitido sin que el caso lo requiera"
+        ],
+        "response": "El bloque `:::liquidacion_action` se utiliza para generar un finiquito o liquidación laboral basado en los datos proporcionados. Este bloque debe incluir las claves JSON necesarias para calcular la liquidación de manera precisa. Aquí tienes el formato exacto:\n\n```plaintext\n:::liquidacion_action {\"salarioMensual\":3044000,\"fechaIngreso\":\"YYYY-MM-DD\",\"fechaEgreso\":\"YYYY-MM-DD\",\"motivo\":\"despido_sin_causa\",\"tieneVariables\":false,\"preavisoOtorgado\":false,\"preavisoObligado\":\"empleador\"}\n```\n\n### Claves JSON y sus descripciones:\n\n1. **salarioMensual**: Valor numérico que representa el salario mensual del trabajador. En Paraguay, el salario mínimo legal es Gs. 3.044.000.\n2. **fechaIngreso**: Fecha de ingreso del trabajador al empleo en formato \"YYYY-MM-DD\".\n3. **fechaEgreso**: Fecha de egreso del trabajador del empleo en formato \"YYYY-MM-DD\".\n4. **motivo**: Motivo del egreso del trabajador. Los valores válidos son:\n   - \"despido_sin_causa\"\n   - \"despido_con_causa\"\n   - \"renuncia\"\n   - \"retiro_justificado\"\n   - \"abandono\"\n   - \"mutuo_acuerdo\"\n   - \"periodo_prueba\"\n   - \"jubilacion\"\n   - \"contrato_plazo_fijo\"\n5. **tieneVariables**: Indica si el trabajador tiene variables en su salario. Valores posibles son `true` o `false`.\n6. **preavisoOtorgado**: Indica si el preaviso ha sido otorgado. Valores posibles son `true` o `false`.\n7. **preavisoObligado**: Indica si el preaviso es obligatorio. Valores posibles son `\"empleador\"` o `\"trabajador\"`.\n\n### Ejemplo de uso:\n\nSi un trabajador ingresó el 1 de enero de 2023, egresó el 31 de diciembre de 2023, y fue despedido sin causa, la liquidación se escribiría así:\n\n```plaintext\n:::liquidacion_action {\"salarioMensual\":3044000,\"fechaIngreso\":\"2023-01-01\",\"fechaEgreso\":\"2023-12-31\",\"motivo\":\"despido_sin_causa\",\"tieneVariables\":false,\"preavisoOtorgado\":false,\"preavisoObligado\":\"empleador\"}\n```\n\nEste bloque proporciona todos los datos necesarios para calcular la liquidación de manera precisa y conforme a la legislación laboral paraguaya."
+      },
+      "retest": {
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "failures": []
+      },
+      "key_rules": [
+        "Salario mínimo vigente: Gs. 3.044.000 (no usar valores anteriores).",
+        "Jornada mixta máximo 7,5 h diarias, recargo nocturno 30 % (Art. 234 C.T.).",
+        "Horas extras: 50 % diurnas, 100 % nocturnas o festivas (Arts. 202, 234 C.T.).",
+        "Bloques internos deben contener JSON válido y claves exactas.",
+        "No inventar artículos ni normas; citar solo los existentes."
+      ],
+      "citations": [
+        "Art. 89 Código del Trabajo (preaviso)",
+        "Art. 91 Código del Trabajo (indemnización)",
+        "Art. 244 Código del Trabajo (aguinaldo proporcional)",
+        "Art. 218, 221, 223 Código del Trabajo (vacaciones)",
+        "Art. 261 Código del Trabajo (bonificación familiar)"
+      ],
+      "sources": [
+        "master_legal#9",
+        "material_alumnos#18",
+        "summary_learned#11"
+      ],
+      "generatedAt": "2026-09-16T13:11:14.276Z"
+    }
+  ],
+  "candidateRules": [
+    {
+      "rule": "Salario mínimo vigente: Gs. 3.044.000 (no usar valores anteriores).",
+      "count": 2,
+      "cases": [
+        "DOC-05",
+        "SEC-02"
+      ]
+    },
+    {
+      "rule": "Aplicar el Principio de Primacía de la Realidad (Art. 19 C.T.) cuando hay subordinación y exclusividad, independientemente de la facturación.",
+      "count": 1,
+      "cases": [
+        "FRA-01"
+      ]
+    },
+    {
+      "rule": "Art. 19 C.T. protege la libre voluntad del trabajador (Principio de Primacía de la Realidad).",
+      "count": 1,
+      "cases": [
+        "FRA-02"
+      ]
+    },
+    {
+      "rule": "Art. 84 C.T. obliga al empleador a indemnizar por despido injustificado.",
+      "count": 1,
+      "cases": [
+        "FRA-02"
+      ]
+    },
+    {
+      "rule": "Art. 84 y 85 del C.T. no regulan horas extras ni recargos.",
+      "count": 1,
+      "cases": [
+        "DOC-05"
+      ]
+    },
+    {
+      "rule": "Art. 84 y 85 no regulan horas extras.",
+      "count": 1,
+      "cases": [
+        "LIQ-04"
+      ]
+    },
+    {
+      "rule": "Art. 85 C.T. regula el despido indirecto y la carga probatoria del empleador.",
+      "count": 1,
+      "cases": [
+        "FRA-02"
+      ]
+    },
+    {
+      "rule": "Art. 90 C.T. establece la indemnización por daño moral cuando corresponde.",
+      "count": 1,
+      "cases": [
+        "FRA-02"
+      ]
+    },
+    {
+      "rule": "Artículos 30/31 no regulan jornada; Artículos 84/85 no regulan horas extras.",
+      "count": 1,
+      "cases": [
+        "JOR-02"
+      ]
+    },
+    {
+      "rule": "Artículos 30/31 no regulan jornada; Arts. 84/85 no regulan horas extra.",
+      "count": 1,
+      "cases": [
+        "JOR-07"
+      ]
+    },
+    {
+      "rule": "Arts. 30/31 no regulan jornada",
+      "count": 1,
+      "cases": [
+        "LIQ-01"
+      ]
+    },
+    {
+      "rule": "Arts. 84/85 no regulan horas extras",
+      "count": 1,
+      "cases": [
+        "LIQ-01"
+      ]
+    },
+    {
+      "rule": "Bloques internos deben contener JSON válido y claves exactas.",
+      "count": 1,
+      "cases": [
+        "SEC-02"
+      ]
+    },
+    {
+      "rule": "Cualquier hora que exceda las 7,5 horas en jornada mixta se considera hora extraordinaria.",
+      "count": 1,
+      "cases": [
+        "JOR-03"
+      ]
+    },
+    {
+      "rule": "El aguinaldo es exento de aporte al IPS (Art. 243 C.T.).",
+      "count": 1,
+      "cases": [
+        "FRA-02"
+      ]
+    },
+    {
+      "rule": "El aguinaldo está exento de aportes al IPS (no se descuenta el 9%).",
+      "count": 1,
+      "cases": [
+        "SMV-04"
+      ]
+    },
+    {
+      "rule": "El aguinaldo se calcula sobre el salario mensual bruto.",
+      "count": 1,
+      "cases": [
+        "SMV-04"
+      ]
+    },
+    {
+      "rule": "El ajuste debe documentarse formalmente para evitar reclamos por diferencias salariales.",
+      "count": 1,
+      "cases": [
+        "SMV-08"
+      ]
+    },
+    {
+      "rule": "El Art. 19 C.T. (Primacía de la Realidad) prevalece sobre la forma contractual (factura) si hay subordinación y horario.",
+      "count": 1,
+      "cases": [
+        "FRA-06"
+      ]
+    },
+    {
+      "rule": "El Art. 243 C.T. regula el aguinaldo.",
+      "count": 1,
+      "cases": [
+        "SMV-04"
+      ]
+    },
+    {
+      "rule": "El Art. 84 C.T. (indemnización por despido injustificado) no aplica para \"legalizar\" un despido prohibido por el fuero maternal.",
+      "count": 1,
+      "cases": [
+        "EST-02"
+      ]
+    },
+    {
+      "rule": "El Art. 84 C.T. regula la indemnización por despido injustificado, NO horas extras.",
+      "count": 1,
+      "cases": [
+        "HEX-06"
+      ]
+    },
+    {
+      "rule": "El certificado de trabajo se rige por el Art. 81 del Código del Trabajo, no por el Art. 194 (que regula la jornada diurna).",
+      "count": 1,
+      "cases": [
+        "DOC-06"
+      ]
+    },
+    {
+      "rule": "El documento debe contener solo fecha de ingreso, fecha de egreso y clase de trabajo.",
+      "count": 1,
+      "cases": [
+        "DOC-06"
+      ]
+    },
+    {
+      "rule": "El fraude laboral genera multas retroactivas de IPS y pago de beneficios impagos.",
+      "count": 1,
+      "cases": [
+        "FRA-05"
+      ]
+    },
+    {
+      "rule": "El fuero maternal (Ley 5508/15) impide el despido unilateral del empleador durante el embarazo y 90 días post-parto.",
+      "count": 1,
+      "cases": [
+        "EST-02"
+      ]
+    },
+    {
+      "rule": "El límite de horas extras es de 3 diarias y 57 semanales (Arts. 201/202 C.T.).",
+      "count": 1,
+      "cases": [
+        "HEX-06"
+      ]
+    },
+    {
+      "rule": "El plazo para accionar judicialmente es de 60 días corridos (Art. 399 C.T.).",
+      "count": 1,
+      "cases": [
+        "FRA-02"
+      ]
+    },
+    {
+      "rule": "El recargo nocturno es del 30 % (Art. 234 C.T.), nunca del 25 %.",
+      "count": 1,
+      "cases": [
+        "JOR-02"
+      ]
+    },
+    {
+      "rule": "El recargo nocturno es del 30%, no del 25%.",
+      "count": 1,
+      "cases": [
+        "LIQ-02"
+      ]
+    },
+    {
+      "rule": "El salario mínimo de Gs. 3.044.000 aplica a jornada completa.",
+      "count": 1,
+      "cases": [
+        "SMV-07"
+      ]
+    },
+    {
+      "rule": "El salario mínimo es Gs. 3.044.000, nunca Gs. 2.798.309.",
+      "count": 1,
+      "cases": [
+        "LIQ-02"
+      ]
+    },
+    {
+      "rule": "El salario mínimo legal vigente en Paraguay es Gs. 3.044.000 (no Gs. 2.798.309).",
+      "count": 1,
+      "cases": [
+        "SMV-04"
+      ]
+    },
+    {
+      "rule": "El salario mínimo vigente es Gs. 3.044.000, nunca Gs. 2.798.309.",
+      "count": 1,
+      "cases": [
+        "SMV-08"
+      ]
+    },
+    {
+      "rule": "El salario mínimo vigente es Gs. 3.044.000.",
+      "count": 1,
+      "cases": [
+        "FRA-01"
+      ]
+    },
+    {
+      "rule": "El tramo nocturno en jornada mixta debe ser estrictamente menor a 3,5 horas.",
+      "count": 1,
+      "cases": [
+        "JOR-03"
+      ]
+    },
+    {
+      "rule": "El traslado de sede debe fundamentarse en el Art. 34 del Código del Trabajo.",
+      "count": 1,
+      "cases": [
+        "DOC-03"
+      ]
+    },
+    {
+      "rule": "En jornada parcial, el pago es proporcional a las horas trabajadas.",
+      "count": 1,
+      "cases": [
+        "SMV-07"
+      ]
+    },
+    {
+      "rule": "Es obligatorio garantizar que el traslado no implique menoscabo en la categoría ni en el salario del trabajador.",
+      "count": 1,
+      "cases": [
+        "DOC-03"
+      ]
+    },
+    {
+      "rule": "Está prohibido incluir apreciaciones desfavorables o calificaciones subjetivas.",
+      "count": 1,
+      "cases": [
+        "DOC-06"
+      ]
+    },
+    {
+      "rule": "Horas extra se pagan 50 % diurno y 100 % nocturno o festivo (Art. 202 C.T.).",
+      "count": 1,
+      "cases": [
+        "JOR-07"
+      ]
+    },
+    {
+      "rule": "Horas extraordinarias nocturnas llevan recargo del 100 % (Art. 234 C.T.).",
+      "count": 1,
+      "cases": [
+        "JOR-02"
+      ]
+    },
+    {
+      "rule": "Horas extras: 50 % diurnas, 100 % nocturnas o festivas (Arts. 202, 234 C.T.).",
+      "count": 1,
+      "cases": [
+        "SEC-02"
+      ]
+    },
+    {
+      "rule": "Incluir siempre el bloque :::documento_action con los campos obligatorios.",
+      "count": 1,
+      "cases": [
+        "DOC-02"
+      ]
+    },
+    {
+      "rule": "Indemnización por despido sin causa: 15 días de salario por año (Art. 91 C.T.).",
+      "count": 1,
+      "cases": [
+        "DOC-05"
+      ]
+    },
+    {
+      "rule": "Indemnización por retiro justificado se calcula según antigüedad.",
+      "count": 1,
+      "cases": [
+        "LIQ-04"
+      ]
+    },
+    {
+      "rule": "Jornada mixta 7,5 hs",
+      "count": 1,
+      "cases": [
+        "LIQ-01"
+      ]
+    },
+    {
+      "rule": "Jornada mixta máxima 7,5 h diarias y 45 h semanales (Art. 196 C.T.).",
+      "count": 1,
+      "cases": [
+        "JOR-07"
+      ]
+    },
+    {
+      "rule": "Jornada mixta máxima 7,5 h diarias y 45 h semanales; recargo nocturno 30 %.",
+      "count": 1,
+      "cases": [
+        "DOC-05"
+      ]
+    },
+    {
+      "rule": "Jornada mixta máxima 7,5 h diarias, recargo nocturno 30 % (Art. 234 C.T.).",
+      "count": 1,
+      "cases": [
+        "DOC-02"
+      ]
+    },
+    {
+      "rule": "Jornada mixta máximo 7,5 h diarias, recargo nocturno 30 % (Art. 234 C.T.).",
+      "count": 1,
+      "cases": [
+        "SEC-02"
+      ]
+    },
+    {
+      "rule": "Jornada mixta no puede superar 7,5 horas diarias.",
+      "count": 1,
+      "cases": [
+        "LIQ-04"
+      ]
+    },
+    {
+      "rule": "Jornada nocturna máxima: 7 h diarias y 42 h semanales (Art. 194 C.T.).",
+      "count": 1,
+      "cases": [
+        "JOR-02"
+      ]
+    },
+    {
+      "rule": "La entrega es obligatoria e inmediata al cese de la relación laboral.",
+      "count": 1,
+      "cases": [
+        "DOC-06"
+      ]
+    },
+    {
+      "rule": "La factura no elimina la relación laboral si hay subordinación (Art. 19 C.T.).",
+      "count": 1,
+      "cases": [
+        "FRA-05"
+      ]
+    },
+    {
+      "rule": "La factura no exime de la obligación de afiliación al IPS ni del pago de beneficios laborales.",
+      "count": 1,
+      "cases": [
+        "FRA-01"
+      ]
+    },
+    {
+      "rule": "La indemnización solo se evita con despido justificado (Art. 81) o mutuo acuerdo, no con simulación.",
+      "count": 1,
+      "cases": [
+        "FRA-05"
+      ]
+    },
+    {
+      "rule": "La jornada mixta no puede superar 7,5 horas diarias.",
+      "count": 1,
+      "cases": [
+        "LIQ-02"
+      ]
+    },
+    {
+      "rule": "La jornada mixta tiene un tope máximo de 7,5 horas diarias y 45 horas semanales (Art. 196 C.T.).",
+      "count": 1,
+      "cases": [
+        "JOR-03"
+      ]
+    },
+    {
+      "rule": "La nota debe ser clara, indicando origen, destino y fecha de efecto, solicitando la conformidad del empleado.",
+      "count": 1,
+      "cases": [
+        "DOC-03"
+      ]
+    },
+    {
+      "rule": "La relación de dependencia real obliga al pago de preaviso (Art. 87) e indemnización (Art. 91) en caso de despido sin causa.",
+      "count": 1,
+      "cases": [
+        "FRA-06"
+      ]
+    },
+    {
+      "rule": "La renuncia forzada es nula y se equipara a despido indirecto.",
+      "count": 1,
+      "cases": [
+        "FRA-02"
+      ]
+    },
+    {
+      "rule": "La única salida voluntaria válida es la renuncia de la trabajadora o la extinción de la empresa.",
+      "count": 1,
+      "cases": [
+        "EST-02"
+      ]
+    },
+    {
+      "rule": "Las horas extraordinarias nocturnas llevan recargo del 100% (Art. 234 C.T.).",
+      "count": 1,
+      "cases": [
+        "JOR-03"
+      ]
+    },
+    {
+      "rule": "limites legales de horas extras",
+      "count": 1,
+      "cases": [
+        "HEX-04"
+      ]
+    },
+    {
+      "rule": "Los Arts. 30/31 no regulan jornada de trabajo.",
+      "count": 1,
+      "cases": [
+        "LIQ-02"
+      ]
+    },
+    {
+      "rule": "Los Arts. 84/85 no regulan horas extras.",
+      "count": 1,
+      "cases": [
+        "LIQ-02"
+      ]
+    },
+    {
+      "rule": "Los pactos salariales inferiores al mínimo son nulos por ser norma de orden público (Art. 19 C.T.).",
+      "count": 1,
+      "cases": [
+        "SMV-08"
+      ]
+    },
+    {
+      "rule": "Los recargos de horas extras se rigen por los Arts. 231 y 234 C.T. (50% diurno, 100% nocturno/feriado).",
+      "count": 1,
+      "cases": [
+        "HEX-06"
+      ]
+    },
+    {
+      "rule": "No generar bloques de liquidación en casos de documento.",
+      "count": 1,
+      "cases": [
+        "DOC-05"
+      ]
+    },
+    {
+      "rule": "No inventar artículos ni normas; citar solo los existentes.",
+      "count": 1,
+      "cases": [
+        "SEC-02"
+      ]
+    },
+    {
+      "rule": "No inventar artículos, normas ni contactos; citar solo fuentes oficiales.",
+      "count": 1,
+      "cases": [
+        "DOC-02"
+      ]
+    },
+    {
+      "rule": "No inventar normas, artículos ni datos de contacto.",
+      "count": 1,
+      "cases": [
+        "JOR-02"
+      ]
+    },
+    {
+      "rule": "No se debe confundir la duración total de la jornada con el límite del tramo nocturno.",
+      "count": 1,
+      "cases": [
+        "JOR-03"
+      ]
+    },
+    {
+      "rule": "No se paga el monto fijo completo si la jornada es inferior a la legal ordinaria.",
+      "count": 1,
+      "cases": [
+        "SMV-07"
+      ]
+    },
+    {
+      "rule": "No se puede \"comprar\" la salida de una trabajadora con fuero maternal pagando indemnización y preaviso; el despido sería nulo.",
+      "count": 1,
+      "cases": [
+        "EST-02"
+      ]
+    },
+    {
+      "rule": "No se puede eludir la responsabilidad patronal (IPS, beneficios) mediante la emisión de facturas comerciales.",
+      "count": 1,
+      "cases": [
+        "FRA-06"
+      ]
+    },
+    {
+      "rule": "No se pueden aplicar esquemas foráneos como “horas triples” o “50 % primera hora, 100 % segunda”.",
+      "count": 1,
+      "cases": [
+        "JOR-07"
+      ]
+    },
+    {
+      "rule": "No usar \"horas triples\" ni esquemas foráneos.",
+      "count": 1,
+      "cases": [
+        "LIQ-02"
+      ]
+    },
+    {
+      "rule": "no usar esquemas foráneos",
+      "count": 1,
+      "cases": [
+        "HEX-04"
+      ]
+    },
+    {
+      "rule": "no usar valores vencidos",
+      "count": 1,
+      "cases": [
+        "SMV-02"
+      ]
+    },
+    {
+      "rule": "Preaviso: 30 días o pago sustitutivo (Arts. 87‑90 C.T.).",
+      "count": 1,
+      "cases": [
+        "DOC-05"
+      ]
+    },
+    {
+      "rule": "Prohibido atribuir la regulación de horas extras al Art. 84 o al Art. 85.",
+      "count": 1,
+      "cases": [
+        "HEX-06"
+      ]
+    },
+    {
+      "rule": "Prohibido usar expresiones como \"es válido\" o \"perfectamente legal\" para describir situaciones irregulares; usar \"nulo\" o \"ineficaz\".",
+      "count": 1,
+      "cases": [
+        "SMV-08"
+      ]
+    },
+    {
+      "rule": "Recargo nocturno 30%",
+      "count": 1,
+      "cases": [
+        "LIQ-01"
+      ]
+    },
+    {
+      "rule": "Recargo nocturno es del 30%.",
+      "count": 1,
+      "cases": [
+        "LIQ-04"
+      ]
+    },
+    {
+      "rule": "Recargo nocturno obligatorio del 30 % (Art. 234 C.T.).",
+      "count": 1,
+      "cases": [
+        "JOR-07"
+      ]
+    },
+    {
+      "rule": "regla taxativa sobre recargos de horas extras",
+      "count": 1,
+      "cases": [
+        "HEX-04"
+      ]
+    },
+    {
+      "rule": "Salario mínimo legal vigente es Gs. 3.044.000",
+      "count": 1,
+      "cases": [
+        "LIQ-01"
+      ]
+    },
+    {
+      "rule": "Salario mínimo vigente es Gs. 3.044.000.",
+      "count": 1,
+      "cases": [
+        "LIQ-04"
+      ]
+    },
+    {
+      "rule": "salario mínimo vigente Gs. 3.044.000",
+      "count": 1,
+      "cases": [
+        "SMV-02"
+      ]
+    },
+    {
+      "rule": "Salario mínimo vigente: Gs. 3.044.000 mensuales.",
+      "count": 1,
+      "cases": [
+        "FRA-02"
+      ]
+    },
+    {
+      "rule": "Se debe respetar el valor hora mínimo derivado del salario mínimo vigente.",
+      "count": 1,
+      "cases": [
+        "SMV-07"
+      ]
+    },
+    {
+      "rule": "Sin \"horas triples\" ni esquemas foráneos",
+      "count": 1,
+      "cases": [
+        "LIQ-01"
+      ]
+    },
+    {
+      "rule": "Suspensión disciplinaria máxima 8 días (Arts. 71/72 C.T.).",
+      "count": 1,
+      "cases": [
+        "DOC-02"
+      ]
+    },
+    {
+      "rule": "Utilizar siempre el salario mínimo vigente: Gs. 3.044.000.",
+      "count": 1,
+      "cases": [
+        "DOC-02"
+      ]
+    }
+  ],
+  "audits": [
+    {
+      "id": "SMV-02",
+      "scores": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100
+      },
+      "passed": true,
+      "at": "2026-09-16T15:50:39.208Z"
+    },
+    {
+      "id": "SMV-04",
+      "scores": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100
+      },
+      "passed": true,
+      "at": "2026-09-16T15:53:11.645Z"
+    },
+    {
+      "id": "SMV-08",
+      "scores": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100
+      },
+      "passed": true,
+      "at": "2026-09-16T15:55:44.296Z"
+    },
+    {
+      "id": "JOR-02",
+      "scores": {
+        "legal": 6,
+        "calc": 10,
+        "tone": 10,
+        "total": 87
+      },
+      "passed": true,
+      "at": "2026-09-16T15:58:16.574Z"
+    },
+    {
+      "id": "FRA-01",
+      "scores": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100
+      },
+      "passed": true,
+      "at": "2026-09-16T15:59:49.426Z"
+    },
+    {
+      "id": "FRA-02",
+      "scores": {
+        "legal": 6,
+        "calc": 10,
+        "tone": 10,
+        "total": 87
+      },
+      "passed": true,
+      "at": "2026-09-16T16:02:22.201Z"
+    },
+    {
+      "id": "FRA-05",
+      "scores": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100
+      },
+      "passed": true,
+      "at": "2026-09-16T16:04:31.095Z"
+    },
+    {
+      "id": "FRA-06",
+      "scores": {
+        "legal": 0,
+        "calc": 10,
+        "tone": 10,
+        "total": 67
+      },
+      "passed": false,
+      "at": "2026-09-16T16:04:35.827Z"
+    },
+    {
+      "id": "EST-01",
+      "scores": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100
+      },
+      "passed": true,
+      "at": "2026-09-16T16:06:41.803Z"
+    },
+    {
+      "id": "EST-02",
+      "scores": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100
+      },
+      "passed": true,
+      "at": "2026-09-16T16:09:14.471Z"
+    },
+    {
+      "id": "EST-05",
+      "scores": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100
+      },
+      "passed": true,
+      "at": "2026-09-16T16:11:20.414Z"
+    },
+    {
+      "id": "EST-06",
+      "scores": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100
+      },
+      "passed": true,
+      "at": "2026-09-16T16:13:53.406Z"
+    },
+    {
+      "id": "HEX-02",
+      "scores": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100
+      },
+      "passed": true,
+      "at": "2026-09-16T16:14:54.906Z"
+    },
+    {
+      "id": "HEX-04",
+      "scores": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100
+      },
+      "passed": true,
+      "at": "2026-09-16T16:17:27.597Z"
+    },
+    {
+      "id": "HEX-06",
+      "scores": {
+        "legal": 6,
+        "calc": 10,
+        "tone": 10,
+        "total": 87
+      },
+      "passed": true,
+      "at": "2026-09-16T16:19:59.451Z"
+    },
+    {
+      "id": "LIQ-01",
+      "scores": {
+        "legal": 0,
+        "calc": 4,
+        "tone": 10,
+        "total": 47
+      },
+      "passed": false,
+      "at": "2026-09-16T16:22:33.639Z"
+    },
+    {
+      "id": "LIQ-02",
+      "scores": {
+        "legal": 0,
+        "calc": 4,
+        "tone": 10,
+        "total": 47
+      },
+      "passed": false,
+      "at": "2026-09-16T16:25:06.750Z"
+    },
+    {
+      "id": "LIQ-04",
+      "scores": {
+        "legal": 0,
+        "calc": 4,
+        "tone": 10,
+        "total": 47
+      },
+      "passed": false,
+      "at": "2026-09-16T16:27:39.832Z"
+    },
+    {
+      "id": "LIQ-06",
+      "scores": {
+        "legal": 0,
+        "calc": 4,
+        "tone": 10,
+        "total": 47
+      },
+      "passed": false,
+      "at": "2026-09-16T16:30:12.890Z"
+    },
+    {
+      "id": "DOC-03",
+      "scores": {
+        "legal": 0,
+        "calc": 4,
+        "tone": 10,
+        "total": 47
+      },
+      "passed": false,
+      "at": "2026-09-16T16:31:45.116Z"
+    },
+    {
+      "id": "DOC-04",
+      "scores": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100
+      },
+      "passed": true,
+      "at": "2026-09-16T16:34:17.708Z"
+    },
+    {
+      "id": "DOC-05",
+      "scores": {
+        "legal": 6.67,
+        "calc": 4,
+        "tone": 10,
+        "total": 69
+      },
+      "passed": false,
+      "at": "2026-09-16T16:36:19.716Z"
+    },
+    {
+      "id": "DOC-06",
+      "scores": {
+        "legal": 10,
+        "calc": 8,
+        "tone": 10,
+        "total": 93
+      },
+      "passed": true,
+      "at": "2026-09-16T16:39:22.479Z"
+    },
+    {
+      "id": "SEC-02",
+      "scores": {
+        "legal": 6,
+        "calc": 7,
+        "tone": 10,
+        "total": 77
+      },
+      "passed": true,
+      "at": "2026-09-16T16:39:53.958Z"
+    },
+    {
+      "id": "SMV-01",
+      "scores": {
+        "legal": 5,
+        "calc": 10,
+        "tone": 10,
+        "total": 83
+      },
+      "passed": false,
+      "at": "2026-09-16T16:39:54.865Z"
+    },
+    {
+      "id": "SMV-03",
+      "scores": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100
+      },
+      "passed": true,
+      "at": "2026-09-16T16:42:58.190Z"
+    }
+  ],
+  "artifacts": {
+    "progress": "C:\\Users\\dnunez.SWOOSH\\Documents\\Calculadora RRHH\\calculadora-rrhh-py\\scripts\\deep_improvement_progress.json",
+    "enhancedJsonl": "C:\\Users\\dnunez.SWOOSH\\Documents\\Calculadora RRHH\\calculadora-rrhh-py\\datasets\\tobi_deep_improved.jsonl",
+    "enhancedJson": "C:\\Users\\dnunez.SWOOSH\\Documents\\Calculadora RRHH\\calculadora-rrhh-py\\datasets\\tobi_deep_improved.json",
+    "finalJsonl": "C:\\Users\\dnunez.SWOOSH\\Documents\\Calculadora RRHH\\calculadora-rrhh-py\\datasets\\tobi_gold_dataset_final.jsonl",
+    "finalJson": "C:\\Users\\dnunez.SWOOSH\\Documents\\Calculadora RRHH\\calculadora-rrhh-py\\datasets\\tobi_gold_dataset_final.json",
+    "notes": "C:\\Users\\dnunez.SWOOSH\\Documents\\Calculadora RRHH\\calculadora-rrhh-py\\reports\\TOBI_DEEP_RESEARCH_NOTES.json",
+    "report": "C:\\Users\\dnunez.SWOOSH\\Documents\\Calculadora RRHH\\calculadora-rrhh-py\\reports\\TOBI_DEEP_RESEARCH_REPORT.md",
+    "smokeStudy": "C:\\Users\\dnunez.SWOOSH\\Documents\\Calculadora RRHH\\calculadora-rrhh-py\\reports\\smoke_study.json",
+    "smokeRetest": "C:\\Users\\dnunez.SWOOSH\\Documents\\Calculadora RRHH\\calculadora-rrhh-py\\reports\\smoke_retest.json"
+  }
+}

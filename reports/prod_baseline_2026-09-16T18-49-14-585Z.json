@@ -1,0 +1,194 @@
+{
+  "generatedAt": "2026-09-16T18:49:14.584Z",
+  "endpoint": "https://calculadora-rrhh-py.vercel.app/api/assistant",
+  "durationMs": 47718,
+  "options": {
+    "limit": 8,
+    "only": null,
+    "pauseMs": 2000,
+    "casesPath": null
+  },
+  "summary": {
+    "total": 8,
+    "evaluated": 8,
+    "passed": 6,
+    "failed": 2,
+    "failedCalls": 0,
+    "evaluatorErrors": 0,
+    "avgScore": 89.6,
+    "passRate": 75
+  },
+  "cases": [
+    {
+      "id": "SMV-01",
+      "category": "Salario Mínimo",
+      "title": "SMV vigente 2026",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/openai/gpt-oss-20b",
+      "score": 83,
+      "passed": false,
+      "error": null,
+      "responseChars": 118,
+      "evaluation": {
+        "legal": 5,
+        "calc": 10,
+        "tone": 10,
+        "total": 83,
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /(?:6225|670)/"
+        ]
+      }
+    },
+    {
+      "id": "SMV-02",
+      "category": "Salario Mínimo",
+      "title": "Trampa SMV vencido",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/openai/gpt-oss-120b",
+      "score": 87,
+      "passed": true,
+      "error": null,
+      "responseChars": 2153,
+      "evaluation": {
+        "legal": 6,
+        "calc": 10,
+        "tone": 10,
+        "total": 87,
+        "passed": true,
+        "failures": [
+          "Patrón prohibido detectado: /2\\.798\\.309\\s*(?:es|corresponde|sigue|contin[uú]a)/i"
+        ]
+      }
+    },
+    {
+      "id": "SMV-03",
+      "category": "Salario Mínimo",
+      "title": "Liquidación con sueldo mínimo",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/openai/gpt-oss-20b",
+      "score": 73,
+      "passed": false,
+      "error": null,
+      "responseChars": 2101,
+      "evaluation": {
+        "legal": 5,
+        "calc": 7,
+        "tone": 10,
+        "total": 73,
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /3\\.044\\.000/",
+          "Bloque de acción emitido sin que el caso lo requiera"
+        ]
+      }
+    },
+    {
+      "id": "SMV-04",
+      "category": "Salario Mínimo",
+      "title": "Aguinaldo con base mínima",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/qwen/qwen3.8-27b",
+      "score": 87,
+      "passed": true,
+      "error": null,
+      "responseChars": 3277,
+      "evaluation": {
+        "legal": 6,
+        "calc": 10,
+        "tone": 10,
+        "total": 87,
+        "passed": true,
+        "failures": [
+          "Patrón prohibido detectado: /2\\.798\\.309/"
+        ]
+      }
+    },
+    {
+      "id": "SMV-05",
+      "category": "Salario Mínimo",
+      "title": "Histórico 2024 vs vigente",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/qwen/qwen3.8-27b",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 1980,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "SMV-06",
+      "category": "Salario Mínimo",
+      "title": "Recibo con monto desactualizado",
+      "called": true,
+      "requestOk": true,
+      "provider": "deepseek/deepseek-chat",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 2415,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "SMV-07",
+      "category": "Salario Mínimo",
+      "title": "SMV y jornada parcial",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/openai/gpt-oss-120b",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 3207,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "SMV-08",
+      "category": "Salario Mínimo",
+      "title": "Sueldo pactado bajo el mínimo",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/openai/gpt-oss-20b",
+      "score": 87,
+      "passed": true,
+      "error": null,
+      "responseChars": 765,
+      "evaluation": {
+        "legal": 6,
+        "calc": 10,
+        "tone": 10,
+        "total": 87,
+        "passed": true,
+        "failures": [
+          "Patrón prohibido detectado: /es v[aá]lido|perfectamente legal/i"
+        ]
+      }
+    }
+  ]
+}

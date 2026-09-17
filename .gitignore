@@ -1,0 +1,18 @@
+# Zero-Leak Security & Frontend Exclusions
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.log
+*.zip
+coverage/
+ingestion_state.json
+audios/
+test_extract/
+documentos_csj/
+ingestion_progress.json
+node_modules/
+dist/
+build/
+.vercel/

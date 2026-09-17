@@ -1,0 +1,64 @@
+{
+  "generatedAt": "2026-09-16T13:34:58.633Z",
+  "endpoint": "https://calculadora-rrhh-py.vercel.app/api/assistant",
+  "durationMs": 9132,
+  "options": {
+    "limit": 2,
+    "only": null,
+    "pauseMs": 1500
+  },
+  "summary": {
+    "total": 2,
+    "evaluated": 2,
+    "passed": 2,
+    "failed": 0,
+    "failedCalls": 0,
+    "evaluatorErrors": 0,
+    "avgScore": 93.5,
+    "passRate": 100
+  },
+  "cases": [
+    {
+      "id": "SMV-01",
+      "category": "Salario Mínimo",
+      "title": "SMV vigente 2026",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/qwen/qwen3.8-27b",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 929,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "SMV-02",
+      "category": "Salario Mínimo",
+      "title": "Trampa SMV vencido",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/openai/gpt-oss-120b",
+      "score": 87,
+      "passed": true,
+      "error": null,
+      "responseChars": 2154,
+      "evaluation": {
+        "legal": 6,
+        "calc": 10,
+        "tone": 10,
+        "total": 87,
+        "passed": true,
+        "failures": [
+          "Patrón prohibido detectado: /2\\.798\\.309\\s*(?:es|corresponde|sigue|contin[uú]a)/i"
+        ]
+      }
+    }
+  ]
+}

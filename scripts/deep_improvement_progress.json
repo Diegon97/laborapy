@@ -1,0 +1,343 @@
+{
+  "status": "completed",
+  "startedAt": "2026-09-16T15:33:00.097Z",
+  "updatedAt": "2026-09-16T16:42:58.296Z",
+  "deadlineAt": "2026-09-16T17:00:00.000Z",
+  "provider": "groq",
+  "model": "openai/gpt-oss-120b",
+  "phase1Status": "completed",
+  "weakTotal": 4,
+  "nearTotal": 0,
+  "processed": 4,
+  "verifiedImproved": 2,
+  "unverified": 2,
+  "requeued": 0,
+  "currentId": null,
+  "cases": [
+    {
+      "id": "LIQ-03",
+      "category": "Acciones de Liquidación",
+      "title": "Despido con causa",
+      "status": "unverified",
+      "cycles": 1,
+      "updatedAt": "2026-09-16T15:37:11.117Z"
+    },
+    {
+      "id": "DOC-02",
+      "category": "Acciones de Documentos",
+      "title": "Suspensión disciplinaria",
+      "status": "unverified",
+      "cycles": 1,
+      "updatedAt": "2026-09-16T15:39:49.068Z"
+    },
+    {
+      "id": "FRA-02",
+      "category": "Fraude Laboral",
+      "title": "Renuncia forzada",
+      "status": "verified",
+      "cycles": 1,
+      "updatedAt": "2026-09-16T15:43:27.474Z"
+    },
+    {
+      "id": "JOR-02",
+      "category": "Jornada Laboral",
+      "title": "Jornada nocturna 7h/42h + 30%",
+      "status": "verified",
+      "cycles": 0,
+      "updatedAt": "2026-09-16T15:48:06.609Z"
+    }
+  ],
+  "audits": {
+    "count": 26,
+    "passed": 18,
+    "failed": 8,
+    "entries": [
+      {
+        "id": "SMV-02",
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "at": "2026-09-16T15:50:39.208Z"
+      },
+      {
+        "id": "SMV-04",
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "at": "2026-09-16T15:53:11.645Z"
+      },
+      {
+        "id": "SMV-08",
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "at": "2026-09-16T15:55:44.296Z"
+      },
+      {
+        "id": "JOR-02",
+        "scores": {
+          "legal": 6,
+          "calc": 10,
+          "tone": 10,
+          "total": 87
+        },
+        "passed": true,
+        "at": "2026-09-16T15:58:16.574Z"
+      },
+      {
+        "id": "FRA-01",
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "at": "2026-09-16T15:59:49.426Z"
+      },
+      {
+        "id": "FRA-02",
+        "scores": {
+          "legal": 6,
+          "calc": 10,
+          "tone": 10,
+          "total": 87
+        },
+        "passed": true,
+        "at": "2026-09-16T16:02:22.201Z"
+      },
+      {
+        "id": "FRA-05",
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "at": "2026-09-16T16:04:31.095Z"
+      },
+      {
+        "id": "FRA-06",
+        "scores": {
+          "legal": 0,
+          "calc": 10,
+          "tone": 10,
+          "total": 67
+        },
+        "passed": false,
+        "at": "2026-09-16T16:04:35.827Z"
+      },
+      {
+        "id": "EST-01",
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "at": "2026-09-16T16:06:41.803Z"
+      },
+      {
+        "id": "EST-02",
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "at": "2026-09-16T16:09:14.471Z"
+      },
+      {
+        "id": "EST-05",
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "at": "2026-09-16T16:11:20.414Z"
+      },
+      {
+        "id": "EST-06",
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "at": "2026-09-16T16:13:53.406Z"
+      },
+      {
+        "id": "HEX-02",
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "at": "2026-09-16T16:14:54.906Z"
+      },
+      {
+        "id": "HEX-04",
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "at": "2026-09-16T16:17:27.597Z"
+      },
+      {
+        "id": "HEX-06",
+        "scores": {
+          "legal": 6,
+          "calc": 10,
+          "tone": 10,
+          "total": 87
+        },
+        "passed": true,
+        "at": "2026-09-16T16:19:59.451Z"
+      },
+      {
+        "id": "LIQ-01",
+        "scores": {
+          "legal": 0,
+          "calc": 4,
+          "tone": 10,
+          "total": 47
+        },
+        "passed": false,
+        "at": "2026-09-16T16:22:33.639Z"
+      },
+      {
+        "id": "LIQ-02",
+        "scores": {
+          "legal": 0,
+          "calc": 4,
+          "tone": 10,
+          "total": 47
+        },
+        "passed": false,
+        "at": "2026-09-16T16:25:06.750Z"
+      },
+      {
+        "id": "LIQ-04",
+        "scores": {
+          "legal": 0,
+          "calc": 4,
+          "tone": 10,
+          "total": 47
+        },
+        "passed": false,
+        "at": "2026-09-16T16:27:39.832Z"
+      },
+      {
+        "id": "LIQ-06",
+        "scores": {
+          "legal": 0,
+          "calc": 4,
+          "tone": 10,
+          "total": 47
+        },
+        "passed": false,
+        "at": "2026-09-16T16:30:12.890Z"
+      },
+      {
+        "id": "DOC-03",
+        "scores": {
+          "legal": 0,
+          "calc": 4,
+          "tone": 10,
+          "total": 47
+        },
+        "passed": false,
+        "at": "2026-09-16T16:31:45.116Z"
+      },
+      {
+        "id": "DOC-04",
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "at": "2026-09-16T16:34:17.708Z"
+      },
+      {
+        "id": "DOC-05",
+        "scores": {
+          "legal": 6.67,
+          "calc": 4,
+          "tone": 10,
+          "total": 69
+        },
+        "passed": false,
+        "at": "2026-09-16T16:36:19.716Z"
+      },
+      {
+        "id": "DOC-06",
+        "scores": {
+          "legal": 10,
+          "calc": 8,
+          "tone": 10,
+          "total": 93
+        },
+        "passed": true,
+        "at": "2026-09-16T16:39:22.479Z"
+      },
+      {
+        "id": "SEC-02",
+        "scores": {
+          "legal": 6,
+          "calc": 7,
+          "tone": 10,
+          "total": 77
+        },
+        "passed": true,
+        "at": "2026-09-16T16:39:53.958Z"
+      },
+      {
+        "id": "SMV-01",
+        "scores": {
+          "legal": 5,
+          "calc": 10,
+          "tone": 10,
+          "total": 83
+        },
+        "passed": false,
+        "at": "2026-09-16T16:39:54.865Z"
+      },
+      {
+        "id": "SMV-03",
+        "scores": {
+          "legal": 10,
+          "calc": 10,
+          "tone": 10,
+          "total": 100
+        },
+        "passed": true,
+        "at": "2026-09-16T16:42:58.190Z"
+      }
+    ]
+  }
+}

@@ -1,0 +1,374 @@
+{
+  ".oxlintrc.json": {
+    "mtime": 1788405968.6827488,
+    "seen": 1788640051.0673373,
+    "ast_hash": "029f4905006c1fffd96bc863e2d98d3e",
+    "semantic_hash": ""
+  },
+  "package.json": {
+    "mtime": 1788638681.9395738,
+    "seen": 1788640051.0673373,
+    "ast_hash": "378e93fa1b26a744eb4026b8d88fcb5b",
+    "semantic_hash": ""
+  },
+  "src/App.tsx": {
+    "mtime": 1788637819.576047,
+    "seen": 1788640051.0673373,
+    "ast_hash": "cf2990451a0387781e152a277d65d67f",
+    "semantic_hash": ""
+  },
+  "src/config/laborapy.ts": {
+    "mtime": 1788637557.0193944,
+    "seen": 1788640051.0673373,
+    "ast_hash": "784b4b3501948844e98a2e70ec416383",
+    "semantic_hash": ""
+  },
+  "src/lib/supabase.ts": {
+    "mtime": 1788638744.3327336,
+    "seen": 1788640051.0673373,
+    "ast_hash": "e08559ed3d613d5eb78bed29decfc81d",
+    "semantic_hash": ""
+  },
+  "src/main.tsx": {
+    "mtime": 1788405970.2686722,
+    "seen": 1788640051.0673373,
+    "ast_hash": "787e5a07efeb2bf6209d5937195f2f68",
+    "semantic_hash": ""
+  },
+  "src/modules/analytics/MetaPixelConfigModal.tsx": {
+    "mtime": 1788407304.8500946,
+    "seen": 1788640051.0673373,
+    "ast_hash": "f1bad0c39d46e8f9e85e5acc88c29295",
+    "semantic_hash": ""
+  },
+  "src/modules/analytics/metaPixel.ts": {
+    "mtime": 1788630997.8433168,
+    "seen": 1788640051.0673373,
+    "ast_hash": "fa43ed9811c9a0461cd272b98997d835",
+    "semantic_hash": ""
+  },
+  "src/modules/lead/LeadCaptureModal.tsx": {
+    "mtime": 1788633959.14468,
+    "seen": 1788640051.0673373,
+    "ast_hash": "ee77a4c28193588a3486ca02ee91bc24",
+    "semantic_hash": ""
+  },
+  "src/modules/lead/components/CommercialLeadsModal.tsx": {
+    "mtime": 1788638833.8502257,
+    "seen": 1788640051.0673373,
+    "ast_hash": "54049dacf70c37e39d25d97d94832880",
+    "semantic_hash": ""
+  },
+  "src/modules/lead/components/FloatingWhatsAppButton.tsx": {
+    "mtime": 1788636834.8107564,
+    "seen": 1788640051.0673373,
+    "ast_hash": "ab54aa1724fb3bb1f8dba2cda1701c50",
+    "semantic_hash": ""
+  },
+  "src/modules/lead/components/LaboraPyServicesSection.tsx": {
+    "mtime": 1788637783.5178726,
+    "seen": 1788640051.0673373,
+    "ast_hash": "8e47788f81ccfae50719685c1b2ca58f",
+    "semantic_hash": ""
+  },
+  "src/modules/lead/leadService.ts": {
+    "mtime": 1788633928.513801,
+    "seen": 1788640051.0673373,
+    "ast_hash": "2d520d01fd2b6c7093e3a181ccb7cdaa",
+    "semantic_hash": ""
+  },
+  "src/modules/lead/services/leadService.ts": {
+    "mtime": 1788640745.239028,
+    "seen": 1788640912.418539,
+    "ast_hash": "b95011de7a9289fa8322137dd837987d",
+    "semantic_hash": ""
+  },
+  "src/modules/lead/tests/leadService.test.ts": {
+    "mtime": 1788634018.1597762,
+    "seen": 1788640051.0673373,
+    "ast_hash": "09200d9077aa79e8b3dfaacb2c5a17e0",
+    "semantic_hash": ""
+  },
+  "src/modules/lead/tests/supabaseLeads.test.ts": {
+    "mtime": 1788638886.8674908,
+    "seen": 1788640051.0673373,
+    "ast_hash": "4b701259146ae60c7b9e912d099e66fd",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/components/FinalSettlementModal.tsx": {
+    "mtime": 1788636887.2263849,
+    "seen": 1788640051.0673373,
+    "ast_hash": "e56fff02438644eb7a5941792ef7c1b3",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/components/HRDocumentModal.tsx": {
+    "mtime": 1788636896.9783483,
+    "seen": 1788640051.0673373,
+    "ast_hash": "59bdf75adda861a06fc62cd985c08400",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/constants.ts": {
+    "mtime": 1788635745.6379542,
+    "seen": 1788640051.0673373,
+    "ast_hash": "cbb76f7c60f3b9948ea8722eb1d7b7d9",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/engine/aguinaldo.ts": {
+    "mtime": 1788406189.227268,
+    "seen": 1788640051.0673373,
+    "ast_hash": "45241b63dd8c626a3e7368a511e3eb43",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/engine/bonificacion.ts": {
+    "mtime": 1788635762.0084677,
+    "seen": 1788640051.0673373,
+    "ast_hash": "73f3f1ba82cb42c106c52fa8018c2535",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/engine/dates.ts": {
+    "mtime": 1788406887.9819405,
+    "seen": 1788640051.0673373,
+    "ast_hash": "6fb37afabc21c8a8007b40d0d31ae8b0",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/engine/indemnizacion.ts": {
+    "mtime": 1788406898.6015117,
+    "seen": 1788640051.0673373,
+    "ast_hash": "d965db4693138e8101a34726f15e8ddd",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/engine/ips.ts": {
+    "mtime": 1788632806.2273104,
+    "seen": 1788640051.0673373,
+    "ast_hash": "0b88d945807673e6766ca73073c98e52",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/engine/preaviso.ts": {
+    "mtime": 1788406673.8857198,
+    "seen": 1788640051.0673373,
+    "ast_hash": "109360b5200d49df87070e845115f0a1",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/engine/salaryBase.ts": {
+    "mtime": 1788406172.9532762,
+    "seen": 1788640051.0673373,
+    "ast_hash": "a520a8658f42461218c368c478c3d993",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/engine/vacaciones.ts": {
+    "mtime": 1788406692.6374948,
+    "seen": 1788640051.0673373,
+    "ast_hash": "ee9d5bc2dfee6544b63a440f32216edb",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/generators/documentDocxGenerator.ts": {
+    "mtime": 1788636916.3967896,
+    "seen": 1788640051.0673373,
+    "ast_hash": "04e151568139a6d900ba052b0ca7325e",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/generators/noticePdfGenerator.ts": {
+    "mtime": 1788406776.4911525,
+    "seen": 1788640051.0673373,
+    "ast_hash": "da4b8941754039b1e2a106a76b469249",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/generators/settlementPdfGenerator.ts": {
+    "mtime": 1788636906.8610647,
+    "seen": 1788640051.0673373,
+    "ast_hash": "5054a49eca717515a1ac655a607760fd",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/liquidacion.ts": {
+    "mtime": 1788635778.0522816,
+    "seen": 1788640051.0673373,
+    "ast_hash": "e6ac9f6774a672f9a802019046ed89eb",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/tests/aguinaldo.test.ts": {
+    "mtime": 1788406620.7870932,
+    "seen": 1788640051.0673373,
+    "ast_hash": "7fa47314f3e3167d8c6ad89898be19bc",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/tests/bonificacion.test.ts": {
+    "mtime": 1788635795.7605295,
+    "seen": 1788640051.0673373,
+    "ast_hash": "0b01a1a7e574708de1111ce3df9cd246",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/tests/dates.test.ts": {
+    "mtime": 1788626893.1610706,
+    "seen": 1788640051.0673373,
+    "ast_hash": "3a0916a9a4430fd5752badda99cd3a44",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/tests/generators.test.ts": {
+    "mtime": 1788635949.422637,
+    "seen": 1788640051.0673373,
+    "ast_hash": "2c9d173028fbe7f95d8c650055b554b5",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/tests/indemnizacion.test.ts": {
+    "mtime": 1788626906.3998258,
+    "seen": 1788640051.0673373,
+    "ast_hash": "7f92142648fc803ed2a01bf65608a22e",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/tests/liquidacion.integration.test.ts": {
+    "mtime": 1788633298.8022316,
+    "seen": 1788640051.0673373,
+    "ast_hash": "09a242728be9629add4e497042d2c93c",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/tests/preaviso.test.ts": {
+    "mtime": 1788406615.8851728,
+    "seen": 1788640051.0673373,
+    "ast_hash": "af13f07ebf230ce921e63314dcc0fc92",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/tests/vacaciones.test.ts": {
+    "mtime": 1788406608.9048076,
+    "seen": 1788640051.0673373,
+    "ast_hash": "b099ead33e4106404d19a55f5c7a6b06",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/types.ts": {
+    "mtime": 1788635739.8382251,
+    "seen": 1788640051.0673373,
+    "ast_hash": "49c38d716b717caf1a37c287a16a354b",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/utils/numberToWordsPY.ts": {
+    "mtime": 1788406355.2564964,
+    "seen": 1788640051.0673373,
+    "ast_hash": "31804138a59cfb50d19f5f9a47287ff0",
+    "semantic_hash": ""
+  },
+  "src/modules/payroll/validation.ts": {
+    "mtime": 1788406111.4363286,
+    "seen": 1788640051.0673373,
+    "ast_hash": "70c674f6889ccacbc3b8d591342a70e6",
+    "semantic_hash": ""
+  },
+  "tsconfig.app.json": {
+    "mtime": 1788405968.8871658,
+    "seen": 1788640051.0673373,
+    "ast_hash": "5f2dafd737dea8a4ddcbb10f5113ac5a",
+    "semantic_hash": ""
+  },
+  "tsconfig.json": {
+    "mtime": 1788405968.9422722,
+    "seen": 1788640051.0673373,
+    "ast_hash": "a3d39fa780ebff65444de257f291ce6c",
+    "semantic_hash": ""
+  },
+  "tsconfig.node.json": {
+    "mtime": 1788405968.9945679,
+    "seen": 1788640051.0673373,
+    "ast_hash": "f9cb81ddcea69ffdab672fc8c48dca66",
+    "semantic_hash": ""
+  },
+  "vercel.json": {
+    "mtime": 1788640757.55348,
+    "seen": 1788640912.4220452,
+    "ast_hash": "76f301794938b558bfd8573ffcdd61b4",
+    "semantic_hash": ""
+  },
+  "vite.config.ts": {
+    "mtime": 1788627283.1551876,
+    "seen": 1788640051.0673373,
+    "ast_hash": "d3335ec1b3e49ab149f6f50f52506b95",
+    "semantic_hash": ""
+  },
+  ".agents/agents/arquitecto/agent.md": {
+    "mtime": 1788633738.328982,
+    "seen": 1788640051.0673373,
+    "ast_hash": "c934645309fa7455abc093f1a5cab017",
+    "semantic_hash": ""
+  },
+  ".agents/agents/codificador/agent.md": {
+    "mtime": 1788633738.3319764,
+    "seen": 1788640051.0673373,
+    "ast_hash": "f0764425c7e7f22afc8fb0ed2c9b8b84",
+    "semantic_hash": ""
+  },
+  ".agents/agents/revisor/agent.md": {
+    "mtime": 1788633738.3349762,
+    "seen": 1788640051.0673373,
+    "ast_hash": "9eaddaf7ed352ea40571d3cdd1c34a07",
+    "semantic_hash": ""
+  },
+  ".agents/rules/multiplataforma.md": {
+    "mtime": 1788634843.1818035,
+    "seen": 1788640051.0673373,
+    "ast_hash": "06b40b88d8aa70ac8166a633c3d77827",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1788405969.2010558,
+    "seen": 1788640051.0673373,
+    "ast_hash": "10495bfcc6c568eca4dab6dd5df795d3",
+    "semantic_hash": ""
+  },
+  "index.html": {
+    "mtime": 1788634155.7102041,
+    "seen": 1788640051.0673373,
+    "ast_hash": "c08ecd4cf9059737e05e7ff511445751",
+    "semantic_hash": ""
+  },
+  "public/robots.txt": {
+    "mtime": 1788407194.7172873,
+    "seen": 1788640051.0673373,
+    "ast_hash": "7a34f634912086c8e7ce2606def4384b",
+    "semantic_hash": ""
+  },
+  "public/favicon.svg": {
+    "mtime": 1788405969.517425,
+    "seen": 1788640051.0673373,
+    "ast_hash": "7e840862161341271697daa99a40d76b",
+    "semantic_hash": ""
+  },
+  "public/icons.svg": {
+    "mtime": 1788405969.6870167,
+    "seen": 1788640051.0673373,
+    "ast_hash": "3b4fcfcf393eca4d264dca4a4663bc37",
+    "semantic_hash": ""
+  },
+  "src/assets/hero.png": {
+    "mtime": 1788405969.3303218,
+    "seen": 1788640051.0673373,
+    "ast_hash": "aead493361b27e7510691c5d7072dfc1",
+    "semantic_hash": ""
+  },
+  "src/assets/react.svg": {
+    "mtime": 1788405969.8447342,
+    "seen": 1788640051.0673373,
+    "ast_hash": "f0402b67b6ce880f65666bb49e841696",
+    "semantic_hash": ""
+  },
+  "src/assets/vite.svg": {
+    "mtime": 1788405969.981583,
+    "seen": 1788640051.0673373,
+    "ast_hash": "9960a24288958394ac50e57ff638b036",
+    "semantic_hash": ""
+  },
+  "src/lib/crypto.ts": {
+    "mtime": 1788640803.76317,
+    "seen": 1788640912.4175236,
+    "ast_hash": "c7a1bb4739fe33ce0afe4bceec0b9209",
+    "semantic_hash": ""
+  },
+  "src/lib/tests/crypto.test.ts": {
+    "mtime": 1788640672.6525583,
+    "seen": 1788640912.4175236,
+    "ast_hash": "39bc5448b42acf17dc53a8847bb59ef9",
+    "semantic_hash": ""
+  },
+  "CIBERSEGURIDAD_Y_PROTECCION_DATOS.md": {
+    "mtime": 1788640784.4040332,
+    "seen": 1788640912.4227095,
+    "ast_hash": "490f926cfe9ffe16d9295c267e1ebfb5",
+    "semantic_hash": ""
+  }
+}

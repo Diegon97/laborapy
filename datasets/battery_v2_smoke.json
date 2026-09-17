@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-09-16T13:34:34.266Z",
+  "provider": "groq",
+  "batchesRequested": 1,
+  "batchesOk": 1,
+  "accepted": 2,
+  "areas": [
+    "LIC",
+    "TEL",
+    "ACC",
+    "FER",
+    "DES",
+    "MEN",
+    "SIN",
+    "CON",
+    "DSC",
+    "MAQ",
+    "CIS",
+    "CAL"
+  ],
+  "cases": [
+    {
+      "id": "LIC-02",
+      "category": "Enfermedad",
+      "title": "¿Cuánto se debe pagar al trabajador en caso de enfermedad no laboral?",
+      "prompt": "Un trabajador quedó incapacitado por una gripe y el empleador pregunta cuánto debe abonar el salario durante el período de incapacidad y si aplica alguna tasa adicional.",
+      "requiredRegex": [
+        "50\\\\s+%"
+      ],
+      "forbiddenRegex": [
+        "100\\\\s+%"
+      ]
+    },
+    {
+      "id": "MEN-01",
+      "category": "Trabajo infantil",
+      "title": "¿Es legal contratar a un menor de 14 años como trabajadora doméstica?",
+      "prompt": "Un empleador quiere contratar a una niña de 12 años para trabajar en su hogar. ¿La ley permite este trabajo y cuáles son las restricciones?",
+      "requiredRegex": [
+        "14\\\\s+años"
+      ],
+      "forbiddenRegex": [
+        "12\\\\s+años"
+      ]
+    }
+  ],
+  "rejected": [
+    {
+      "id": "LIC-01",
+      "motivo": "Título inválido o supera 90 caracteres (97) en ID \"LIC-01\""
+    }
+  ]
+}

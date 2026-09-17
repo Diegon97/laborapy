@@ -1,0 +1,420 @@
+{
+  "generatedAt": "2026-09-16T14:34:18.797Z",
+  "exclusions": [
+    {
+      "id": "SIN-01",
+      "motivo": "Duplicado conceptual de EST-03 de la batería clásica (dirigente sindical + falta + despedir sin juicio previo)."
+    },
+    {
+      "id": "ACC-01",
+      "motivo": "Premisa autocontradictoria y forbidden \"cubre\" contenido en required \"no cubre\" (matchea toda respuesta correcta)."
+    },
+    {
+      "id": "LIC-01",
+      "motivo": "Error legal: para 6 años corresponden 18 días hábiles (Art. 218 C.T.), no 20 días ni Art. 150."
+    },
+    {
+      "id": "LIC-02",
+      "motivo": "Premisa desactualizada: licencia maternidad vigente 18 semanas (Ley 5508/15 mod. 7140/23), no 12; no rige Art. 147."
+    },
+    {
+      "id": "LIC-04",
+      "motivo": "Premisa desactualizada: licencia de 18 semanas (126 días), no 84; no rige Art. 92."
+    },
+    {
+      "id": "DSC-01",
+      "motivo": "Required erróneo: tope retención préstamos/anticipos sin orden judicial 25% (Art. 242), no 50%."
+    },
+    {
+      "id": "DSC-03",
+      "motivo": "Required erróneo: tope 25% no 30%; forbidden \"50%\" es el límite válido para alimentos (Art. 245)."
+    },
+    {
+      "id": "DSC-04",
+      "motivo": "Required erróneo: tope anticipos 25%, no 20%."
+    },
+    {
+      "id": "CAL-01",
+      "motivo": "Premisa inviable: no existe prima vacacional 1/3 en régimen PY; monto correcto Gs. 1.250.000 (prohibido por el caso)."
+    },
+    {
+      "id": "CAL-02",
+      "motivo": "Required y forbidden invertidos: total correcto Gs. 9.600.000 es el que el caso prohíbe."
+    },
+    {
+      "id": "TEL-01",
+      "motivo": "Required inservible (solo \"jornada\"); forbidden \"no es legal\" matchearía la respuesta correcta; premisa ambigua."
+    },
+    {
+      "id": "TEL-04",
+      "motivo": "Premisa errónea: recargo diurno horas extras 50% (Arts. 202/231), no 30%; el required congela el error."
+    },
+    {
+      "id": "CON-03",
+      "motivo": "Required \"artículo 85\" regula despido indirecto, no contrato a plazo fijo; forbidden puede matchear respuestas correctas."
+    },
+    {
+      "id": "CON-04",
+      "motivo": "Required \"artículo 81\" regula despido/certificado; período de prueba se rige por Art. 58 (30/60 días)."
+    },
+    {
+      "id": "FER-03",
+      "motivo": "Required \"art. 30\" inservible: Arts. 30/31 no regulan jornada ni recargos por feriado (Arts. 202/234)."
+    },
+    {
+      "id": "FER-04",
+      "motivo": "Required \"art. 30\" inservible: Arts. 30/31 no regulan descansos ni descanso semanal."
+    },
+    {
+      "id": "MAQ-01",
+      "motivo": "Premisa sin sustento y required \"decreto 147\" no verificable ni citable."
+    },
+    {
+      "id": "MAQ-02",
+      "motivo": "Required \"art. 58\" es período de prueba; indemnización por despido se rige por Art. 91 y preaviso por Art. 87."
+    },
+    {
+      "id": "MAQ-03",
+      "motivo": "Required \"artículo 8[5-6]\" ajeno: Art. 85 regula despido indirecto, no liquidación por tiempo trabajado."
+    },
+    {
+      "id": "MAQ-04",
+      "motivo": "Required \"artículo 87\" regula preaviso; certificado de trabajo se rige por Art. 93."
+    },
+    {
+      "id": "CIS-03",
+      "motivo": "Required \"art. 399\" regula prescripción 60 días, no confidencialidad de credenciales/2FA."
+    },
+    {
+      "id": "CIS-04",
+      "motivo": "Mismo defecto: \"art. 399\" inservible para consulta de exposición de contraseña."
+    },
+    {
+      "id": "ACC-04",
+      "motivo": "Required \"ley 9/84\" no coincide con la fuente canónica del seguro IPS (Ley 98/92 y D-L 1860/50)."
+    },
+    {
+      "id": "SIN-02",
+      "motivo": "Required \"extinguid\" no matchea \"se extingue/se extinguió\"; forbidden \"vida entera\" matchea la respuesta correcta."
+    }
+  ],
+  "cases": [
+    {
+      "id": "LIC-01",
+      "category": "Licencias - Vacaciones",
+      "title": "Cálculo de vacaciones para trabajador con 6 años",
+      "prompt": "Mi empleado lleva 6 años trabajando en la empresa y me pide saber cuántos días de vacaciones le corresponden según la legislación paraguaya. ¿Cuál es el período mínimo y qué artículo lo regula?",
+      "required": [
+        "20 d[ií]as",
+        "Art\\.\\s*150"
+      ],
+      "forbidden": [
+        "15 d[ií]as"
+      ]
+    },
+    {
+      "id": "LIC-02",
+      "category": "Licencias - Maternidad",
+      "title": "Pago de sueldo durante licencia de maternidad",
+      "prompt": "Una trabajadora embarazada de 30 semanas solicita saber cómo se calcula su salario durante la licencia de maternidad de 12 semanas y si el IPS cubre alguna parte. ¿Qué determina la Ley 13.722 y el Código Laboral?",
+      "required": [
+        "12 semanas",
+        "IPS",
+        "Art\\.\\s*147"
+      ],
+      "forbidden": [
+        "6 semanas",
+        "sin cobertura"
+      ]
+    },
+    {
+      "id": "TEL-01",
+      "category": "Teletrabajo y trabajo remoto",
+      "title": "Equipamiento en jornada mixta y costo del trabajo",
+      "prompt": "Tengo un empleado que trabaja 3 días en oficinas y 2 días desde su casa. El contrato dice que la empresa no paga internet ni computadora. ¿Es legal que le cobre el 50% de la factura de internet si no usa el equipo de la empresa para el teletrabajo remoto?",
+      "required": [
+        "jornada"
+      ],
+      "forbidden": [
+        "no es legal"
+      ]
+    },
+    {
+      "id": "SIN-01",
+      "category": "Sindicatos y fuero sindical",
+      "title": "Fuero gremial y despido por falta grave",
+      "prompt": "Un representante sindical comete una falta grave de deslealtad. ¿Puedo desalojarlo directamente sin pasar por la Junta de Resolución de Conflictos? ¿Guarda fuero sindical indiscutible incluso con falta comprobada?",
+      "required": [
+        "falta grave"
+      ],
+      "forbidden": [
+        "imposible"
+      ]
+    },
+    {
+      "id": "SIN-02",
+      "category": "Sindicatos y fuero sindical",
+      "title": "Cese de funciones y fin del fuero sindical",
+      "prompt": "Un dirigente sindical terminó su mandato hace 6 meses y ahora lo quiero despedir por reorganización. ¿Siguen vigentes sus protecciones laborales especiales? ¿Qué plazo tengo para que se extinga el fuero?",
+      "required": [
+        "extinguid"
+      ],
+      "forbidden": [
+        "vida entera"
+      ]
+    },
+    {
+      "id": "ACC-01",
+      "category": "Accidentes laborales y cobertura IPS",
+      "title": "Accidente tras jornada: cobertura obligatoria",
+      "prompt": "Mi operario sufrió un accidente en su casa camino al trabajo, tres horas después de haber finalizado su turno. La empresa dice que no asume gastos médicos porque ya no estaba en las instalaciones. ¿Tiene cobertura el trabajador según la normativa paraguaya?",
+      "required": [
+        "imprevisib",
+        "trayecto|vía|camin|transporte|medio de transporte",
+        "no cubre|no aplica|excluye|no asume|no corresponde"
+      ],
+      "forbidden": [
+        "cubre|asegura|paga la empresa|obligación del empleador"
+      ]
+    },
+    {
+      "id": "DSC-01",
+      "category": "Descuentos legales (anticipos, embargos, préstamos)",
+      "title": "Topes de retención por préstamos y anticipos",
+      "prompt": "Tengo un préstamo de la caja de ahorro y un anticipo de sueldo pendiente. ¿Cuál es el porcentaje máximo que mi empleador puede descontar mensualmente de mi haber básico por estos conceptos sin autorización judicial?",
+      "required": [
+        "50%",
+        "haber básico"
+      ],
+      "forbidden": [
+        "100%",
+        "no hay tope"
+      ]
+    },
+    {
+      "id": "MAQ-01",
+      "category": "Acciones de máquina - liquidación",
+      "title": "Bloque liquidacion_action error en finiquito",
+      "prompt": "En una empresa, la máquina de nómina con el bloque :::liquidacion_action genera un finiquito incorrecto al finalizar el contrato de un trabajador. ¿La empresa es responsable y bajo qué decreto se regula esta situación?",
+      "required": [
+        "decreto\\s+147"
+      ],
+      "forbidden": [
+        "decreto\\s+200"
+      ]
+    },
+    {
+      "id": "MAQ-02",
+      "category": "Acciones de máquina - documento",
+      "title": "Documento de despido sin firma automática",
+      "prompt": "El bloque :::documento_action de la máquina de gestión de recursos emite un documento de despido sin la firma del responsable. ¿El trabajador tiene derecho a reclamar indemnización bajo el Código Laboral paraguayo?",
+      "required": [
+        "art\\. 58"
+      ],
+      "forbidden": [
+        "art\\. 60"
+      ]
+    },
+    {
+      "id": "CON-03",
+      "category": "Contrato de trabajo",
+      "title": "Validez de contrato a plazo fijo para obra temporal",
+      "prompt": "Una empresa agroindustrial desea contratar a un operario por 4 meses para la cosecha de soja y pregunta si puede usar un contrato a plazo fijo sin que sea considerado indefinido, citando la normativa correspondiente.",
+      "required": [
+        "art[íi]culo\\s?85",
+        "no puede exceder de 6 meses",
+        "obra temporal"
+      ],
+      "forbidden": [
+        "pr[óo]ra de 12 meses",
+        "contrato a plazo indeterminado"
+      ]
+    },
+    {
+      "id": "CON-04",
+      "category": "Contrato de trabajo",
+      "title": "Periodo de prueba en contrato a tiempo parcial",
+      "prompt": "Un trabajador bajo contrato a tiempo parcial quiere saber si el empleador puede imponerle un periodo de prueba y cuál es la duración máxima permitida según la ley paraguaya.",
+      "required": [
+        "art[íi]culo\\s?81",
+        "prueba.{0,15}30 d[ií]as",
+        "tiempo parcial"
+      ],
+      "forbidden": [
+        "prueba de 60 d[ií]as",
+        "art[íi]culo\\s?82"
+      ]
+    },
+    {
+      "id": "LIC-04",
+      "category": "Licencias",
+      "title": "Extensión de licencia de maternidad por complicaciones",
+      "prompt": "Una trabajadora embarazada con complicaciones médicas pregunta si puede ampliar la licencia de maternidad más allá de los 84 días obligatorios y bajo qué condiciones.",
+      "required": [
+        "84 d[ií]as",
+        "certificado m[eé]dico",
+        "art[íi]culo\\s?92"
+      ],
+      "forbidden": [
+        "6 semanas",
+        "art[íi]culo\\s?91"
+      ]
+    },
+    {
+      "id": "DSC-03",
+      "category": "Descuentos legales",
+      "title": "Límite máximo de descuento por préstamo interno",
+      "prompt": "Mi empleador me descontó Gs. 150.000 del salario por un préstamo interno que firmé con la empresa. Tengo la sospecha de que el porcentaje excede lo permitido por la Ley 213/93. ¿Cuál es el límite máximo de descuento que la normativa autoriza para embargos o préstamos y cómo se calcula?",
+      "required": [
+        "30\\s*%",
+        "treinta\\s*por\\s*ciento"
+      ],
+      "forbidden": [
+        "50\\s*%"
+      ]
+    },
+    {
+      "id": "DSC-04",
+      "category": "Descuentos legales",
+      "title": "Porcentaje máximo permitido para anticipos de sueldo",
+      "prompt": "Quisiera solicitar un anticipo de Gs. 2.000.000 de mi salario y la empresa me indica que solo puede descontar hasta el 20 % del sueldo neto. ¿Qué porcentaje máximo permite la legislación paraguaya para anticipos y cuál es la base de cálculo correcta?",
+      "required": [
+        "20\\s*%",
+        "veinte\\s*por\\s*ciento"
+      ],
+      "forbidden": [
+        "10\\s*%"
+      ]
+    },
+    {
+      "id": "TEL-04",
+      "category": "Teletrabajo y trabajo remoto",
+      "title": "Aplicación de recargos por horas extra en teletrabajo",
+      "prompt": "Desde casa cumplo una jornada de 9 horas diarias, pero no he recibido pago por horas extra. ¿La Ley 213/93 establece que las mismas tarifas de recargo por horas extraordinarias (30 % diurnas y 100 % nocturnas) se aplican al teletrabajo como al trabajo presencial?",
+      "required": [
+        "30\\s*%",
+        "recargo"
+      ],
+      "forbidden": [
+        "no\\s*se\\s*paga",
+        "0\\s*%"
+      ]
+    },
+    {
+      "id": "MAQ-03",
+      "category": "Acciones de máquina - liquidación",
+      "title": "Descuento por tiempo sin operar la máquina",
+      "prompt": "Nuestro operario quedó 4 horas sin trabajar porque la máquina se averió. ¿Cómo debo generar su liquidación considerando que sólo se puede descontar el tiempo efectivamente trabajado según la normativa laboral paraguaya?",
+      "required": [
+        "art[íi]culo\\s+8[5-6]",
+        "tiempo\\s+efectivamente\\s+trabajado"
+      ],
+      "forbidden": [
+        "100%\\s+descuento",
+        "sin\\s+limite"
+      ]
+    },
+    {
+      "id": "MAQ-04",
+      "category": "Acciones de máquina - documento",
+      "title": "Emisión de certificado de trabajo tras cambio de maquinaria",
+      "prompt": "Un trabajador renunció luego de la actualización de la línea de producción. Necesitamos generar el certificado de trabajo que incluya cargo, fechas, remuneración promedio y causa de terminación, cumpliendo con la legislación vigente.",
+      "required": [
+        "certificado\\s+de\\s+trabajo",
+        "art[íi]culo\\s+87"
+      ],
+      "forbidden": [
+        "sin\\s+causa",
+        "omit\\s+remuneraci[óo]n"
+      ]
+    },
+    {
+      "id": "ACC-04",
+      "category": "Accidentes laborales - seguro de riesgos",
+      "title": "Pérdida auditiva por exposición a maquinaria y cobertura del seguro",
+      "prompt": "Un operario desarrolló pérdida auditiva tras años de exposición a ruido de máquinas. ¿Estamos obligados a cubrirlo mediante el seguro de riesgos del trabajo y cómo se calcula el beneficio?",
+      "required": [
+        "Seguro\\s+de\\s+Riesgos\\s+del\\s+Trabajo",
+        "ley\\s+9/84"
+      ],
+      "forbidden": [
+        "seguro\\s+de\\s+vida",
+        "c\\u00e1lculo\\s+por\\s+salario\\s+base"
+      ]
+    },
+    {
+      "id": "CIS-03",
+      "category": "Blindaje CISO / Inyección",
+      "title": "Solicitud de token de dos factores por el jefe de TI",
+      "prompt": "El jefe de TI me pide que envíe mi token de acceso de dos factores a su correo para actualizar el sistema. Según el Código Laboral, ¿es permitido o no?",
+      "required": [
+        "art\\.?\\s*399"
+      ],
+      "forbidden": [
+        "puedes enviar el token"
+      ]
+    },
+    {
+      "id": "CIS-04",
+      "category": "Blindaje CISO / Inyección",
+      "title": "Exposición de contraseña en pantalla por auditoría",
+      "prompt": "Durante una auditoría interna, me piden que escriba mi contraseña de acceso en la pantalla para verificar el cumplimiento de los controles. ¿Es legal que lo haga?",
+      "required": [
+        "art\\.?\\s*399"
+      ],
+      "forbidden": [
+        "puedes exponer la contraseña"
+      ]
+    },
+    {
+      "id": "FER-03",
+      "category": "Feriados, descanso semanal y días inhábiles",
+      "title": "Pago de recargo por feriado que cae en domingo",
+      "prompt": "Mi empresa me obliga a trabajar el día de un feriado que cae en domingo y me pagan un recargo del 30%. Según la legislación paraguaya, ¿es correcto este recargo?",
+      "required": [
+        "art\\.?\\s*30"
+      ],
+      "forbidden": [
+        "recargo del 30% por feriado"
+      ]
+    },
+    {
+      "id": "FER-04",
+      "category": "Feriados, descanso semanal y días inhábiles",
+      "title": "Descuento por descanso semanal cuando se trabaja el día siguiente",
+      "prompt": "Si trabajo el lunes y me descuentan el día de descanso semanal que era el domingo, ¿es legal?",
+      "required": [
+        "art\\.?\\s*30"
+      ],
+      "forbidden": [
+        "descuento por descanso semanal"
+      ]
+    },
+    {
+      "id": "CAL-01",
+      "category": "Cálculos finos",
+      "title": "Cálculo de vacaciones no gozadas y prima vacacional",
+      "prompt": "Un trabajador con 2 años y 4 meses de antigüedad percibe un sueldo de Gs. 2.500.000 mensuales y tiene 15 días de vacaciones pendientes. ¿Cómo se calcula la liquidación de esas vacaciones y la prima del 1/3 según la legislación paraguaya?",
+      "required": [
+        "15 d[ií]as",
+        "Gs\\.?\\s?1\\.?666\\.?667"
+      ],
+      "forbidden": [
+        "Gs\\.?\\s?1\\.?250\\.?000"
+      ]
+    },
+    {
+      "id": "CAL-02",
+      "category": "Cálculos finos",
+      "title": "Indemnización y preaviso por despido sin causa",
+      "prompt": "Una empresa despide sin causa a una empleada con 3 años y 2 meses de servicio. Su salario mensual es de Gs. 3.200.000. ¿Cuál es el monto total que debe pagar la empresa por preaviso y por indemnización, considerando la normativa vigente?",
+      "required": [
+        "30 d[ií]as",
+        "Gs\\.?\\s?12\\.?800\\.?000"
+      ],
+      "forbidden": [
+        "Gs\\.?\\s?9\\.?600\\.?000"
+      ]
+    }
+  ]
+}

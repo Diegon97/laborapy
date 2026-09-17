@@ -1,0 +1,21 @@
+{
+  "0": "services/leadService.ts",
+  "1": "liquidacion.ts",
+  "2": "indemnizacion.ts",
+  "3": "dependencies",
+  "4": "devDependencies",
+  "5": "compilerOptions",
+  "6": "compilerOptions",
+  "7": "App.tsx",
+  "8": "metaPixel.ts",
+  "9": "plugins",
+  "10": "numberToWordsPY.ts",
+  "11": "Regla Obligatoria: Verificación Multiplataforma Simultánea (Móvil y Web)",
+  "12": "React + TypeScript + Vite",
+  "13": "tsconfig.json",
+  "14": "arquitecto/agent.md",
+  "15": "codificador/agent.md",
+  "16": "revisor/agent.md",
+  "17": "vercel.json",
+  "18": "vite.config.ts"
+}

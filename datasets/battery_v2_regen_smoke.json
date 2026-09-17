@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-09-16T14:51:35.918Z",
+  "provider": "groq",
+  "mode": "regen",
+  "sourcePool": "datasets\\tobi_battery_v2_excluded.json",
+  "batchesRequested": 1,
+  "batchesOk": 1,
+  "accepted": 2,
+  "cases": [
+    {
+      "id": "LIC-01",
+      "category": "Licencias",
+      "title": "Cálculo de vacaciones para trabajador con 6 años",
+      "prompt": "Mi empleado lleva 6 años trabajando en la empresa y me pide saber cuántos días de vacaciones le corresponden según la legislación paraguaya. ¿Cuál es el período mínimo y qué artículo lo regula?",
+      "requiredRegex": [
+        "18\\s*días\\s*hábiles",
+        "Art\\.\\s*218\\s*inc\\.\\s*b\\)",
+        "Ley\\s*N°\\s*213/93"
+      ],
+      "forbiddenRegex": [
+        "20\\s*días",
+        "Art\\.\\s*150"
+      ]
+    },
+    {
+      "id": "LIC-02",
+      "category": "Licencias",
+      "title": "Pago de sueldo durante licencia de maternidad",
+      "prompt": "Una trabajadora embarazada de 30 semanas solicita saber cómo se calcula su salario durante la licencia de maternidad de 18 semanas y si el IPS cubre alguna parte. ¿Qué determina la Ley 5508/15 y el Código Laboral?",
+      "requiredRegex": [
+        "18\\s*semanas",
+        "Ley\\s*N°\\s*5508/15",
+        "Ley\\s*7140/23"
+      ],
+      "forbiddenRegex": [
+        "12\\s*semanas",
+        "Art\\.\\s*147"
+      ]
+    }
+  ],
+  "rejected": []
+}

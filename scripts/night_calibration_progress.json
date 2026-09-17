@@ -1,0 +1,16 @@
+{
+  "status": "starting",
+  "model": "qwen2.5:7b",
+  "endpoint": "http://localhost:11434/api/chat",
+  "startedAt": "2026-09-16T18:05:01.650Z",
+  "updatedAt": "2026-09-16T18:05:01.827Z",
+  "totalCases": 52,
+  "completed": 0,
+  "remaining": 52,
+  "currentId": null,
+  "passed": 0,
+  "failed": 0,
+  "passRate": 0,
+  "averageScore": 0,
+  "results": []
+}

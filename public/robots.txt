@@ -1,0 +1,6 @@
+# Robots.txt — Calculadora RRHH Paraguay
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://calculadora-rrhh.py/sitemap.xml

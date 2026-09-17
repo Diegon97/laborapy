@@ -1,0 +1,155 @@
+{
+  "generatedAt": "2026-09-16T18:50:07.461Z",
+  "endpoint": "https://calculadora-rrhh-py.vercel.app/api/assistant",
+  "durationMs": 42950,
+  "options": {
+    "limit": null,
+    "only": [
+      "FRA-01",
+      "FRA-02",
+      "JOR-01",
+      "JOR-02",
+      "JOR-03",
+      "EST-01",
+      "FUE-01",
+      "AGU-01",
+      "AGU-02"
+    ],
+    "pauseMs": 2000,
+    "casesPath": null
+  },
+  "summary": {
+    "total": 6,
+    "evaluated": 6,
+    "passed": 5,
+    "failed": 1,
+    "failedCalls": 0,
+    "evaluatorErrors": 0,
+    "avgScore": 97.2,
+    "passRate": 83.3
+  },
+  "cases": [
+    {
+      "id": "FRA-01",
+      "category": "Fraude Laboral",
+      "title": "Factura con exclusividad",
+      "called": true,
+      "requestOk": true,
+      "provider": "deepseek/deepseek-chat",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 2838,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "FRA-02",
+      "category": "Fraude Laboral",
+      "title": "Renuncia forzada",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/qwen/qwen3.8-27b",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 2760,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "JOR-01",
+      "category": "Jornada Laboral",
+      "title": "Jornada diurna 8h/48h",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/qwen/qwen3.8-27b",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 2121,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "JOR-02",
+      "category": "Jornada Laboral",
+      "title": "Jornada nocturna 7h/42h + 30%",
+      "called": true,
+      "requestOk": true,
+      "provider": "deepseek/deepseek-chat",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 1994,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "JOR-03",
+      "category": "Jornada Laboral",
+      "title": "Tope jornada mixta 7,5h/45h",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/openai/gpt-oss-120b",
+      "score": 83,
+      "passed": false,
+      "error": null,
+      "responseChars": 2722,
+      "evaluation": {
+        "legal": 5,
+        "calc": 10,
+        "tone": 10,
+        "total": 83,
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /(?:7[.,]5|7\\s*horas\\s*y\\s*media|45\\s*horas)/i"
+        ]
+      }
+    },
+    {
+      "id": "EST-01",
+      "category": "Estabilidad y Fueros",
+      "title": "Estabilidad 10 años por falta grave",
+      "called": true,
+      "requestOk": true,
+      "provider": "deepseek/deepseek-chat",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 3057,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    }
+  ]
+}

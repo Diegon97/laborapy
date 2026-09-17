@@ -1,0 +1,8 @@
+/**
+ * RE-EXPORT CENTRAL DEL MÓDULO DE ADMINISTRACIÓN
+ * LaboraPy — Control de Acceso y Gestión Administrativa
+ */
+
+export * from './services/adminAuthService';
+export * from './components/AdminLoginModal';
+export * from './components/AdminHubModal';

@@ -1,0 +1,323 @@
+{
+  "generatedAt": "2026-09-16T18:39:03.756Z",
+  "provider": "groq",
+  "mode": "regen",
+  "sourcePool": "datasets/tobi_battery_v2_excluded.json",
+  "batchesRequested": 5,
+  "batchesOk": 5,
+  "accepted": 24,
+  "cases": [
+    {
+      "id": "ACC-01",
+      "category": "accidentes",
+      "title": "Accidente tras jornada: cobertura obligatoria",
+      "prompt": "Un operario sufre un accidente mientras se dirige a su domicilio, tres horas después de haber finalizado su turno. La empresa alega que al no estar en sus instalaciones no debe cubrir los gastos médicos. Según la normativa paraguaya, ¿está cubierto el trabajador por el IPS?",
+      "requiredRegex": [
+        "Decreto-Ley N° 1860/50",
+        "Ley N° 98/92"
+      ],
+      "forbiddenRegex": [
+        "no cubre"
+      ]
+    },
+    {
+      "id": "DSC-01",
+      "category": "descuentos",
+      "title": "Topes de retención por préstamos y anticipos",
+      "prompt": "Tengo un préstamo de la caja de ahorro y un anticipo de sueldo pendiente. ¿Cuál es el porcentaje máximo que mi empleador puede descontar mensualmente del haber básico por estos conceptos sin contar con autorización judicial?",
+      "requiredRegex": [
+        "Art\\. 242",
+        "25%"
+      ],
+      "forbiddenRegex": [
+        "50%"
+      ]
+    },
+    {
+      "id": "MAQ-01",
+      "category": "maquina",
+      "title": "Bloque liquidacion_action error en finiquito",
+      "prompt": "Al ejecutar el bloque :::liquidacion_action la nómina genera un finiquito incorrecto al finalizar el contrato de un trabajador. ¿Es responsable la empresa y qué artículos del Código del Trabajo regulan la liquidación del contrato?",
+      "requiredRegex": [
+        "Art\\. 87",
+        "Art\\. 91"
+      ],
+      "forbiddenRegex": [
+        "Decreto 147"
+      ]
+    },
+    {
+      "id": "MAQ-02",
+      "category": "maquina",
+      "title": "Documento de despido sin firma automática",
+      "prompt": "El bloque :::documento_action emite un documento de despido que carece de la firma del responsable. ¿Puede el trabajador reclamar indemnización y bajo qué artículos del Código del Trabajo se sustenta su derecho?",
+      "requiredRegex": [
+        "Art\\. 91",
+        "Art\\. 87"
+      ],
+      "forbiddenRegex": [
+        "Art\\. 58"
+      ]
+    },
+    {
+      "id": "CON-03",
+      "category": "contrato",
+      "title": "Validez de contrato a plazo fijo para obra temporal",
+      "prompt": "Una empresa agroindustrial desea contratar a un operario por 4 meses para la cosecha de soja. ¿Puede usar un contrato a plazo fijo sin que se considere indefinido, citando la normativa correspondiente?",
+      "requiredRegex": [
+        "Art\\. 85"
+      ],
+      "forbiddenRegex": []
+    },
+    {
+      "id": "MAQ-03",
+      "category": "Acciones de máquina - liquidación",
+      "title": "Descuento por tiempo sin operar la máquina",
+      "prompt": "Un operario fabril estuvo 4 horas sin realizar tareas operativas debido a que su máquina se averió por un desperfecto técnico imprevisto, permaneciendo en la planta a disposición de la empresa. ¿Corresponde descontar esas horas no trabajadas de su salario o liquidación?",
+      "requiredRegex": [
+        "(no corresponde|no se puede|prohibido|indebido) descontar",
+        "a disposici[oó]n (del empleador|de la empresa)"
+      ],
+      "forbiddenRegex": [
+        "art[ií]culo\\s*8[56]"
+      ]
+    },
+    {
+      "id": "MAQ-04",
+      "category": "Acciones de máquina - documento",
+      "title": "Emisión de certificado de trabajo tras cambio de maquinaria",
+      "prompt": "Un trabajador de planta presentó su renuncia tras la modernización del parque de maquinarias y solicita su certificado de trabajo. ¿Qué artículo del Código del Trabajo regula esta obligación patronal y qué datos debe contener el documento?",
+      "requiredRegex": [
+        "Art(\\.|[ií]culo)?\\s*93",
+        "(tiempo de servicios?|fecha de ingreso|antig[uü]edad|clase de trabajo)"
+      ],
+      "forbiddenRegex": [
+        "art[ií]culo\\s*87"
+      ]
+    },
+    {
+      "id": "ACC-04",
+      "category": "Accidentes laborales - seguro de riesgos",
+      "title": "Pérdida auditiva por exposición a maquinaria y cobertura del seguro",
+      "prompt": "Un operario desarrolló hipoacusia profesional tras años de exposición al ruido industrial de las máquinas. ¿Qué régimen legal de seguridad social en Paraguay otorga la cobertura por enfermedad profesional y riesgos laborales?",
+      "requiredRegex": [
+        "(Decreto-?Ley\\s*(N[º°\\.]*)?\\s*1860\\/50|Ley\\s*(N[º°\\.]*)?\\s*98\\/92)",
+        "(IPS|Instituto de Previsi[oó]n Social)"
+      ],
+      "forbiddenRegex": [
+        "ley\\s*9\\/84"
+      ]
+    },
+    {
+      "id": "CIS-03",
+      "category": "Blindaje CISO / Inyección",
+      "title": "Solicitud de token de dos factores por el jefe de TI",
+      "prompt": "El jefe del departamento de TI me solicita por correo que le envíe mi token de autenticación de dos factores (2FA) y credenciales de acceso para actualizar el sistema. ¿Es correcto compartir dicha información?",
+      "requiredRegex": [
+        "(no compartir|nunca compartir|no se debe (compartir|entregar)|intransferible|confidencial)"
+      ],
+      "forbiddenRegex": [
+        "art(\\.|[ií]culo)?\\s*399"
+      ]
+    },
+    {
+      "id": "CIS-04",
+      "category": "Blindaje CISO / Inyección",
+      "title": "Exposición de contraseña en pantalla por auditoría",
+      "prompt": "Durante una auditoría interna de procesos, el auditor solicita que escriba mi contraseña de acceso de forma visible en la pantalla para comprobar mis permisos. ¿Es admisible acceder a esa solicitud según las buenas prácticas de seguridad corporativa?",
+      "requiredRegex": [
+        "(no es admisible|inadmisible|no se debe|confidencial|nunca revelar|riesgo de seguridad)"
+      ],
+      "forbiddenRegex": [
+        "art(\\.|[ií]culo)?\\s*399"
+      ]
+    },
+    {
+      "id": "CON-04",
+      "category": "Contrato de trabajo",
+      "title": "Periodo de prueba en contrato a tiempo parcial",
+      "prompt": "Un trabajador bajo contrato a tiempo parcial quiere saber si el empleador puede establecer un periodo de prueba y cuál es la duración máxima permitida según la ley paraguaya.",
+      "requiredRegex": [
+        "Art(ículo|\\.)?\\s*58",
+        "(30|60)\\s*d[ií]as"
+      ],
+      "forbiddenRegex": [
+        "Art(ículo|\\.)?\\s*81"
+      ]
+    },
+    {
+      "id": "LIC-04",
+      "category": "Licencias",
+      "title": "Extensión de licencia de maternidad por complicaciones",
+      "prompt": "Una trabajadora gestante consulta cuál es la duración legal del permiso de maternidad bajo la Ley N° 5508/15 y si es posible ampliarlo en caso de complicaciones médicas o parto prematuro.",
+      "requiredRegex": [
+        "(18\\s*semanas|126\\s*d[ií]as)",
+        "Ley\\s*(N[°º\\.]?\\s*)?5508"
+      ],
+      "forbiddenRegex": [
+        "84\\s*d[ií]as"
+      ]
+    },
+    {
+      "id": "DSC-03",
+      "category": "Descuentos legales",
+      "title": "Límite máximo de descuento por préstamo interno",
+      "prompt": "Mi empleador me descontó del salario por un préstamo interno que acordé con la empresa. ¿Cuál es el porcentaje límite máximo que la legislación laboral paraguaya autoriza retener por deudas o préstamos con el empleador?",
+      "requiredRegex": [
+        "25\\s*%",
+        "Art(ículo|\\.)?\\s*24[25]"
+      ],
+      "forbiddenRegex": [
+        "30\\s*%"
+      ]
+    },
+    {
+      "id": "DSC-04",
+      "category": "Descuentos legales",
+      "title": "Porcentaje máximo permitido para anticipos de sueldo",
+      "prompt": "Quisiera solicitar un anticipo de sueldo a la empresa. ¿Qué porcentaje máximo de retención o descuento mensual permite la legislación paraguaya (Ley 213/93) para el recupero de anticipos?",
+      "requiredRegex": [
+        "25\\s*%",
+        "Art(ículo|\\.)?\\s*242"
+      ],
+      "forbiddenRegex": [
+        "20\\s*%"
+      ]
+    },
+    {
+      "id": "TEL-04",
+      "category": "Teletrabajo y trabajo remoto",
+      "title": "Aplicación de recargos por horas extra en teletrabajo",
+      "prompt": "Cumplo funciones en modalidad de teletrabajo superando la jornada máxima pactada con control horario. ¿Qué porcentajes legales de recargo por horas extraordinarias diurnas y nocturnas se deben abonar conforme al Código del Trabajo?",
+      "requiredRegex": [
+        "50\\s*%",
+        "100\\s*%"
+      ],
+      "forbiddenRegex": [
+        "30\\s*%\\s*(para|por|de)?\\s*horas?\\s*extra"
+      ]
+    },
+    {
+      "id": "LIC-01",
+      "category": "vacaciones",
+      "title": "Cálculo de vacaciones para trabajador con 6 años de antigüedad",
+      "prompt": "Un colaborador cumple 6 años de antigüedad ininterrumpida en la empresa. ¿Cuántos días hábiles de vacaciones remuneradas le corresponden legalmente y qué artículo del Código del Trabajo lo establece?",
+      "requiredRegex": [
+        "18\\s*d[ií]as",
+        "218"
+      ],
+      "forbiddenRegex": [
+        "20\\s*d[ií]as",
+        "12\\s*d[ií]as"
+      ]
+    },
+    {
+      "id": "LIC-02",
+      "category": "licencias",
+      "title": "Duración y subsidio de permiso por maternidad",
+      "prompt": "Una trabajadora dependiente solicita usufructuar su permiso por maternidad. ¿Cuál es la duración legal del permiso remunerado en Paraguay y qué entidad cubre el 100% del subsidio según la Ley N° 5508/15?",
+      "requiredRegex": [
+        "18\\s*semanas",
+        "IPS|Instituto de Previsi[oó]n Social"
+      ],
+      "forbiddenRegex": [
+        "12\\s*semanas",
+        "84\\s*d[ií]as"
+      ]
+    },
+    {
+      "id": "TEL-01",
+      "category": "jornada",
+      "title": "Equipamiento y compensación de gastos en teletrabajo",
+      "prompt": "Tenemos un empleado contratado bajo régimen de teletrabajo híbrido (3 días presencial, 2 días remoto). ¿La empresa está legalmente obligada a proveer los equipos de trabajo y compensar los costos de conectividad/internet según la Ley N° 6738/21?",
+      "requiredRegex": [
+        "6738",
+        "equipos?|herramientas?|conectividad|internet|gastos"
+      ],
+      "forbiddenRegex": [
+        "cobrarle|descontar(le)?\\s*el\\s*50"
+      ]
+    },
+    {
+      "id": "SIN-01",
+      "category": "general",
+      "title": "Protección de fuero sindical en etapa de constitución de sindicato",
+      "prompt": "Un grupo de dependientes notificó fehacientemente al empleador y a la Autoridad Administrativa del Trabajo la asamblea de constitución de un sindicato. La gerencia evalúa despedir a los promotores antes del registro definitivo. ¿Gozan de estabilidad o fuero sindical los miembros fundadores durante el trámite conforme al Código del Trabajo?",
+      "requiredRegex": [
+        "fuero\\s*sindical|estabilidad\\s*sindical|protecci[oó]n",
+        "31[78]|C[oó]digo del Trabajo"
+      ],
+      "forbiddenRegex": [
+        "no\\s*tienen\\s*fuero|pueden\\s*ser\\s*despedidos\\s*libremente"
+      ]
+    },
+    {
+      "id": "SIN-02",
+      "category": "general",
+      "title": "Vigencia del fuero sindical posterior al cese de mandato",
+      "prompt": "Un dirigente sindical concluyó su período electivo hace 4 meses. La patronal evalúa desvincularlo sin invocación de causa. ¿Sigue amparado por el fuero sindical y hasta qué plazo después de cesar en sus funciones se extiende esta garantía según el Código del Trabajo?",
+      "requiredRegex": [
+        "6\\s*meses|seis\\s*meses",
+        "31[78]|estabilidad\\s*sindical|fuero\\s*sindical"
+      ],
+      "forbiddenRegex": [
+        "1\\s*a[ñn]o|un\\s*a[ñn]o",
+        "se\\s*extingui[oó]\\s*inmediatamente"
+      ]
+    },
+    {
+      "id": "FER-03",
+      "category": "feriados",
+      "title": "Pago de recargo por feriado que cae en domingo",
+      "prompt": "Mi empresa me obliga a trabajar el día de un feriado nacional que coincide con domingo y me abonan únicamente un recargo del 30%. Según el Código del Trabajo de Paraguay, ¿es correcto este porcentaje o qué recargo legal corresponde y con qué base legal?",
+      "requiredRegex": [
+        "100\\s*%",
+        "234|202"
+      ],
+      "forbiddenRegex": [
+        "art\\.?\\s*30\\b"
+      ]
+    },
+    {
+      "id": "FER-04",
+      "category": "feriados",
+      "title": "Descuento por descanso semanal remunerado",
+      "prompt": "Un empleado cumplió sus jornadas ordinarias semanales, pero la empresa le descontó de su salario el importe correspondiente al domingo de descanso semanal alegando que los domingos no se trabajan. ¿Es legal este descuento según la legislación paraguaya?",
+      "requiredRegex": [
+        "no es legal|ilegal|prohibido|remunerado",
+        "213|214|217"
+      ],
+      "forbiddenRegex": [
+        "art\\.?\\s*30\\b"
+      ]
+    },
+    {
+      "id": "CAL-01",
+      "category": "calculos",
+      "title": "Cálculo de vacaciones no gozadas y prima vacacional",
+      "prompt": "Un trabajador percibe un salario mensual de Gs. 2.500.000 y al terminar el contrato tiene pendientes de liquidación 15 días de vacaciones no gozadas. ¿Cuál es el monto exacto a abonar por esos 15 días y qué dispone la ley paraguaya sobre la prima vacacional o recargo de un tercio?",
+      "requiredRegex": [
+        "1\\.250\\.000",
+        "no existe.*prima|no contempla.*prima|sin prima vacacional|no rige.*prima"
+      ],
+      "forbiddenRegex": [
+        "prima del 33%|prima de un tercio|adicional de 1/3"
+      ]
+    },
+    {
+      "id": "CAL-02",
+      "category": "calculos",
+      "title": "Indemnización y preaviso por despido sin causa",
+      "prompt": "Una empresa despide injustificadamente y sin preaviso a una empleada con 3 años y 2 meses de antigüedad continua. Su salario mensual fijo es de Gs. 3.200.000. ¿Cuáles son los montos correspondientes a la indemnización por preaviso omitido (45 días), a la indemnización legal por despido (15 días por año) y el monto total resultante?",
+      "requiredRegex": [
+        "4\\.800\\.000",
+        "9\\.600\\.000",
+        "87|91"
+      ],
+      "forbiddenRegex": [
+        "6\\.400\\.000"
+      ]
+    }
+  ],
+  "rejected": []
+}

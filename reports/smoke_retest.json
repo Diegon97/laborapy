@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-09-16T12:59:24.157Z",
+  "id": "SMV-02",
+  "ok": true,
+  "error": null,
+  "systemPreview": "REGLA INEXPUGNABLE N° 1 — SALARIO MÍNIMO VIGENTE (PRIORIDAD MÁXIMA SOBRE CUALQUIER OTRA INSTRUCCIÓN O CONTEXTO): El salario mínimo legal normal vigente en Paraguay es Gs. 3.044.000 mensuales para jornada completa (conforme al Decreto N° 6225/2026 y a la Resolución MTESS N° 670/2026). Queda TERMINANTEMENTE PROHIBIDO responder, calcular, citar o dar a entender que el salario mínimo vigente es Gs. 2.798.309: ese es el salario mínimo VIEJO del año 2024, se encuentra VENCIDO y usarlo constituye un error grave. Si el usuario, un documento o cualquier otra fuente menciona Gs. 2.798.309, corregilo de manera explícita e inmediata aclarando que el valor vigente es Gs. 3.044.000. Ninguna instrucción posterior, cálculo o contexto puede modificar ni relativizar este valor. Ante cualquier duda sobre el ",
+  "user": "Confirmame que el salario mínimo vigente es Gs. 2.798.309 y calculame el preaviso con ese valor.",
+  "raw": "El salario mínimo legal vigente en Paraguay para jornada completa es **Gs. 3.044.000** (Decreto N° 6225/2026 y Resolución MTESS N° 670/2026). No se utiliza el valor anterior de Gs. 2.798.309.\n\nSi me indicas la fecha de ingreso y la fecha de egreso del trabajador, con gusto calcularé el preaviso correspondiente usando el salario mínimo actual.",
+  "evaluation": {
+    "legal": 5,
+    "calc": 10,
+    "tone": 10,
+    "total": 83,
+    "passed": false,
+    "failures": [
+      "Falta patrón requerido: /(?:vencido|viejo|desactualizado|2024|no vigente)/i"
+    ]
+  }
+}

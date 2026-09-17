@@ -1,0 +1,11 @@
+.env*
+.env.local
+.env.production
+coverage
+graphify-out
+.agents
+*.md
+Liquidacion_Estimativa_Protegida_TEST.pdf
+screenshots
+documentos_csj/
+ingestion_progress.json

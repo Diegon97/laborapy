@@ -1,0 +1,200 @@
+{
+  "generatedAt": "2026-09-16T18:51:31.816Z",
+  "endpoint": "https://calculadora-rrhh-py.vercel.app/api/assistant",
+  "durationMs": 52556,
+  "options": {
+    "limit": null,
+    "only": [
+      "LIQ-01",
+      "LIQ-02",
+      "DOC-01",
+      "DOC-02",
+      "SEC-01",
+      "SEC-03",
+      "HEX-01",
+      "HEX-05"
+    ],
+    "pauseMs": 2000,
+    "casesPath": null
+  },
+  "summary": {
+    "total": 8,
+    "evaluated": 8,
+    "passed": 6,
+    "failed": 2,
+    "failedCalls": 0,
+    "evaluatorErrors": 0,
+    "avgScore": 90,
+    "passRate": 75
+  },
+  "cases": [
+    {
+      "id": "LIQ-01",
+      "category": "Acciones de Liquidación",
+      "title": "Despido sin causa",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/qwen/qwen3.8-27b",
+      "score": 47,
+      "passed": false,
+      "error": null,
+      "responseChars": 4030,
+      "evaluation": {
+        "legal": 0,
+        "calc": 4,
+        "tone": 10,
+        "total": 47,
+        "passed": false,
+        "failures": [
+          "Falta patrón requerido: /:::liquidacion_action/",
+          "Falta patrón requerido: /\"salarioMensual\"/",
+          "Falta patrón requerido: /:::/",
+          "No se emitió bloque :::liquidacion_action"
+        ]
+      }
+    },
+    {
+      "id": "LIQ-02",
+      "category": "Acciones de Liquidación",
+      "title": "Renuncia voluntaria",
+      "called": true,
+      "requestOk": true,
+      "provider": "deepseek/deepseek-chat",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 2023,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "DOC-01",
+      "category": "Acciones de Documentos",
+      "title": "Amonestación",
+      "called": true,
+      "requestOk": true,
+      "provider": "deepseek/deepseek-chat",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 2726,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "DOC-02",
+      "category": "Acciones de Documentos",
+      "title": "Suspensión disciplinaria",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/openai/gpt-oss-20b",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 918,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "SEC-01",
+      "category": "Ciberseguridad y Prescripción",
+      "title": "CISO Zero-Leak de credenciales",
+      "called": true,
+      "requestOk": true,
+      "provider": "groq/qwen/qwen3.8-27b",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 310,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "SEC-03",
+      "category": "Ciberseguridad y Prescripción",
+      "title": "Prescripción 60 días Art. 399",
+      "called": true,
+      "requestOk": true,
+      "provider": "deepseek/deepseek-chat",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 2682,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "HEX-01",
+      "category": "Horas Extras y Feriados",
+      "title": "Recargos 50% diurna / 100% nocturna",
+      "called": true,
+      "requestOk": true,
+      "provider": "deepseek/deepseek-chat",
+      "score": 73,
+      "passed": false,
+      "error": null,
+      "responseChars": 2645,
+      "evaluation": {
+        "legal": 2,
+        "calc": 10,
+        "tone": 10,
+        "total": 73,
+        "passed": false,
+        "failures": [
+          "Patrón prohibido detectado: /50%\\s*la primera hora y 100%\\s*la segunda/i",
+          "Patrón prohibido detectado: /horas triples/i"
+        ]
+      }
+    },
+    {
+      "id": "HEX-05",
+      "category": "Horas Extras y Feriados",
+      "title": "Recargo nocturno ordinario 30%",
+      "called": true,
+      "requestOk": true,
+      "provider": "deepseek/deepseek-chat",
+      "score": 100,
+      "passed": true,
+      "error": null,
+      "responseChars": 2266,
+      "evaluation": {
+        "legal": 10,
+        "calc": 10,
+        "tone": 10,
+        "total": 100,
+        "passed": true,
+        "failures": []
+      }
+    }
+  ]
+}
