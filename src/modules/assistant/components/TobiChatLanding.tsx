@@ -1272,34 +1272,29 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, flexWrap: 'nowrap', flexShrink: 0 }}>
-          {isVoiceSupported && (
-            <button
-              type="button"
-              aria-label="Abrir Modo Voz Gemini Live"
-              title="Iniciar conversación por voz estilo Gemini Live"
-              onClick={() => setIsLiveModalOpen(true)}
-              style={{
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(99, 102, 241, 0.25) 100%)',
-                border: '1px solid #10b981',
-                color: '#a7f3d0',
-                height: 32,
-                padding: isMobile ? '0 9px' : '0 12px',
-                borderRadius: 8,
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                boxShadow: '0 0 14px rgba(16, 185, 129, 0.35)',
-              }}
-            >
-              <span>🎙️✨</span>
-              <span style={{ display: isMobile ? 'none' : 'inline' }}>
-                Modo Voz Live
-              </span>
-            </button>
-          )}
+          {/* Selector de consultas de ejemplo */}
+          <button
+            type="button"
+            onClick={handleNewChat}
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: '#ffffff',
+              height: 32,
+              padding: isMobile ? '0 9px' : '0 12px',
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+            title="Nueva consulta (limpiar conversación)"
+          >
+            <span>+</span>
+            <span style={{ display: isMobile ? 'none' : 'inline' }}>Nueva consulta</span>
+          </button>
 
           {hasMessages && (
             <>
@@ -1587,15 +1582,16 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
                 )}
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {isVoiceSupported && (
+                  {/* Botón Grabar Audio (Estilo Gemini Web / WhatsApp) */}
+                  {isAudioRecordingSupported && !isRecording && (
                     <button
                       type="button"
-                      onClick={() => setIsLiveModalOpen(true)}
+                      onClick={() => void startRecording()}
                       disabled={isLoading || pdfProcessing}
-                      aria-label="Abrir Modo Voz Gemini Live"
-                      title="Hablar con Tobi en vivo (Modo Gemini Live)"
+                      aria-label="Grabar audio"
+                      title="Grabar consulta por voz"
                       style={{
-                        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%)',
+                        background: 'rgba(16, 185, 129, 0.15)',
                         border: '1px solid #10b981',
                         borderRadius: '50%',
                         width: 34,
@@ -1606,12 +1602,64 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: '0 0 12px rgba(16, 185, 129, 0.35)',
+                        boxShadow: '0 0 10px rgba(16, 185, 129, 0.25)',
                       }}
                     >
                       🎙️
                     </button>
                   )}
+
+                  {isRecording && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        border: '1px solid #ef4444',
+                        borderRadius: 20,
+                        padding: '4px 10px',
+                        animation: 'tobiPulse 1.2s infinite',
+                      }}
+                    >
+                      <span style={{ fontSize: 13, color: '#f87171', fontWeight: 700 }}>
+                        🔴 {formatDuration(recordingDuration)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={cancelRecording}
+                        title="Cancelar grabación"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#94a3b8',
+                          cursor: 'pointer',
+                          fontSize: 13,
+                          padding: 2,
+                        }}
+                      >
+                        ✕
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleFinishRecordingAndSend()}
+                        title="Enviar audio a Tobi"
+                        style={{
+                          background: '#10b981',
+                          border: 'none',
+                          borderRadius: 12,
+                          color: '#022c22',
+                          fontWeight: 700,
+                          fontSize: 11,
+                          padding: '3px 8px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Enviar
+                      </button>
+                    </div>
+                  )}
+
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -2097,16 +2145,16 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
                 📎
               </button>
 
-              {/* Botón de Micrófono Gemini Live en barra inferior */}
-              {isVoiceSupported && (
+              {/* Botón de Micrófono de Grabación Directa (Estilo Gemini Web) */}
+              {isAudioRecordingSupported && !isRecording && (
                 <button
                   type="button"
-                  onClick={() => setIsLiveModalOpen(true)}
+                  onClick={() => void startRecording()}
                   disabled={isLoading || pdfProcessing}
-                  aria-label="Abrir Modo Voz Gemini Live"
-                  title="Hablar por micrófono con Tobi (Modo Gemini Live)"
+                  aria-label="Grabar audio"
+                  title="Grabar consulta por voz"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%)',
+                    background: 'rgba(16, 185, 129, 0.15)',
                     border: '1px solid #10b981',
                     borderRadius: '50%',
                     width: 32,
@@ -2118,32 +2166,85 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    boxShadow: '0 0 10px rgba(16, 185, 129, 0.3)',
+                    boxShadow: '0 0 10px rgba(16, 185, 129, 0.25)',
                   }}
                 >
                   🎙️
                 </button>
               )}
 
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                rows={1}
-                placeholder="Escribí tu consulta o indicación adicional a Tobi…"
-                style={{
-                  flex: 1,
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#f8fafc',
-                  fontSize: 14.5,
-                  resize: 'none',
-                  outline: 'none',
-                  fontFamily: 'inherit',
-                  maxHeight: 120,
-                }}
-              />
+              {isRecording ? (
+                <div
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 10,
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    borderRadius: 12,
+                    padding: '6px 12px',
+                    animation: 'tobiPulse 1.2s infinite',
+                  }}
+                >
+                  <span style={{ fontSize: 13, color: '#f87171', fontWeight: 700 }}>
+                    🔴 Grabando: {formatDuration(recordingDuration)}
+                  </span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="button"
+                      onClick={cancelRecording}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        fontSize: 12,
+                        padding: '4px 8px',
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleFinishRecordingAndSend()}
+                      style={{
+                        background: '#10b981',
+                        border: 'none',
+                        borderRadius: 8,
+                        color: '#022c22',
+                        fontWeight: 700,
+                        fontSize: 12,
+                        padding: '4px 12px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Enviar audio
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  rows={1}
+                  placeholder="Escribí tu consulta o indicación adicional a Tobi…"
+                  style={{
+                    flex: 1,
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#f8fafc',
+                    fontSize: 14.5,
+                    resize: 'none',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                    maxHeight: 120,
+                  }}
+                />
+              )}
 
               <button
                 type="button"
@@ -2351,14 +2452,6 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
           </div>
         </div>
       )}
-
-      {/* ── MODAL INMERSIVO GEMINI LIVE (VOZ BIDIRECCIONAL CONTINUA) ── */}
-      <TobiGeminiLiveModal
-        isOpen={isLiveModalOpen}
-        onClose={() => setIsLiveModalOpen(false)}
-        onSendQuery={handleLiveModalSend}
-        isMobile={isMobile}
-      />
     </div>
   );
 };

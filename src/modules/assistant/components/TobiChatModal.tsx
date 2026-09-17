@@ -13,13 +13,13 @@ import {
 import { extractContinuationOptions } from '../tobiOptionsAction';
 import { evaluateTobiPeritaje } from '../systemOne';
 import { useTobiVoice } from '../hooks/useTobiVoice';
+import { useAudioRecorder, formatDuration } from '../hooks/useAudioRecorder';
 import { TobiSettlementCard } from './TobiSettlementCard';
 import { TobiDocumentCard } from './TobiDocumentCard';
 import { TobiContinuationOptions } from './TobiContinuationOptions';
 import { TobiPeritajeCard } from './TobiPeritajeCard';
 import { TobiDocumentFormCard } from './TobiDocumentFormCard';
 import { TobiSettlementFormCard } from './TobiSettlementFormCard';
-import { TobiGeminiLiveModal } from './TobiGeminiLiveModal';
 import type { TobiDocumentType, TobiDocumentActionPayload, TobiSettlementActionPayload } from '../types';
 
 export interface TobiChatModalProps {
@@ -289,27 +289,18 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
   const [activeDocFormTipo, setActiveDocFormTipo] = useState<TobiDocumentType | null>(null);
   const [activeDocInitialData, setActiveDocInitialData] = useState<TobiDocumentFormInitialData | null>(null);
   const [isSettlementFormActive, setIsSettlementFormActive] = useState<boolean>(false);
-  const [isLiveModalOpen, setIsLiveModalOpen] = useState<boolean>(false);
+  // Síntesis de voz (Text-to-Speech) para escuchar respuestas
+  const { isSpeaking, speakText, stopSpeaking } = useTobiVoice();
 
-  // Hook de Voz Bidireccional estilo Gemini Live
+  // Grabación directa de audio estándar con MediaRecorder
   const {
-    isVoiceSupported,
-    isListening,
-    isSpeaking,
-    liveTranscript,
-    stopListening,
-    speakText,
-    stopSpeaking,
-  } = useTobiVoice({
-    onTranscriptChange: (liveText) => {
-      setInput(liveText);
-    },
-    onSpeechEnd: (finalText) => {
-      if (finalText.trim()) {
-        void handleSend(finalText);
-      }
-    },
-  });
+    isRecording,
+    recordingDuration,
+    isSupported: isAudioRecordingSupported,
+    startRecording,
+    stopRecording,
+    cancelRecording,
+  } = useAudioRecorder();
 
   const handleProcessIncomingFiles = async (files: FileList | File[]) => {
     const list = Array.from(files).slice(0, MAX_FILES_PER_DROP);
