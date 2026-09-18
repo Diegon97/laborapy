@@ -4,7 +4,7 @@ import { exec } from 'child_process';
 import readline from 'readline';
 
 // Configuración de endpoints y llaves
-const CAPATAZ_URL = 'http://127.0.0.1:8318/v1/chat/completions';
+const CAPATAZ_URL = 'http://127.0.0.1:8317/v1/chat/completions';
 const CAPATAZ_ESTADO_URL = 'http://127.0.0.1:8318/api/estado';
 // Usaremos la API oficial de DeepSeek (el usuario debe tener DEEPSEEK_API_KEY en .env)
 const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions';
@@ -46,6 +46,22 @@ let stats = {
 let dataset = [];
 let archivosPendientes = [];
 
+function getAllFiles(dirPath, arrayOfFiles = []) {
+    const files = fs.readdirSync(dirPath);
+    files.forEach(file => {
+        const fullPath = path.join(dirPath, file);
+        if (fs.statSync(fullPath).isDirectory()) {
+            arrayOfFiles = getAllFiles(fullPath, arrayOfFiles);
+        } else {
+            if (file.endsWith('.doc') || file.endsWith('.txt')) {
+                // Save relative path for cleaner display
+                arrayOfFiles.push(path.relative(CSJ_DIR, fullPath));
+            }
+        }
+    });
+    return arrayOfFiles;
+}
+
 async function obtenerEstadoCapataz() {
     try {
         const response = await fetch(CAPATAZ_ESTADO_URL);
@@ -81,7 +97,10 @@ Devolvé ÚNICAMENTE un JSON válido con este formato:
     try {
         const response = await fetch(CAPATAZ_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer cpa-local-2f1e299d67fe4fbbaa862ef78d418f08047245b8'
+            },
             body: JSON.stringify({
                 model: 'gemini-3.8-flash-high', // Usa el worker más rápido y capaz
                 messages: [{ role: 'user', content: prompt }],
@@ -144,9 +163,8 @@ async function iniciarPipeline() {
         stats = prog.stats;
         archivosPendientes = prog.pendientes;
     } else {
-        const files = fs.readdirSync(CSJ_DIR).filter(f => f.endsWith('.doc') || f.endsWith('.txt'));
-        archivosPendientes = files;
-        stats.archivosTotales = files.length;
+        archivosPendientes = getAllFiles(CSJ_DIR);
+        stats.archivosTotales = archivosPendientes.length;
     }
 
     if (!DEEPSEEK_API_KEY) {
@@ -155,53 +173,60 @@ async function iniciarPipeline() {
         console.log("Agregá DEEPSEEK_API_KEY=sk-... a tu .env si querés la auditoría de R1.\n");
     }
 
-    for (let i = 0; i < archivosPendientes.length; i++) {
-        const file = archivosPendientes[i];
+    // 1. Monitoreo de Cuota en tiempo real (El Gobernador)
+    const estado = await obtenerEstadoCapataz();
+    if (estado) {
+        stats.combustiblePromedio = estado.promedioCombustible;
+        if (estado.frenoTotal || stats.combustiblePromedio < 5) {
+            actualizarDashboard("TODOS", "APAGANDO PC...");
+            console.log("\n\n🚨 ALERTA: Cuota de cuentas Capataz agotada o freno de emergencia activado.");
+            console.log("💾 Guardando progreso y apagando la computadora en 60 segundos...");
+            fs.writeFileSync(PROGRESS_FILE, JSON.stringify({ stats, pendientes: archivosPendientes }, null, 2));
+            exec('shutdown /s /t 60');
+            process.exit(0);
+        }
+    }
+
+    // PROCESAMIENTO EN PARALELO (Batches de 10)
+    const BATCH_SIZE = 10;
+    while (archivosPendientes.length > 0) {
+        const batch = archivosPendientes.splice(0, BATCH_SIZE);
+        actualizarDashboard(`Batch de ${batch.length}`, "Capataz Paralelo");
+
+        const promesas = batch.map(async (file) => {
+            const filePath = path.join(CSJ_DIR, file);
+            const texto = await extraerTextoDoc(filePath);
+            const pares = await capatazExtraer(texto);
+            
+            let validados = 0;
+            let rechazados = 0;
+            
+            for (const pair of pares) {
+                const aprobado = await deepseekValidar(pair);
+                if (aprobado) {
+                    pair.system = "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy...";
+                    dataset.push(pair);
+                    validados++;
+                } else {
+                    rechazados++;
+                }
+            }
+            return { validados, rechazados, totalPares: pares.length };
+        });
+
+        const resultados = await Promise.all(promesas);
         
-        // 1. Monitoreo de Cuota en tiempo real (El Gobernador)
-        const estado = await obtenerEstadoCapataz();
-        if (estado) {
-            stats.combustiblePromedio = estado.promedioCombustible;
-            if (estado.frenoTotal || stats.combustiblePromedio < 5) {
-                actualizarDashboard(file, "APAGANDO PC...");
-                console.log("\n\n🚨 ALERTA: Cuota de cuentas Capataz agotada o freno de emergencia activado.");
-                console.log("💾 Guardando progreso y apagando la computadora en 60 segundos...");
-                fs.writeFileSync(PROGRESS_FILE, JSON.stringify({ stats, pendientes: archivosPendientes.slice(i) }, null, 2));
-                exec('shutdown /s /t 60');
-                process.exit(0);
-            }
-        }
+        resultados.forEach(r => {
+            stats.paresExtraidos += r.totalPares;
+            stats.aprobadosDeepSeek += r.validados;
+            stats.rechazadosDeepSeek += r.rechazados;
+            stats.procesados++;
+        });
 
-        // 2. Extracción de Texto
-        actualizarDashboard(file, "Extrayendo...");
-        const filePath = path.join(CSJ_DIR, file);
-        const texto = await extraerTextoDoc(filePath);
-
-        // 3. Destilación con Capataz (Uso de máxima capacidad round-robin)
-        actualizarDashboard(file, "Capataz Gemini");
-        const pares = await capatazExtraer(texto);
-        stats.paresExtraidos += pares.length;
-
-        // 4. Validación estricta con DeepSeek Reasoner
-        for (const pair of pares) {
-            actualizarDashboard(file, "Validando (R1)");
-            const aprobado = await deepseekValidar(pair);
-            if (aprobado) {
-                stats.aprobadosDeepSeek++;
-                // Inyectamos el system prompt dorado de Tobi
-                pair.system = "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy...";
-                dataset.push(pair);
-            } else {
-                stats.rechazadosDeepSeek++;
-            }
-        }
-
-        // Guardado incremental cada 5 archivos
-        stats.procesados++;
-        if (stats.procesados % 5 === 0) {
-            fs.writeFileSync(OUTPUT_FILE, JSON.stringify(dataset, null, 2));
-            fs.writeFileSync(PROGRESS_FILE, JSON.stringify({ stats, pendientes: archivosPendientes.slice(i + 1) }, null, 2));
-        }
+        fs.writeFileSync(OUTPUT_FILE, JSON.stringify(dataset, null, 2));
+        fs.writeFileSync(PROGRESS_FILE, JSON.stringify({ stats, pendientes: archivosPendientes }, null, 2));
+        
+        actualizarDashboard(`Restan ${archivosPendientes.length}`, "Batch Completado");
     }
 
     console.log("\n\n✅ ¡Pipeline Finalizado con Éxito!");
