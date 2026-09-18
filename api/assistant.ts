@@ -839,52 +839,50 @@ async function callDeepSeek(
   return null;
 }
 
-const GEMINI_EMBEDDING_MODEL = 'text-embedding-004';
 const EMBEDDING_DIMENSIONS = 768;
-const SEMANTIC_MATCH_THRESHOLD = 0.5;
-const SEMANTIC_MATCH_COUNT = 3;
+const SEMANTIC_MATCH_THRESHOLD = 0.3; // Menor umbral para capturar más contexto
+const SEMANTIC_MATCH_COUNT = 4;
 
-interface SemanticJurisprudenceMatch {
+interface TobiKnowledgeMatch {
   id: string;
-  autor_handle: string | null;
-  autor_nombre: string | null;
-  titulo_tema: string;
-  caso_abuso_detectado: string;
-  fundamento_juridico: string;
-  criterio_practico: string;
-  articulos_citados: string[] | null;
-  url_video: string | null;
+  content: string;
+  metadata: any;
   similarity: number;
 }
 
 /**
- * Genera el embedding (768 dims, text-embedding-004) de la consulta.
- * Requiere GEMINI_API_KEY; devuelve null si falta la key o el proveedor falla.
+ * Genera el embedding (768 dims, gemma-300m) usando Cloudflare Workers AI.
+ * Aplica normalización L2 explícita para la métrica coseno de pgvector.
  */
 async function embedQueryText(query: string, timeoutMs: number): Promise<number[] | null> {
-  const apiKey = (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY)?.trim();
-  if (!apiKey) return null;
+  const accountId = (process.env.CF_ACCOUNT_ID || process.env.CLOUDFLARE_ACCOUNT_ID)?.trim();
+  const token = (process.env.CF_API_TOKEN || process.env.CLOUDFLARE_API_TOKEN)?.trim();
+  if (!accountId || !token) return null;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_EMBEDDING_MODEL}:embedContent?key=${apiKey}`,
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/google/embeddinggemma-300m`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: `models/${GEMINI_EMBEDDING_MODEL}`,
-          content: { parts: [{ text: query.slice(0, 2000) }] },
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ text: [query.slice(0, 2000)] }),
         signal: controller.signal,
       },
     );
     if (!res.ok) return null;
-    const data = (await res.json()) as { embedding?: { values?: unknown } };
-    const values = data?.embedding?.values;
-    if (!Array.isArray(values) || values.length !== EMBEDDING_DIMENSIONS) return null;
-    if (!values.every((v) => typeof v === 'number' && Number.isFinite(v))) return null;
-    return values as number[];
+    const data = await res.json();
+    if (!data.success) return null;
+    
+    const v = data.result.data[0];
+    if (!Array.isArray(v) || v.length !== EMBEDDING_DIMENSIONS) return null;
+    
+    // Normalización L2 requerida para operator class vector_cosine_ops en Supabase
+    const norm = Math.sqrt(v.reduce((s, x) => s + x * x, 0));
+    return norm === 0 ? v : v.map((x) => x / norm);
   } catch {
     return null;
   } finally {
@@ -893,8 +891,7 @@ async function embedQueryText(query: string, timeoutMs: number): Promise<number[
 }
 
 /**
- * RAG semántico sobre jurisprudencia_multimedia (pgvector) vía RPC buscar_criterios_laborales.
- * Devuelve '' si falta la key de embeddings, el RPC falla o no hay matches sobre el umbral.
+ * RAG unificado sobre tobi_knowledge_base (pgvector) vía RPC match_tobi_knowledge.
  */
 async function fetchSemanticJurisprudence(
   query: string,
@@ -910,8 +907,8 @@ async function fetchSemanticJurisprudence(
     const remaining = timeoutMs - (Date.now() - startedAt);
     if (remaining < 300) return '';
 
-    const matches = await fetchJson<SemanticJurisprudenceMatch[]>(
-      `${supabaseUrl}/rest/v1/rpc/buscar_criterios_laborales`,
+    const matches = await fetchJson<TobiKnowledgeMatch[]>(
+      `${supabaseUrl}/rest/v1/rpc/match_tobi_knowledge`,
       {
         method: 'POST',
         headers: {
@@ -932,12 +929,18 @@ async function fetchSemanticJurisprudence(
 
     return matches
       .map((m) => {
-        const autor = (m.autor_nombre || m.autor_handle || 'Especialista laboral').trim();
+        let title = 'Precedente Legal / Base de Conocimiento';
+        if (m.metadata?.source === 'csj') {
+            title = `Corte Suprema de Justicia (${m.metadata?.sala || 'Sala Laboral'})`;
+        } else if (m.metadata?.type === 'audio_transcription') {
+            title = 'Consulta Similar (Audio/Video Resuelto)';
+        } else if (m.metadata?.source === 'multimedia') {
+            title = 'Jurisprudencia y Criterio Práctico Multimedia';
+        }
+        
         return (
-          `• Criterio/Precedente Paraguayo (${autor}): "${m.titulo_tema}"\n` +
-          `  Caso fáctico: ${m.caso_abuso_detectado}\n` +
-          `  Criterio práctico de expertos: ${m.criterio_practico}\n` +
-          `  Leyes aplicables: ${m.fundamento_juridico}`
+          `• [${title}]:\n` +
+          `  ${m.content.replace(/\n/g, '\n  ')}`
         );
       })
       .join('\n\n');
@@ -1024,7 +1027,7 @@ async function fetchMultimediaJurisprudence(
   serviceKey: string,
   timeoutMs: number,
 ): Promise<string> {
-  // 1) RAG semántico (pgvector + embeddings) — se activa con GEMINI_API_KEY y backfill aplicado
+  // 1) RAG semántico (pgvector + embeddings) — se activa con CF_API_TOKEN y backfill aplicado
   const semantic = await fetchSemanticJurisprudence(query, supabaseUrl, serviceKey, timeoutMs);
   if (semantic) return semantic;
 

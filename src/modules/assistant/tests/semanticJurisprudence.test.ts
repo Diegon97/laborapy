@@ -19,15 +19,14 @@ function readUrl(input: RequestInfo | URL): string {
   return input.url;
 }
 
-// Neutraliza SIEMPRE las variantes VITE_* y las claves Gemini del entorno real
-// (Vitest carga .env en process.env y la máquina del dev suele tener GEMINI_API_KEY).
+// Neutraliza SIEMPRE las variantes VITE_* y las claves del entorno real
 function stubBaseEnv(): void {
   vi.stubEnv('SUPABASE_URL', TEST_SUPABASE_URL);
   vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', TEST_SERVICE_KEY);
   vi.stubEnv('VITE_SUPABASE_URL', '');
   vi.stubEnv('VITE_SUPABASE_ANON_KEY', '');
-  vi.stubEnv('GEMINI_API_KEY', '');
-  vi.stubEnv('VITE_GEMINI_API_KEY', '');
+  vi.stubEnv('CF_API_TOKEN', '');
+  vi.stubEnv('CF_ACCOUNT_ID', '');
 }
 
 afterEach(() => {
@@ -37,35 +36,30 @@ afterEach(() => {
 });
 
 describe('fetchSupabaseJurisprudence — RAG semántico con fallback ILIKE garantizado', () => {
-  it('usa embedding + RPC semántico cuando hay GEMINI_API_KEY y hay matches', async () => {
+  it('usa embedding + RPC semántico cuando hay CF_API_TOKEN y hay matches', async () => {
     stubBaseEnv();
-    vi.stubEnv('GEMINI_API_KEY', 'test-gemini-key');
+    vi.stubEnv('CF_API_TOKEN', 'test-cf-key');
+    vi.stubEnv('CF_ACCOUNT_ID', 'test-account-id');
 
     const calls: string[] = [];
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = readUrl(input);
       calls.push(url);
 
-      if (url.includes(':embedContent')) {
+      if (url.includes('embeddinggemma-300m')) {
         expect(init?.headers).toMatchObject({ 'Content-Type': 'application/json' });
-        return jsonResponse({ embedding: { values: new Array(768).fill(0.01) } });
+        return jsonResponse({ success: true, result: { data: [new Array(768).fill(0.01)] } });
       }
-      if (url.includes('/rpc/buscar_criterios_laborales')) {
+      if (url.includes('/rpc/match_tobi_knowledge')) {
         const payload = JSON.parse(String(init?.body ?? '{}'));
-        expect(payload.match_threshold).toBe(0.5);
-        expect(payload.match_count).toBe(3);
+        expect(payload.match_threshold).toBe(0.3);
+        expect(payload.match_count).toBe(4);
         expect(payload.query_embedding).toHaveLength(768);
         return jsonResponse([
           {
             id: 'a152db4e-0000-0000-0000-000000000000',
-            autor_handle: '@juanbernis',
-            autor_nombre: 'Abg. Juan Bernis',
-            titulo_tema: 'Primacía de la realidad',
-            caso_abuso_detectado: 'Exigir factura legal a cajera con horario fijo',
-            fundamento_juridico: 'Art. 19 C.T. (Primacía de la Realidad)',
-            criterio_practico: 'No firmar renuncia; intimar por colacionado',
-            articulos_citados: ['Art. 19'],
-            url_video: 'https://example.com/video',
+            content: 'Caso fáctico: Exigir factura legal a cajera con horario fijo. Criterio: No firmar renuncia. Art. 19 C.T.',
+            metadata: { source: 'multimedia', type: 'audio_transcription' },
             similarity: 0.91,
           },
         ]);
@@ -76,12 +70,11 @@ describe('fetchSupabaseJurisprudence — RAG semántico con fallback ILIKE garan
 
     const result = await fetchSupabaseJurisprudence('despido sin registro en IPS', 2000);
 
-    expect(result).toContain('Abg. Juan Bernis');
     expect(result).toContain('Art. 19 C.T.');
     expect(calls.some((u) => u.includes('jurisprudencia_multimedia?'))).toBe(false);
   });
 
-  it('cae al ILIKE cuando falta GEMINI_API_KEY', async () => {
+  it('cae al ILIKE cuando falta CF_API_TOKEN', async () => {
     stubBaseEnv();
 
     const calls: string[] = [];
@@ -98,28 +91,29 @@ describe('fetchSupabaseJurisprudence — RAG semántico con fallback ILIKE garan
           },
         ]);
       }
-      throw new Error(`No debería llamarse sin GEMINI_API_KEY: ${url}`);
+      throw new Error(`No debería llamarse sin CF_API_TOKEN: ${url}`);
     });
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await fetchSupabaseJurisprudence('despido injustificado sin preaviso', 2000);
 
     expect(result).toContain('Caso fáctico');
-    expect(calls.some((u) => u.includes(':embedContent'))).toBe(false);
+    expect(calls.some((u) => u.includes('embeddinggemma-300m'))).toBe(false);
   });
 
   it('cae al ILIKE cuando el RPC semántico devuelve 0 matches', async () => {
     stubBaseEnv();
-    vi.stubEnv('GEMINI_API_KEY', 'test-gemini-key');
+    vi.stubEnv('CF_API_TOKEN', 'test-cf-key');
+    vi.stubEnv('CF_ACCOUNT_ID', 'test-account-id');
 
     const calls: string[] = [];
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = readUrl(input);
       calls.push(url);
-      if (url.includes(':embedContent')) {
-        return jsonResponse({ embedding: { values: new Array(768).fill(0.02) } });
+      if (url.includes('embeddinggemma-300m')) {
+        return jsonResponse({ success: true, result: { data: [new Array(768).fill(0.02)] } });
       }
-      if (url.includes('/rpc/buscar_criterios_laborales')) return jsonResponse([]);
+      if (url.includes('/rpc/match_tobi_knowledge')) return jsonResponse([]);
       if (url.includes('jurisprudencia_multimedia?')) {
         return jsonResponse([
           {
@@ -138,8 +132,8 @@ describe('fetchSupabaseJurisprudence — RAG semántico con fallback ILIKE garan
 
     expect(result).toContain('Caso fáctico');
     expect(result).toContain('Art. 243 C.T.');
-    expect(calls.some((u) => u.includes(':embedContent'))).toBe(true);
-    expect(calls.some((u) => u.includes('/rpc/buscar_criterios_laborales'))).toBe(true);
+    expect(calls.some((u) => u.includes('embeddinggemma-300m'))).toBe(true);
+    expect(calls.some((u) => u.includes('/rpc/match_tobi_knowledge'))).toBe(true);
     expect(calls.some((u) => u.includes('jurisprudencia_multimedia?'))).toBe(true);
   });
 });

@@ -73,8 +73,8 @@ function stubBaseEnv(): void {
   vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', TEST_SERVICE_KEY);
   vi.stubEnv('VITE_SUPABASE_URL', '');
   vi.stubEnv('VITE_SUPABASE_ANON_KEY', '');
-  vi.stubEnv('GEMINI_API_KEY', '');
-  vi.stubEnv('VITE_GEMINI_API_KEY', '');
+  vi.stubEnv('CF_API_TOKEN', '');
+  vi.stubEnv('CF_ACCOUNT_ID', '');
 }
 
 afterEach(() => {
@@ -201,7 +201,8 @@ describe('fetchCsjJurisprudence — Búsqueda RPC en jurisprudencia CSJ', () => 
 describe('fetchSupabaseJurisprudence — Integración combinada CSJ y Multimedia', () => {
   it('Caso 5: Integración combinada: cuando hay CSJ y hay multimedia, incluye ambas secciones', async () => {
     stubBaseEnv();
-    vi.stubEnv('GEMINI_API_KEY', 'test-gemini-key');
+    vi.stubEnv('CF_API_TOKEN', 'test-cf-key');
+    vi.stubEnv('CF_ACCOUNT_ID', 'test-account-id');
 
     const calls: string[] = [];
     const fetchMock = vi.fn(async (input: RequestInfo | URL): Promise<Response> => {
@@ -211,21 +212,15 @@ describe('fetchSupabaseJurisprudence — Integración combinada CSJ y Multimedia
       if (url.includes('/rpc/buscar_jurisprudencia_csj')) {
         return jsonResponse([MOCK_CSJ_ITEMS[0]]);
       }
-      if (url.includes(':embedContent')) {
-        return jsonResponse({ embedding: { values: new Array(768).fill(0.01) } });
+      if (url.includes('embeddinggemma-300m')) {
+        return jsonResponse({ success: true, result: { data: [new Array(768).fill(0.01)] } });
       }
-      if (url.includes('/rpc/buscar_criterios_laborales')) {
+      if (url.includes('/rpc/match_tobi_knowledge')) {
         return jsonResponse([
           {
             id: 'a152db4e-0000-0000-0000-000000000000',
-            autor_handle: '@juanbernis',
-            autor_nombre: 'Abg. Juan Bernis',
-            titulo_tema: 'Primacía de la realidad en tercerizaciones',
-            caso_abuso_detectado: 'Exigir factura legal con horario estricto',
-            fundamento_juridico: 'Art. 19 C.T. (Primacía de la Realidad)',
-            criterio_practico: 'No firmar renuncia y remitir telegrama colacionado',
-            articulos_citados: ['Art. 19'],
-            url_video: 'https://example.com/video',
+            content: 'Caso fáctico: Exigir factura legal con horario estricto. Criterio: No firmar renuncia. Art. 19 C.T.',
+            metadata: { source: 'multimedia', type: 'audio_transcription' },
             similarity: 0.93,
           },
         ]);
@@ -253,8 +248,6 @@ describe('fetchSupabaseJurisprudence — Integración combinada CSJ y Multimedia
     expect(result).toContain('Hacer lugar a la demanda laboral');
 
     // Sección Multimedia / Criterio Doctrinario
-    expect(result).toContain('Abg. Juan Bernis');
-    expect(result).toContain('Primacía de la realidad');
     expect(result).toContain('Art. 19 C.T.');
   });
 });
