@@ -1242,6 +1242,40 @@ async function logTobiEvent(payload: TobiEventPayload): Promise<void> {
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/*                        Transcripción de Audio (Whisper)                    */
+/* -------------------------------------------------------------------------- */
+
+async function transcribeAudio(base64Data: string, mimeType: string): Promise<string> {
+  if (GROQ_POOL.length === 0) return '';
+  const ext = mimeType.includes('mp4') ? 'm4a' : mimeType.includes('ogg') ? 'ogg' : mimeType.includes('wav') ? 'wav' : 'webm';
+  for (const apiKey of GROQ_POOL) {
+    try {
+      const buffer = Buffer.from(base64Data, 'base64');
+      const blob = new Blob([buffer], { type: mimeType });
+      const formData = new FormData();
+      formData.append('file', blob, `audio.${ext}`);
+      formData.append('model', 'whisper-large-v3-turbo');
+      formData.append('language', 'es');
+      
+      const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}` },
+        body: formData as any,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.text) return data.text.trim();
+      } else {
+        console.warn('Groq Whisper error:', await res.text());
+      }
+    } catch (err) {
+      console.warn('Groq Whisper exception:', err);
+    }
+  }
+  return '';
+}
+
 export default async function handler(req: any, res: any): Promise<void> {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -1267,6 +1301,22 @@ export default async function handler(req: any, res: any): Promise<void> {
 
   const { prompt, context } = parsed;
   const attachmentInfo = deriveAttachmentInfo(parsed.attachments);
+
+  // Transcribir audios antes del RAG usando Groq Whisper para que TODOS los modelos puedan leerlo
+  for (const a of parsed.attachments) {
+    if (a.mimeType.startsWith('audio/')) {
+      const transcript = await transcribeAudio(a.cleanBase64, a.mimeType);
+      if (transcript) {
+        a.mimeType = 'text/plain'; // Convertir a texto para compatibilidad universal en la cascada
+        a.cleanBase64 = `[Transcripción de la nota de voz del usuario]: "${transcript}"`;
+        a.name = `${a.name} (Transcrito)`;
+      } else {
+        a.mimeType = 'text/plain';
+        a.cleanBase64 = `[Error: La nota de voz recibida estaba completamente en silencio o no contenía voz humana. Pide al usuario que escriba su consulta o verifique su micrófono.]`;
+        a.name = `${a.name} (Fallo)`;
+      }
+    }
+  }
 
   // Búsqueda RAG de criterios jurisprudenciales y doctrinales en Supabase
   const jurisprudence = await fetchSupabaseJurisprudence(prompt, 1200);
