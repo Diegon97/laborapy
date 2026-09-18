@@ -1,0 +1,12 @@
+{
+  "stats": {
+    "procesados": 1591,
+    "paresExtraidos": 1951,
+    "aprobadosDeepSeek": 1453,
+    "rechazadosDeepSeek": 498,
+    "combustiblePromedio": 74,
+    "archivosTotales": 1591,
+    "groqRateLimits": 2500
+  },
+  "pendientes": []
+}

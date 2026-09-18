@@ -53,9 +53,9 @@ def main():
     )
 
     # 3. Carga del Dataset de Oro
-    dataset_path = "datasets/tobi_qlora_messages.jsonl"
+    dataset_path = "datasets/tobi_gold_dataset_v3_combined.jsonl"
     if not os.path.exists(dataset_path):
-        dataset_path = "calculadora-rrhh-py/datasets/tobi_qlora_messages.jsonl"
+        dataset_path = "calculadora-rrhh-py/datasets/tobi_gold_dataset_v3_combined.jsonl"
 
     print(f"📂 Cargando dataset: {dataset_path}...")
     dataset = load_dataset("json", data_files=dataset_path, split="train")
