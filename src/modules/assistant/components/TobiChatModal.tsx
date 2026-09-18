@@ -20,6 +20,7 @@ import { TobiContinuationOptions } from './TobiContinuationOptions';
 import { TobiPeritajeCard } from './TobiPeritajeCard';
 import { TobiDocumentFormCard } from './TobiDocumentFormCard';
 import { TobiSettlementFormCard } from './TobiSettlementFormCard';
+import { TobiGeminiLiveModal } from './TobiGeminiLiveModal';
 import type { TobiDocumentType, TobiDocumentActionPayload, TobiSettlementActionPayload } from '../types';
 
 export interface TobiChatModalProps {
@@ -285,12 +286,13 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const dragCounterRef = useRef<number>(0);
-  const [isVoiceMode] = useState<boolean>(false);
+  const [isVoiceMode, setIsVoiceMode] = useState<boolean>(true);
+  const [isLiveModalOpen, setIsLiveModalOpen] = useState<boolean>(false);
   const [activeDocFormTipo, setActiveDocFormTipo] = useState<TobiDocumentType | null>(null);
   const [activeDocInitialData, setActiveDocInitialData] = useState<TobiDocumentFormInitialData | null>(null);
   const [isSettlementFormActive, setIsSettlementFormActive] = useState<boolean>(false);
   // Síntesis de voz (Text-to-Speech) para escuchar respuestas
-  const { isSpeaking, speakText, stopSpeaking } = useTobiVoice();
+  const { isSpeaking, currentlySpeakingText, speakText, stopSpeaking } = useTobiVoice();
 
   // Grabación directa de audio estándar con MediaRecorder
   const {
@@ -466,14 +468,26 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
   );
 
   const handleSend = useCallback(
-    async (rawText?: string) => {
-      const activeAttachments = attachments;
-      const text = (rawText ?? input).trim() || (activeAttachments.length ? `Auditoría pericial jurídica del documento adjunto (${activeAttachments[0].name})` : '');
-      if (!text || isLoading || activeRequestRef.current || pdfProcessing) return;
+    async (
+      rawText?: string,
+      explicitAttachments?: AssistantAttachment[],
+      options?: { readonly skipTts?: boolean },
+    ): Promise<string | null> => {
+      const activeAttachments = explicitAttachments ?? attachments;
+      const text =
+        (rawText ?? input).trim() ||
+        (activeAttachments.length
+          ? (activeAttachments[0].mimeType.startsWith('audio/')
+              ? 'Consulta por nota de voz grabada'
+              : `Auditoría pericial jurídica del documento adjunto (${activeAttachments[0].name})`)
+          : '');
+      if (!text || isLoading || activeRequestRef.current || pdfProcessing) return null;
 
       if (isGuest && guestQueriesCount >= GUEST_QUERY_LIMIT) {
-        return;
+        return null;
       }
+
+      const shouldSpeak = isVoiceMode && !options?.skipTts;
 
       activeRequestRef.current = true;
 
@@ -629,9 +643,10 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
             };
             setMessages((prev) => prev.map((m) => (m.id === draftId ? finalMessage : m)));
             void persist(finalMessage);
-            if (isVoiceMode) {
+            if (shouldSpeak) {
               speakText(finalMessage.content);
             }
+            return finalMessage.content;
           } else {
             const finalMessage: AssistantMessage = {
               ...assistantMessage,
@@ -643,9 +658,10 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
             };
             setMessages((prev) => [...prev, finalMessage]);
             void persist(finalMessage);
-            if (isVoiceMode) {
+            if (shouldSpeak) {
               speakText(finalMessage.content);
             }
+            return finalMessage.content;
           }
         } else if (streamStarted) {
           // Hay texto parcial visible: no se pisa ni se reemplaza por offline; se persiste tal cual
@@ -672,9 +688,10 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
             systemOneJudgment,
           };
           void persist(partial);
-          if (isVoiceMode) {
+          if (shouldSpeak) {
             speakText(partial.content);
           }
+          return partial.content;
         } else {
           const offline = generateOfflineAnswer(text, queryContext);
           const { cleanedText: offClean, options: offOptions } = extractContinuationOptions(offline.content);
@@ -686,9 +703,10 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
           };
           setMessages((prev) => [...prev, enrichedOffline]);
           void persist(enrichedOffline);
-          if (isVoiceMode) {
+          if (shouldSpeak) {
             speakText(enrichedOffline.content);
           }
+          return enrichedOffline.content;
         }
       } catch (_err) {
         if (streamStarted) {
@@ -700,6 +718,7 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
             createdAt: new Date().toISOString(),
           };
           void persist(partial);
+          return partial.content;
         } else {
           setErrorMessage('No pude procesar tu consulta. Intenta nuevamente.');
           const fallback: AssistantMessage = {
@@ -710,13 +729,38 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
             createdAt: new Date().toISOString(),
           };
           setMessages((prev) => [...prev, fallback]);
+          return fallback.content;
         }
       } finally {
         activeRequestRef.current = false;
         setIsLoading(false);
       }
     },
-    [input, isLoading, persist, queryContext, isGuest, guestQueriesCount, attachments, pdfProcessing, messages],
+    [input, isLoading, persist, queryContext, isGuest, guestQueriesCount, attachments, pdfProcessing, messages, isVoiceMode, speakText],
+  );
+
+  const handleFinishRecordingAndSend = useCallback(async () => {
+    setIsVoiceMode(true);
+    const audioFile = await stopRecording();
+    if (!audioFile) return;
+
+    setPdfProcessing(true);
+    try {
+      const processed = await processMediaFile(audioFile);
+      void handleSend('Consulta grabada por nota de voz', processed);
+    } catch (err: any) {
+      alert(err?.message || 'Error al procesar el audio grabado.');
+    } finally {
+      setPdfProcessing(false);
+    }
+  }, [stopRecording, handleSend]);
+
+  const handleLiveModalSend = useCallback(
+    async (text: string, explicitAttachments?: AssistantAttachment[]): Promise<string | null> => {
+      setIsVoiceMode(true);
+      return await handleSend(text, explicitAttachments, { skipTts: true });
+    },
+    [handleSend],
   );
 
   const handleSendRef = useRef(handleSend);
@@ -886,63 +930,6 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
     [persist, isVoiceMode, speakText],
   );
 
-  const handleLiveModalSend = useCallback(
-    async (userText: string): Promise<string | null> => {
-      return new Promise((resolve) => {
-        void (async () => {
-          const userMsg: AssistantMessage = {
-            id: nextId('user'),
-            role: 'user',
-            content: userText,
-            createdAt: new Date().toISOString(),
-          };
-          setMessages((prev) => [...prev, userMsg]);
-          setIsLoading(true);
-
-          const draftId = nextId('assistant');
-          let streamedText = '';
-          const onDelta = (delta: string) => {
-            streamedText += delta;
-          };
-
-          const history = messages
-            .filter((m) => m.role === 'user' || m.role === 'assistant')
-            .slice(-6)
-            .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
-
-          try {
-            const resp = await askDeepSeekAssistant(userText, queryContext, null, {
-              history,
-              onDelta,
-            });
-            const content = resp?.content || streamedText;
-            const { cleanedText: textAfterLiq, payload } = extractSettlementAction(content);
-            const { cleanedText: textAfterDoc, payload: docPayload } = extractDocumentAction(textAfterLiq);
-            const { cleanedText, options: continuationOptions } = extractContinuationOptions(textAfterDoc);
-
-            const finalMsg: AssistantMessage = {
-              id: draftId,
-              role: 'assistant',
-              content: cleanedText || content,
-              createdAt: new Date().toISOString(),
-              continuationOptions,
-              documentData: docPayload,
-              settlementData: payload ? executeSettlementAction(payload) : null,
-            };
-            setMessages((prev) => [...prev, finalMsg]);
-            void persist(finalMsg);
-            resolve(finalMsg.content);
-          } catch {
-            resolve('Disculpá, no pude procesar tu consulta en este momento.');
-          } finally {
-            setIsLoading(false);
-          }
-        })();
-      });
-    },
-    [messages, queryContext, persist],
-  );
-
   if (!isOpen) return null;
 
   const isUserMessage = (m: AssistantMessage): boolean =>
@@ -1093,36 +1080,61 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            {/* Toggle Modo Voz Gemini Live */}
-            {isVoiceSupported && (
-              <button
-                type="button"
-                aria-label="Abrir Modo Voz Gemini Live"
-                title="Iniciar conversación por voz estilo Gemini Live"
-                onClick={() => setIsLiveModalOpen(true)}
-                style={{
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(99, 102, 241, 0.25) 100%)',
-                  border: '1px solid #10b981',
-                  color: '#a7f3d0',
-                  height: 34,
-                  padding: isMobile ? '0 9px' : '0 12px',
-                  borderRadius: 9,
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  transition: 'all 0.15s ease',
-                  boxShadow: '0 0 12px rgba(16, 185, 129, 0.35)',
-                }}
-              >
-                <span>🎙️✨</span>
-                <span style={{ display: isMobile ? 'none' : 'inline' }}>
-                  Modo Voz Live
-                </span>
-              </button>
-            )}
+            {/* Toggle Respuesta por Voz */}
+            <button
+              type="button"
+              onClick={() => setIsVoiceMode((prev) => !prev)}
+              aria-label={isVoiceMode ? 'Desactivar voz de Tobi' : 'Activar voz de Tobi'}
+              title={isVoiceMode ? 'Voz activada (Tobi te responde hablando)' : 'Voz silenciada (solo texto)'}
+              style={{
+                background: isVoiceMode ? 'rgba(16, 185, 129, 0.18)' : 'rgba(255, 255, 255, 0.08)',
+                border: isVoiceMode ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.15)',
+                color: isVoiceMode ? '#a7f3d0' : '#94a3b8',
+                height: 34,
+                padding: isMobile ? '0 8px' : '0 11px',
+                borderRadius: 9,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              <span>{isVoiceMode ? '🔊' : '🔇'}</span>
+              <span style={{ display: isMobile ? 'none' : 'inline' }}>
+                {isVoiceMode ? 'Voz ON' : 'Voz OFF'}
+              </span>
+            </button>
+
+            {/* Botón Modo Voz Gemini Live */}
+            <button
+              type="button"
+              aria-label="Abrir Modo Voz con Tobi"
+              title="Hablar por voz en pantalla completa (estilo Gemini)"
+              onClick={() => setIsLiveModalOpen(true)}
+              style={{
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(99, 102, 241, 0.25) 100%)',
+                border: '1px solid #10b981',
+                color: '#a7f3d0',
+                height: 34,
+                padding: isMobile ? '0 9px' : '0 12px',
+                borderRadius: 9,
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                transition: 'all 0.15s ease',
+                boxShadow: '0 0 12px rgba(16, 185, 129, 0.35)',
+              }}
+            >
+              <span>🎙️</span>
+              <span style={{ display: isMobile ? 'none' : 'inline' }}>
+                Modo Voz
+              </span>
+            </button>
 
             <button
               type="button"
@@ -1434,15 +1446,32 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <button
                               type="button"
-                              onClick={() => (isSpeaking ? stopSpeaking() : speakText(m.content))}
-                              title={isSpeaking ? 'Detener voz' : 'Escuchar respuesta de Tobi en voz alta'}
+                              onClick={() => {
+                                if (isSpeaking && currentlySpeakingText === m.content) {
+                                  stopSpeaking();
+                                } else {
+                                  speakText(m.content);
+                                }
+                              }}
+                              title={
+                                isSpeaking && currentlySpeakingText === m.content
+                                  ? 'Detener voz de Tobi'
+                                  : 'Escuchar respuesta de Tobi en voz alta'
+                              }
                               style={{
-                                background: isSpeaking ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
-                                border: isSpeaking ? '1px solid #ef4444' : '1px solid rgba(148, 163, 184, 0.2)',
+                                background:
+                                  isSpeaking && currentlySpeakingText === m.content
+                                    ? 'rgba(239, 68, 68, 0.2)'
+                                    : 'rgba(16, 185, 129, 0.12)',
+                                border:
+                                  isSpeaking && currentlySpeakingText === m.content
+                                    ? '1px solid #ef4444'
+                                    : '1px solid rgba(16, 185, 129, 0.35)',
                                 borderRadius: '6px',
                                 padding: '2px 8px',
                                 fontSize: '11.5px',
-                                color: isSpeaking ? '#fca5a5' : '#94a3b8',
+                                color:
+                                  isSpeaking && currentlySpeakingText === m.content ? '#fca5a5' : '#a7f3d0',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
@@ -1450,9 +1479,9 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
                                 transition: 'all 0.15s ease',
                               }}
                             >
-                              <span>{isSpeaking ? '⏹' : '🔊'}</span>
+                              <span>{isSpeaking && currentlySpeakingText === m.content ? '⏹️' : '🔊'}</span>
                               <span style={{ fontSize: '10px', fontWeight: 600 }}>
-                                {isSpeaking ? 'Detener' : 'Voz'}
+                                {isSpeaking && currentlySpeakingText === m.content ? 'Detener' : 'Escuchar'}
                               </span>
                             </button>
                             <button
@@ -1922,52 +1951,6 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
                 </div>
               )}
 
-              {/* Banner de transcripción en tiempo real cuando el usuario habla */}
-              {isListening && (
-                <div
-                  style={{
-                    padding: '8px 12px',
-                    marginBottom: 8,
-                    borderRadius: 12,
-                    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(239, 68, 68, 0.2) 100%)',
-                    border: '1px solid rgba(239, 68, 68, 0.5)',
-                    color: '#fecaca',
-                    fontSize: 12.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 10,
-                    animation: 'tobiPulse 1.8s infinite',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
-                    <span style={{ fontSize: 16 }}>🎙️</span>
-                    <div style={{ minWidth: 0 }}>
-                      <strong style={{ color: '#fca5a5' }}>Escuchando en vivo: </strong>
-                      <span style={{ fontStyle: 'italic', color: '#ffffff' }}>
-                        {liveTranscript || 'Decile tu caso o consulta laboral…'}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={stopListening}
-                    style={{
-                      border: 'none',
-                      background: 'rgba(239, 68, 68, 0.3)',
-                      color: '#ffffff',
-                      borderRadius: 6,
-                      padding: '3px 8px',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Detener
-                  </button>
-                </div>
-              )}
-
               {/* Banner de Tobi hablando con síntesis de voz */}
               {isSpeaking && (
                 <div
@@ -2014,14 +1997,14 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
                   alignItems: 'flex-end',
                   gap: 8,
                   background: 'rgba(30,41,59,0.65)',
-                  border: isListening
+                  border: isRecording
                     ? '1px solid #ef4444'
                     : isVoiceMode
                     ? '1px solid #10b981'
                     : '1px solid rgba(99,102,241,0.35)',
                   borderRadius: 22,
                   padding: '6px 6px 6px 10px',
-                  boxShadow: isListening
+                  boxShadow: isRecording
                     ? '0 0 16px rgba(239, 68, 68, 0.35)'
                     : 'inset 0 0 0 1px rgba(255,255,255,0.02)',
                   maxWidth: '100%',
@@ -2040,14 +2023,14 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading || pdfProcessing}
+                  disabled={isLoading || pdfProcessing || isRecording}
                   aria-label="Adjuntar documento, foto o audio"
                   title="Adjuntar PDF (máx 15 págs), Word (.docx/.doc), foto o nota de voz hasta 12 MB"
                   style={{
                     background: 'none',
                     border: 'none',
                     color: attachments.length > 0 ? '#818cf8' : '#94a3b8',
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    cursor: isLoading || isRecording ? 'not-allowed' : 'pointer',
                     fontSize: 18,
                     padding: '6px 4px',
                     display: 'flex',
@@ -2060,66 +2043,117 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
                   📎
                 </button>
 
-                {/* Botón de Micrófono (Gemini Live STT en tiempo real) */}
-                {isVoiceSupported && (
+                {/* Botón de Micrófono para Grabar Directo (Estilo Gemini Web / WhatsApp) */}
+                {isAudioRecordingSupported && !isRecording && (
                   <button
                     type="button"
-                    onClick={() => setIsLiveModalOpen(true)}
+                    onClick={() => void startRecording()}
                     disabled={isLoading || pdfProcessing}
-                    aria-label="Abrir Modo Voz Gemini Live"
-                    title="Hablar por micrófono con Tobi (Modo Gemini Live)"
+                    aria-label="Grabar audio"
+                    title="Grabar consulta por voz"
                     style={{
-                      background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%)',
+                      background: 'rgba(16, 185, 129, 0.15)',
                       border: '1px solid #10b981',
                       borderRadius: '50%',
-                      width: 32,
-                      height: 32,
+                      width: 34,
+                      height: 34,
                       color: '#a7f3d0',
                       cursor: 'pointer',
-                      fontSize: 16,
+                      fontSize: 17,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
-                      boxShadow: '0 0 10px rgba(16, 185, 129, 0.3)',
+                      boxShadow: '0 0 10px rgba(16, 185, 129, 0.25)',
                     }}
                   >
                     🎙️
                   </button>
                 )}
 
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={
-                    isListening
-                      ? '🎙️ Te escucho en vivo… habla y se escribe en pantalla…'
-                      : attachments.length > 0
-                      ? `Documento adjunto: ${attachments[0].name}${attachments.length > 1 ? ` (+${attachments.length - 1} archivos)` : ''}. Escribí una indicación o enviá directo…`
-                      : isGuest
-                      ? `Escribe tu consulta laboral (${GUEST_QUERY_LIMIT - guestQueriesCount} de ${GUEST_QUERY_LIMIT} restantes)…`
-                      : 'Escribe o háblale a Tobi sobre tu caso laboral…'
-                  }
-                  rows={1}
-                  disabled={isLoading || pdfProcessing}
-                  style={{
-                    flex: 1,
-                    resize: 'none',
-                    border: 'none',
-                    outline: 'none',
-                    background: 'transparent',
-                    color: '#e2e8f0',
-                    fontSize: 14,
-                    lineHeight: 1.5,
-                    padding: '8px 0',
-                    maxHeight: 140,
-                    overflowY: 'auto',
-                    fontFamily: 'inherit',
-                    minWidth: 0,
-                  }}
-                />
+                {isRecording ? (
+                  <div
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 8,
+                      background: 'rgba(239, 68, 68, 0.14)',
+                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                      borderRadius: 14,
+                      padding: '6px 12px',
+                      animation: 'tobiPulse 1.2s infinite',
+                    }}
+                  >
+                    <span style={{ fontSize: 13, color: '#f87171', fontWeight: 700 }}>
+                      🔴 Grabando: {formatDuration(recordingDuration)}
+                    </span>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button
+                        type="button"
+                        onClick={cancelRecording}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#94a3b8',
+                          cursor: 'pointer',
+                          fontSize: 12,
+                          padding: '3px 7px',
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleFinishRecordingAndSend()}
+                        style={{
+                          background: '#10b981',
+                          border: 'none',
+                          borderRadius: 8,
+                          color: '#022c22',
+                          fontWeight: 700,
+                          fontSize: 12,
+                          padding: '4px 10px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Enviar audio
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={
+                      attachments.length > 0
+                        ? `Documento adjunto: ${attachments[0].name}${attachments.length > 1 ? ` (+${attachments.length - 1} archivos)` : ''}. Escribí una indicación o enviá directo…`
+                        : isGuest
+                        ? `Escribe tu consulta laboral (${GUEST_QUERY_LIMIT - guestQueriesCount} de ${GUEST_QUERY_LIMIT} restantes)…`
+                        : 'Escribe o tocá el micrófono 🎙️ para hablar por voz con Tobi…'
+                    }
+                    rows={1}
+                    disabled={isLoading || pdfProcessing}
+                    style={{
+                      flex: 1,
+                      resize: 'none',
+                      border: 'none',
+                      outline: 'none',
+                      background: 'transparent',
+                      color: '#e2e8f0',
+                      fontSize: 14,
+                      lineHeight: 1.5,
+                      padding: '8px 0',
+                      maxHeight: 140,
+                      overflowY: 'auto',
+                      fontFamily: 'inherit',
+                      minWidth: 0,
+                    }}
+                  />
+                )}
                 <button
                   type="button"
                   onClick={() => void handleSend()}

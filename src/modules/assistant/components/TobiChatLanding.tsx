@@ -19,6 +19,7 @@ import { TobiContinuationOptions } from './TobiContinuationOptions';
 import { TobiDocumentFormCard } from './TobiDocumentFormCard';
 import { TobiSettlementFormCard } from './TobiSettlementFormCard';
 import { TobiPeritajeCard } from './TobiPeritajeCard';
+import { TobiGeminiLiveModal } from './TobiGeminiLiveModal';
 import { TobiSidebar } from './TobiSidebar';
 import {
   listChatSessions,
@@ -542,7 +543,8 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
   const dragCounterRef = useRef<number>(0);
 
   // Estados de Voz y Casillas Rápidas
-  const [isVoiceMode] = useState(false);
+  const [isVoiceMode, setIsVoiceMode] = useState<boolean>(true);
+  const [isLiveModalOpen, setIsLiveModalOpen] = useState<boolean>(false);
   const [activeDocFormTipo, setActiveDocFormTipo] = useState<TobiDocumentType | null>(null);
   const [activeDocInitialData, setActiveDocInitialData] = useState<TobiDocumentFormInitialData | null>(null);
   const [isSettlementFormActive, setIsSettlementFormActive] = useState(false);
@@ -583,7 +585,7 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
   }, [currentSessionId]);
 
   // Síntesis de voz (Text-to-Speech) para escuchar respuestas de Tobi
-  const { isSpeaking, speakText, stopSpeaking } = useTobiVoice();
+  const { isSpeaking, currentlySpeakingText, speakText, stopSpeaking } = useTobiVoice();
 
   // Grabación de audio directa y universal con MediaRecorder (estilo Gemini Web / WhatsApp)
   const {
@@ -719,7 +721,11 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
   };
 
   const handleSend = useCallback(
-    async (rawText?: string, explicitAttachments?: AssistantAttachment[]) => {
+    async (
+      rawText?: string,
+      explicitAttachments?: AssistantAttachment[],
+      options?: { readonly skipTts?: boolean },
+    ): Promise<string | null> => {
       const activeAttachments = explicitAttachments ?? attachments;
       const text =
         (rawText ?? input).trim() ||
@@ -729,7 +735,9 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
               : `Auditoría pericial jurídica del documento adjunto (${activeAttachments[0].name})`)
           : '');
 
-      if (!text || isLoading || activeRequestRef.current || pdfProcessing) return;
+      if (!text || isLoading || activeRequestRef.current || pdfProcessing) return null;
+
+      const shouldSpeak = isVoiceMode && !options?.skipTts;
 
       activeRequestRef.current = true;
       setInput('');
@@ -880,9 +888,10 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
             return [...prev, finalMessage];
           });
           persistToSession(finalMessage);
-          if (isVoiceMode) {
+          if (shouldSpeak) {
             speakText(finalMessage.content);
           }
+          return finalMessage.content;
         } else if (streamStarted && streamedText) {
           const { cleanedText: textAfterLiq, payload: liqPayload } = extractSettlementAction(streamedText);
           const { cleanedText: textAfterDoc, payload: docPayload } = extractDocumentAction(textAfterLiq);
@@ -916,9 +925,10 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
             return [...prev, finalMessage];
           });
           persistToSession(finalMessage);
-          if (isVoiceMode) {
+          if (shouldSpeak) {
             speakText(finalMessage.content);
           }
+          return finalMessage.content;
         } else {
           // Fallback determinístico offline garantizado
           const fallback = generateOfflineAnswer(text, queryContext);
@@ -937,9 +947,10 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
             return [...prev, enrichedFallback];
           });
           persistToSession(enrichedFallback);
-          if (isVoiceMode) {
+          if (shouldSpeak) {
             speakText(enrichedFallback.content);
           }
+          return enrichedFallback.content;
         }
       } catch {
         const fallback = generateOfflineAnswer(text, queryContext);
@@ -950,15 +961,17 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
           }
           return [...prev, fallback];
         });
+        return fallback.content;
       } finally {
         activeRequestRef.current = false;
         setIsLoading(false);
       }
     },
-    [input, isLoading, pdfProcessing, attachments, messages, queryContext],
+    [input, isLoading, pdfProcessing, attachments, messages, queryContext, isVoiceMode, speakText, currentSessionId, sessions],
   );
 
   const handleFinishRecordingAndSend = useCallback(async () => {
+    setIsVoiceMode(true);
     const audioFile = await stopRecording();
     if (!audioFile) return;
 
@@ -972,6 +985,14 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
       setPdfProcessing(false);
     }
   }, [stopRecording, handleSend]);
+
+  const handleLiveModalSend = useCallback(
+    async (text: string, explicitAttachments?: AssistantAttachment[]): Promise<string | null> => {
+      setIsVoiceMode(true);
+      return await handleSend(text, explicitAttachments, { skipTts: true });
+    },
+    [handleSend],
+  );
 
   const handleClear = () => {
     setMessages([]);
@@ -1272,6 +1293,59 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, flexWrap: 'nowrap', flexShrink: 0 }}>
+          {/* Botón Modo Voz Móvil / Táctil */}
+          <button
+            type="button"
+            onClick={() => setIsLiveModalOpen(true)}
+            aria-label="Abrir Modo Voz con Tobi"
+            title="Hablar por voz en pantalla completa (estilo Gemini)"
+            style={{
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(99, 102, 241, 0.22) 100%)',
+              border: '1px solid #10b981',
+              color: '#a7f3d0',
+              height: 32,
+              padding: isMobile ? '0 9px' : '0 12px',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontSize: 12,
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              boxShadow: '0 0 12px rgba(16, 185, 129, 0.3)',
+            }}
+          >
+            <span>🎙️</span>
+            <span style={{ display: isMobile ? 'none' : 'inline' }}>Modo Voz</span>
+          </button>
+
+          {/* Toggle Respuesta por Voz */}
+          <button
+            type="button"
+            onClick={() => setIsVoiceMode((prev) => !prev)}
+            aria-label={isVoiceMode ? 'Desactivar voz de Tobi' : 'Activar voz de Tobi'}
+            title={isVoiceMode ? 'Voz activada (Tobi te responde hablando)' : 'Voz silenciada (solo texto)'}
+            style={{
+              background: isVoiceMode ? 'rgba(16, 185, 129, 0.18)' : 'rgba(255, 255, 255, 0.08)',
+              border: isVoiceMode ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.15)',
+              color: isVoiceMode ? '#a7f3d0' : '#94a3b8',
+              height: 32,
+              padding: isMobile ? '0 8px' : '0 11px',
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+            }}
+          >
+            <span>{isVoiceMode ? '🔊' : '🔇'}</span>
+            <span style={{ display: isMobile ? 'none' : 'inline' }}>
+              {isVoiceMode ? 'Voz ON' : 'Voz OFF'}
+            </span>
+          </button>
+
           {/* Selector de consultas de ejemplo */}
           <button
             type="button"
@@ -1709,6 +1783,39 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
               </div>
             </div>
 
+            {/* Botón Destacado de Voz para Trabajadores */}
+            <div style={{ marginBottom: isMobile ? 18 : 24, width: '100%', maxWidth: 680, display: 'flex', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setIsLiveModalOpen(true)}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.16) 0%, rgba(99, 102, 241, 0.16) 100%)',
+                  border: '1.5px solid rgba(16, 185, 129, 0.45)',
+                  borderRadius: 16,
+                  padding: isMobile ? '12px 14px' : '14px 20px',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 12,
+                  boxShadow: '0 4px 20px rgba(16, 185, 129, 0.2)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <span style={{ fontSize: 24 }}>🎙️✨</span>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: 800, fontSize: isMobile ? 14 : 15, color: '#a7f3d0' }}>
+                    ¿Te cuesta escribir o leer? Hablá con Tobi por voz
+                  </div>
+                  <div style={{ fontSize: isMobile ? 11.5 : 12.5, color: '#94a3b8' }}>
+                    Apretás para grabar tu caso laboral y Tobi te responde hablándote en voz alta
+                  </div>
+                </div>
+              </button>
+            </div>
+
             {/* Action Pills */}
             <div style={{ width: '100%', maxWidth: 740 }}>
               <div
@@ -1903,28 +2010,51 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
                           );
                         })()}
 
-                        {/* Botón de voz en mensaje */}
+                        {/* Botón de voz en mensaje — Accesible y claro para trabajadores */}
                         {m.role === 'assistant' && (
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
                             <button
                               type="button"
-                              onClick={() => (isSpeaking ? stopSpeaking() : speakText(m.content))}
-                              title={isSpeaking ? 'Detener voz' : 'Escuchar respuesta de Tobi'}
+                              onClick={() => {
+                                if (isSpeaking && currentlySpeakingText === m.content) {
+                                  stopSpeaking();
+                                } else {
+                                  speakText(m.content);
+                                }
+                              }}
+                              title={
+                                isSpeaking && currentlySpeakingText === m.content
+                                  ? 'Detener voz de Tobi'
+                                  : 'Escuchar esta respuesta en voz alta'
+                              }
                               style={{
-                                background: isSpeaking ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                                border: isSpeaking ? '1px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: 6,
-                                padding: '2px 8px',
-                                fontSize: 11,
-                                color: isSpeaking ? '#fca5a5' : '#94a3b8',
+                                background:
+                                  isSpeaking && currentlySpeakingText === m.content
+                                    ? 'rgba(239, 68, 68, 0.2)'
+                                    : 'rgba(16, 185, 129, 0.12)',
+                                border:
+                                  isSpeaking && currentlySpeakingText === m.content
+                                    ? '1px solid #ef4444'
+                                    : '1px solid rgba(16, 185, 129, 0.35)',
+                                borderRadius: 8,
+                                padding: '4px 10px',
+                                fontSize: 12,
+                                fontWeight: 600,
+                                color:
+                                  isSpeaking && currentlySpeakingText === m.content ? '#fca5a5' : '#a7f3d0',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: 4,
+                                gap: 5,
+                                WebkitTapHighlightColor: 'transparent',
                               }}
                             >
-                              <span>{isSpeaking ? '⏹' : '🔊'}</span>
-                              <span>{isSpeaking ? 'Detener' : 'Escuchar'}</span>
+                              <span>{isSpeaking && currentlySpeakingText === m.content ? '⏹️' : '🔊'}</span>
+                              <span>
+                                {isSpeaking && currentlySpeakingText === m.content
+                                  ? 'Detener voz'
+                                  : 'Escuchar respuesta'}
+                              </span>
                             </button>
                           </div>
                         )}
@@ -1997,49 +2127,6 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
           }}
         >
           <div style={{ maxWidth: 840, margin: '0 auto', width: '100%' }}>
-            {/* Banner de transcripción en vivo si el usuario está hablando */}
-            {isListening && (
-              <div
-                style={{
-                  padding: '8px 12px',
-                  marginBottom: 8,
-                  borderRadius: 10,
-                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(239, 68, 68, 0.2) 100%)',
-                  border: '1px solid rgba(239, 68, 68, 0.4)',
-                  color: '#fecaca',
-                  fontSize: 12.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 8,
-                  animation: 'tobiPulse 1.5s infinite',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
-                  <span>🎙️</span>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <strong>Escuchando en vivo:</strong> <em>{liveTranscript || 'Decile tu consulta laboral a Tobi…'}</em>
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={stopListening}
-                  style={{
-                    border: 'none',
-                    background: 'rgba(239, 68, 68, 0.3)',
-                    color: '#ffffff',
-                    borderRadius: 4,
-                    padding: '2px 7px',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Detener
-                </button>
-              </div>
-            )}
-
             {/* Banner de Tobi hablando */}
             {isSpeaking && (
               <div
@@ -2111,14 +2198,14 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
                 alignItems: 'center',
                 gap: 8,
                 background: 'rgba(15, 23, 42, 0.85)',
-                border: isListening
+                border: isRecording
                   ? '1px solid #ef4444'
                   : isVoiceMode
                   ? '1px solid #10b981'
                   : '1px solid rgba(52, 211, 153, 0.3)',
                 borderRadius: 16,
                 padding: '8px 12px',
-                boxShadow: isListening ? '0 0 16px rgba(239, 68, 68, 0.35)' : '0 8px 24px rgba(0,0,0,0.35)',
+                boxShadow: isRecording ? '0 0 16px rgba(239, 68, 68, 0.35)' : '0 8px 24px rgba(0,0,0,0.35)',
                 transition: 'border 0.2s ease, box-shadow 0.2s ease',
               }}
             >
@@ -2452,6 +2539,14 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
           </div>
         </div>
       )}
+
+      {/* ── MODAL INMERSIVO GEMINI WEB MOBILE (VOZ DIRECTA TÁCTIL) ── */}
+      <TobiGeminiLiveModal
+        isOpen={isLiveModalOpen}
+        onClose={() => setIsLiveModalOpen(false)}
+        onSendQuery={handleLiveModalSend}
+        isMobile={isMobile}
+      />
     </div>
   );
 };

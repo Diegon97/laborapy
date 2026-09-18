@@ -1,29 +1,37 @@
 /**
- * MODO VOZ CONVERSACIONAL GEMINI LIVE — LABORAPY (TOBI)
+ * MODO VOZ TÁCTIL TIPO GEMINI WEB MOBILE — LABORAPY (TOBI)
  *
- * Experiencia inmersiva de voz bidireccional continua:
- *  - Orbe cósmico animado que pulsa en tiempo real según el estado (Escuchando / Pensando / Hablando).
- *  - Transcripción en vivo de lo que el usuario va diciendo.
- *  - Síntesis de voz automática de la respuesta de Tobi (lectura en voz alta).
- *  - Bucle continuo de conversación: al terminar de responder Tobi, se activa la escucha automáticamente.
- *  - Sincronización completa con el historial de chat (todos los mensajes hablados quedan guardados).
+ * Experiencia sólida de voz en tres toques (sin bucle continuo de SpeechRecognition):
+ *  - 'idle':      botón circular grande "Tocá para hablar con Tobi".
+ *  - 'recording': grabación con MediaRecorder estándar (iOS/Android), contador mm:ss,
+ *                 pulso rojo, "Cancelar" y "Enviar audio a Tobi".
+ *  - 'thinking':  espera elegante mientras Tobi analiza el caso laboral.
+ *  - 'responding': lectura en voz alta inmediata de la respuesta (TTS en español con
+ *                 cadencia humana) + texto legible y controles grandes de reproducción.
  */
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import type { AssistantAttachment } from '../types';
+import { processMediaFile } from '../mediaProcessor';
+import { useAudioRecorder, formatDuration } from '../hooks/useAudioRecorder';
 import {
   sanitizeForSpeech,
   getBestSpanishVoice,
   splitIntoSpeechChunks,
-  getPreferredSpeechLang,
   isIOSDevice,
 } from '../hooks/useTobiVoice';
 
 export interface TobiGeminiLiveModalProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
-  readonly onSendQuery: (text: string) => Promise<string | null>;
+  readonly onSendQuery: (text: string, explicitAttachments?: AssistantAttachment[]) => Promise<string | null>;
   readonly isMobile?: boolean;
 }
+
+type TobiLiveStatus = 'idle' | 'thinking' | 'responding';
+
+/** Texto que acompaña a la nota de voz grabada en el historial del chat. */
+const RECORDED_AUDIO_QUERY = 'Consulta grabada por nota de voz';
 
 export const TobiGeminiLiveModal: React.FC<TobiGeminiLiveModalProps> = ({
   isOpen,
@@ -31,23 +39,44 @@ export const TobiGeminiLiveModal: React.FC<TobiGeminiLiveModalProps> = ({
   onSendQuery,
   isMobile = false,
 }) => {
-  const [liveTranscript, setLiveTranscript] = useState<string>('');
+  const [status, setStatus] = useState<TobiLiveStatus>('idle');
   const [lastAssistantResponse, setLastAssistantResponse] = useState<string>('');
-  const [status, setStatus] = useState<'idle' | 'listening' | 'thinking' | 'speaking' | 'connecting'>('idle');
-  const [statusMessage, setStatusMessage] = useState<string>('Tocá el micrófono para comenzar');
-  const [isMicMuted, setIsMicMuted] = useState<boolean>(false);
-  const [manualText, setManualText] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
-  const recognitionRef = useRef<any>(null);
-  const isSpeakingRef = useRef<boolean>(false);
   const isComponentOpenRef = useRef<boolean>(isOpen);
   isComponentOpenRef.current = isOpen;
+  const isSpeakingRef = useRef<boolean>(false);
+  // Token de reproducción: ignora callbacks de lecturas ya reemplazadas.
+  const playbackIdRef = useRef<number>(0);
+
+  const {
+    isRecording,
+    recordingDuration,
+    isSupported: isAudioRecordingSupported,
+    startRecording,
+    stopRecording,
+    cancelRecording,
+  } = useAudioRecorder();
 
   const stopSpeaking = () => {
+    playbackIdRef.current += 1;
+    isSpeakingRef.current = false;
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
-    isSpeakingRef.current = false;
+  };
+
+  /** Desbloquea SpeechSynthesis dentro del gesto del usuario (requisito de iOS WebKit). */
+  const unlockSpeechSynthesis = () => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    try {
+      const dummy = new SpeechSynthesisUtterance('');
+      dummy.lang = 'es-ES';
+      dummy.volume = 0;
+      window.speechSynthesis.speak(dummy);
+    } catch {
+      // ignore
+    }
   };
 
   const speakAssistantText = (text: string): Promise<void> => {
@@ -63,23 +92,18 @@ export const TobiGeminiLiveModal: React.FC<TobiGeminiLiveModalProps> = ({
         return;
       }
 
-      // Desbloquear audio en iOS WebKit
-      try {
-        const dummy = new SpeechSynthesisUtterance('');
-        dummy.lang = 'es-ES';
-        window.speechSynthesis.speak(dummy);
-      } catch {
-        // ignore
-      }
-
       window.speechSynthesis.cancel();
+      unlockSpeechSynthesis();
+
+      playbackIdRef.current += 1;
+      const playbackId = playbackIdRef.current;
       isSpeakingRef.current = true;
-      setStatus('speaking');
-      setStatusMessage('Tobi está hablando…');
+      setStatus('responding');
 
       const chunks = splitIntoSpeechChunks(cleaned);
       if (chunks.length === 0) {
         isSpeakingRef.current = false;
+        setStatus('idle');
         resolve();
         return;
       }
@@ -89,24 +113,32 @@ export const TobiGeminiLiveModal: React.FC<TobiGeminiLiveModalProps> = ({
       const preferredLang = voice?.lang || (isIOSDevice() ? 'es-MX' : 'es-ES');
 
       const playChunk = (index: number) => {
-        if (!isSpeakingRef.current || !isComponentOpenRef.current || index >= chunks.length) {
+        if (playbackId !== playbackIdRef.current || !isComponentOpenRef.current) {
+          resolve();
+          return;
+        }
+
+        if (index >= chunks.length) {
           isSpeakingRef.current = false;
+          if (isComponentOpenRef.current) {
+            setStatus('idle');
+          }
           resolve();
           return;
         }
 
         const utterance = new SpeechSynthesisUtterance(chunks[index]);
         utterance.lang = preferredLang;
-        utterance.rate = 0.98; // Cadencia natural y pausada
+        utterance.rate = 0.98; // Cadencia humana natural
         utterance.pitch = 1.0;
         if (voice) utterance.voice = voice;
 
         utterance.onend = () => {
-          if (!isSpeakingRef.current || !isComponentOpenRef.current) {
+          if (playbackId !== playbackIdRef.current || !isComponentOpenRef.current) {
             resolve();
             return;
           }
-          // Micro-pausa de respiración natural de 50ms entre oraciones
+          // Micro-pausa de respiración natural entre oraciones
           setTimeout(() => {
             playChunk(index + 1);
           }, 50);
@@ -114,7 +146,7 @@ export const TobiGeminiLiveModal: React.FC<TobiGeminiLiveModalProps> = ({
 
         utterance.onerror = (e) => {
           console.warn('SpeechSynthesis chunk error in Live modal:', e);
-          if (!isSpeakingRef.current || !isComponentOpenRef.current) {
+          if (playbackId !== playbackIdRef.current || !isComponentOpenRef.current) {
             resolve();
             return;
           }
@@ -128,178 +160,115 @@ export const TobiGeminiLiveModal: React.FC<TobiGeminiLiveModalProps> = ({
     });
   };
 
-  const handleUserSaid = async (userText: string) => {
-    const trimmed = userText.trim();
-    if (!trimmed || !isComponentOpenRef.current) return;
-
-    setStatus('thinking');
-    setStatusMessage('Tobi está analizando tu caso…');
-
-    try {
-      const response = await onSendQuery(trimmed);
-      if (response && isComponentOpenRef.current) {
-        setLastAssistantResponse(response);
-        await speakAssistantText(response);
-      }
-    } catch {
-      if (isComponentOpenRef.current) {
-        setStatusMessage('Hubo un inconveniente de conexión.');
-      }
-    } finally {
-      if (isComponentOpenRef.current && !isMicMuted) {
-        startListeningLoop();
-      } else {
-        setStatus('idle');
-      }
-    }
+  const handleStartRecording = async () => {
+    setErrorMessage('');
+    setLastAssistantResponse('');
+    stopSpeaking();
+    unlockSpeechSynthesis(); // Desbloqueo iOS dentro del tap del usuario
+    await startRecording();
   };
 
-  const startListeningLoop = () => {
+  const handleCancelRecording = () => {
+    cancelRecording();
+    setStatus('idle');
+  };
+
+  const handleSendRecording = async () => {
+    unlockSpeechSynthesis(); // Desbloqueo iOS dentro del tap del usuario
+    setErrorMessage('');
+
+    const audioFile = await stopRecording();
     if (!isComponentOpenRef.current) return;
 
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      alert('Tu navegador no cuenta con la API de reconocimiento de voz. Podés escribir por teclado.');
-      onClose();
+    if (!audioFile) {
+      setStatus('idle');
+      setErrorMessage('No se capturó audio. Tocá de nuevo para grabar tu consulta.');
       return;
     }
 
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.abort();
-      } catch {
-        // ignore
-      }
-    }
-
-    setStatus('connecting');
-    setStatusMessage('Iniciando micrófono…');
-
-    const watchdogTimer = setTimeout(() => {
-      if (isComponentOpenRef.current && !isSpeakingRef.current) {
-        setStatus('idle');
-        setStatusMessage('Tocá el orbe o el micrófono para hablar');
-      }
-    }, 2500);
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false; // Frase por frase para streaming interactivo
-    recognition.interimResults = true;
-    recognition.lang = getPreferredSpeechLang();
-
-    let finalTranscript = '';
-
-    recognition.onstart = () => {
-      clearTimeout(watchdogTimer);
-      setStatus('listening');
-      setStatusMessage('Te escucho en vivo… decime tu consulta');
-      setLiveTranscript('');
-    };
-
-    recognition.onresult = (event: any) => {
-      let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        const t = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += (finalTranscript ? ' ' : '') + t;
-        } else {
-          interim += t;
-        }
-      }
-      setLiveTranscript(finalTranscript || interim);
-    };
-
-    recognition.onerror = (event: any) => {
-      clearTimeout(watchdogTimer);
-      console.warn('Recognition error in Live mode:', event.error);
-      if (event.error === 'not-allowed') {
-        setStatusMessage('Permiso de micrófono bloqueado en tu navegador.');
-      } else if (event.error === 'service-not-allowed') {
-        setStatusMessage('En iPhone, activá Dictado en Ajustes > General > Teclado.');
-      } else if (event.error === 'language-not-supported') {
-        setStatusMessage('Idioma ajustado a español. Tocá para reintentar.');
-      } else if (event.error === 'no-speech') {
-        setStatusMessage('No detecté sonido. Tocá el orbe para hablar de nuevo.');
-      } else {
-        setStatusMessage('Tocá el orbe o el micrófono para hablar');
-      }
-      setStatus('idle');
-    };
-
-    recognition.onend = () => {
-      clearTimeout(watchdogTimer);
-      const textToProcess = finalTranscript.trim();
-      if (textToProcess) {
-        void handleUserSaid(textToProcess);
-      } else {
-        setStatus('idle');
-        setStatusMessage('Tocá el orbe o el micrófono para hablar');
-      }
-    };
-
-    recognitionRef.current = recognition;
-
+    setStatus('thinking');
     try {
-      recognition.start();
+      const processed = await processMediaFile(audioFile);
+      const response = await onSendQuery(RECORDED_AUDIO_QUERY, processed);
+      if (!isComponentOpenRef.current) return;
+
+      if (response) {
+        setLastAssistantResponse(response);
+        await speakAssistantText(response);
+      } else {
+        setErrorMessage('No pude procesar tu consulta de voz. Probá de nuevo o consultá por escrito.');
+        setStatus('idle');
+      }
     } catch (err) {
-      clearTimeout(watchdogTimer);
-      console.warn('No se pudo iniciar recognition:', err);
+      if (!isComponentOpenRef.current) return;
+      setErrorMessage(
+        err instanceof Error ? err.message : 'Hubo un inconveniente con tu consulta de voz.',
+      );
       setStatus('idle');
-      setStatusMessage('Tocá el orbe o el micrófono para hablar');
     }
   };
 
-  const toggleMic = () => {
-    if (status === 'listening' || status === 'connecting') {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch {
-          // ignore
-        }
-      }
-      setIsMicMuted(true);
-      setStatus('idle');
-      setStatusMessage('Micrófono en pausa. Tocá el orbe o el botón para hablar.');
-    } else {
-      setIsMicMuted(false);
-      stopSpeaking();
-      startListeningLoop();
-    }
+  const handleNewVoiceQuery = () => {
+    void handleStartRecording();
+  };
+
+  const handleSeeInChat = () => {
+    stopSpeaking();
+    onClose();
   };
 
   useEffect(() => {
     if (isOpen) {
-      setIsMicMuted(false);
-      setStatus('connecting');
-      setStatusMessage('Conectando con Tobi…');
-      // Iniciar escucha directamente
-      const timer = setTimeout(() => {
-        startListeningLoop();
-      }, 100);
-      return () => clearTimeout(timer);
-    } else {
-      stopSpeaking();
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch {
-          // ignore
-        }
-      }
       setStatus('idle');
+      setErrorMessage('');
+    } else {
+      playbackIdRef.current += 1;
+      isSpeakingRef.current = false;
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      cancelRecording();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  useEffect(() => {
+    return () => {
+      playbackIdRef.current += 1;
+      isSpeakingRef.current = false;
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
   if (!isOpen) return null;
+
+  const viewState: 'idle' | 'recording' | 'thinking' | 'responding' = isRecording
+    ? 'recording'
+    : status;
+
+  const controlButtonBase: React.CSSProperties = {
+    border: 'none',
+    borderRadius: 14,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    fontWeight: 800,
+    fontSize: isMobile ? 14 : 15,
+    padding: isMobile ? '13px 18px' : '14px 22px',
+    minHeight: 48,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    WebkitTapHighlightColor: 'transparent',
+  };
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Modo Voz Gemini Live con Tobi"
+      aria-label="Modo Voz con Tobi"
       style={{
         position: 'fixed',
         inset: 0,
@@ -341,18 +310,29 @@ export const TobiGeminiLiveModal: React.FC<TobiGeminiLiveModalProps> = ({
               gap: 6,
             }}
           >
-            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#10b981', animation: 'tobiPulse 1.5s infinite' }} />
-            TOBI LIVE
+            <span
+              style={{
+                display: 'inline-block',
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: '#10b981',
+                animation: 'tobiPulse 1.5s infinite',
+              }}
+            />
+            TOBI VOZ
           </span>
-          <span style={{ fontSize: 12, color: '#94a3b8' }}>
-            Voz Bidireccional Ley 213/93
-          </span>
+          <span style={{ fontSize: 12, color: '#94a3b8' }}>Nota de voz · Ley 213/93</span>
         </div>
 
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => {
+            stopSpeaking();
+            onClose();
+          }}
           title="Salir del modo voz"
+          aria-label="Cerrar modo voz"
           style={{
             background: 'rgba(255, 255, 255, 0.08)',
             border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -371,7 +351,7 @@ export const TobiGeminiLiveModal: React.FC<TobiGeminiLiveModalProps> = ({
         </button>
       </div>
 
-      {/* ÁREA CENTRAL: ORBE CÓSMICO ESTILO GEMINI LIVE */}
+      {/* ÁREA CENTRAL */}
       <div
         style={{
           display: 'flex',
@@ -382,296 +362,309 @@ export const TobiGeminiLiveModal: React.FC<TobiGeminiLiveModalProps> = ({
           width: '100%',
           maxWidth: 580,
           margin: '20px 0',
+          textAlign: 'center',
         }}
       >
-        {/* Contenedor del Orbe con pulsos concéntricos */}
-        <div
-          style={{
-            position: 'relative',
-            width: isMobile ? 180 : 230,
-            height: isMobile ? 180 : 230,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 28,
-          }}
-        >
-          {/* Anillos de pulsación */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: -20,
-              borderRadius: '50%',
-              background: status === 'listening'
-                ? 'radial-gradient(circle, rgba(239, 68, 68, 0.25) 0%, transparent 70%)'
-                : status === 'speaking'
-                ? 'radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%)'
-                : 'radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%)',
-              animation: 'tobiLiveRipple 2.4s ease-out infinite',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              inset: -10,
-              borderRadius: '50%',
-              border: status === 'listening'
-                ? '2px solid rgba(239, 68, 68, 0.4)'
-                : status === 'speaking'
-                ? '2px solid rgba(52, 211, 153, 0.5)'
-                : '2px solid rgba(129, 140, 248, 0.35)',
-              animation: 'tobiPulse 2s ease-in-out infinite',
-            }}
-          />
+        {viewState === 'idle' && (
+          <>
+            <button
+              type="button"
+              onClick={() => void handleStartRecording()}
+              aria-label="Tocá para hablar con Tobi"
+              title="Tocá para hablar con Tobi"
+              style={{
+                width: isMobile ? 112 : 132,
+                height: isMobile ? 112 : 132,
+                borderRadius: '50%',
+                border: 'none',
+                cursor: 'pointer',
+                background: 'radial-gradient(circle at 35% 35%, #818cf8 0%, #4f46e5 60%, #1e1b4b 100%)',
+                boxShadow: '0 0 50px rgba(99, 102, 241, 0.65)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: isMobile ? 46 : 56,
+                animation: 'tobiPulse 3s ease-in-out infinite',
+                WebkitTapHighlightColor: 'transparent',
+                marginBottom: 26,
+              }}
+            >
+              🎙️
+            </button>
 
-          {/* Orbe Central */}
-          <div
-            onClick={toggleMic}
-            role="button"
-            tabIndex={0}
-            title={status === 'listening' ? 'Tocá para pausar micrófono' : 'Tocá para hablar con Tobi'}
-            style={{
-              width: '100%',
-              height: '100%',
-              borderRadius: '50%',
-              cursor: 'pointer',
-              userSelect: 'none',
-              WebkitTapHighlightColor: 'transparent',
-              background: status === 'listening'
-                ? 'radial-gradient(circle at 35% 35%, #f87171 0%, #dc2626 50%, #7f1d1d 100%)'
-                : status === 'connecting'
-                ? 'radial-gradient(circle at 35% 35%, #38bdf8 0%, #0284c7 60%, #0369a1 100%)'
-                : status === 'thinking'
-                ? 'conic-gradient(from 0deg, #6366f1, #38bdf8, #10b981, #f59e0b, #6366f1)'
-                : status === 'speaking'
-                ? 'radial-gradient(circle at 35% 35%, #34d399 0%, #059669 60%, #064e3b 100%)'
-                : 'radial-gradient(circle at 35% 35%, #818cf8 0%, #4f46e5 60%, #1e1b4b 100%)',
-              boxShadow: status === 'listening'
-                ? '0 0 50px rgba(239, 68, 68, 0.65)'
-                : status === 'connecting'
-                ? '0 0 50px rgba(56, 189, 248, 0.65)'
-                : status === 'speaking'
-                ? '0 0 50px rgba(16, 185, 129, 0.65)'
-                : '0 0 50px rgba(99, 102, 241, 0.65)',
-              animation: status === 'thinking' || status === 'connecting' ? 'tobiSpin 2s linear infinite' : 'tobiPulse 3s ease-in-out infinite',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: isMobile ? 36 : 48,
-              transition: 'background 0.4s ease, box-shadow 0.4s ease',
-            }}
-          >
-            <span>
-              {status === 'listening'
-                ? '🎙️'
-                : status === 'connecting'
-                ? '🔄'
-                : status === 'speaking'
-                ? '✨'
-                : status === 'thinking'
-                ? '⏳'
-                : '💬'}
-            </span>
-          </div>
-        </div>
-
-        {/* Mensaje de Estado */}
-        <div
-          style={{
-            fontSize: isMobile ? 16 : 18,
-            fontWeight: 700,
-            color: '#f8fafc',
-            textAlign: 'center',
-            marginBottom: 16,
-            minHeight: 26,
-          }}
-        >
-          {statusMessage}
-        </div>
-
-        {/* Tarjeta de Transcripción / Respuesta Hablada */}
-        <div
-          style={{
-            width: '100%',
-            maxWidth: 520,
-            minHeight: 70,
-            maxHeight: 140,
-            overflowY: 'auto',
-            padding: '12px 16px',
-            borderRadius: 14,
-            background: 'rgba(15, 23, 42, 0.75)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            fontSize: isMobile ? 13 : 14,
-            lineHeight: 1.5,
-            color: '#cbd5e1',
-            textAlign: 'center',
-            boxSizing: 'border-box',
-          }}
-        >
-          {liveTranscript ? (
-            <div>
-              <span style={{ color: '#fca5a5', fontWeight: 700 }}>Vos: </span>
-              <span style={{ color: '#ffffff' }}>"{liveTranscript}"</span>
+            <div style={{ fontSize: isMobile ? 17 : 20, fontWeight: 800, color: '#f8fafc', marginBottom: 8 }}>
+              Tocá para hablar con Tobi
             </div>
-          ) : lastAssistantResponse ? (
-            <div>
-              <span style={{ color: '#34d399', fontWeight: 700 }}>Tobi: </span>
-              <span>{lastAssistantResponse.replace(/:::[\s\S]*?:::/g, '').slice(0, 200)}…</span>
+            <div style={{ fontSize: isMobile ? 12.5 : 14, color: '#94a3b8', maxWidth: 420, lineHeight: 1.5 }}>
+              Grabá tu consulta laboral y Tobi la analiza y te responde en voz alta, con el texto en pantalla.
             </div>
-          ) : (
-            <span style={{ color: '#64748b' }}>
-              Hablale naturalmente sobre tu consulta, despido o funcionario…
-            </span>
-          )}
-        </div>
+            {!isAudioRecordingSupported && (
+              <div
+                style={{
+                  marginTop: 16,
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  color: '#fca5a5',
+                  fontSize: 12.5,
+                  lineHeight: 1.45,
+                  maxWidth: 420,
+                }}
+              >
+                Tu navegador no soporta grabación de audio. Podés escribir tu consulta directamente en el chat.
+              </div>
+            )}
+          </>
+        )}
 
-        {/* Entrada alternativa de texto para móvil si el micrófono no responde */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!manualText.trim()) return;
-            const t = manualText.trim();
-            setManualText('');
-            void handleUserSaid(t);
-          }}
-          style={{
-            width: '100%',
-            maxWidth: 520,
-            display: 'flex',
-            gap: 8,
-            marginTop: 12,
-            boxSizing: 'border-box',
-          }}
-        >
-          <input
-            type="text"
-            value={manualText}
-            onChange={(e) => setManualText(e.target.value)}
-            placeholder="O escribí tu consulta acá para escuchar a Tobi…"
+        {viewState === 'recording' && (
+          <>
+            <div
+              style={{
+                position: 'relative',
+                width: isMobile ? 132 : 152,
+                height: isMobile ? 132 : 152,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 20,
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: -18,
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(239, 68, 68, 0.28) 0%, transparent 70%)',
+                  animation: 'tobiLiveRipple 1.8s ease-out infinite',
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: -8,
+                  borderRadius: '50%',
+                  border: '2px solid rgba(239, 68, 68, 0.5)',
+                  animation: 'tobiPulse 1.4s ease-in-out infinite',
+                }}
+              />
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle at 35% 35%, #f87171 0%, #dc2626 50%, #7f1d1d 100%)',
+                  boxShadow: '0 0 50px rgba(239, 68, 68, 0.65)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: isMobile ? 44 : 52,
+                }}
+              >
+                🔴
+              </div>
+            </div>
+
+            <div
+              style={{
+                fontSize: isMobile ? 30 : 38,
+                fontWeight: 800,
+                color: '#ffffff',
+                fontVariantNumeric: 'tabular-nums',
+                marginBottom: 6,
+              }}
+            >
+              {formatDuration(recordingDuration)}
+            </div>
+            <div style={{ fontSize: isMobile ? 13 : 14.5, color: '#fca5a5', marginBottom: 24 }}>
+              Grabando tu consulta laboral…
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={handleCancelRecording}
+                style={{
+                  ...controlButtonBase,
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#e2e8f0',
+                }}
+              >
+                ✕ Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSendRecording()}
+                style={{
+                  ...controlButtonBase,
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: '#022c22',
+                  boxShadow: '0 0 25px rgba(16, 185, 129, 0.5)',
+                }}
+              >
+                ✓ Enviar audio a Tobi
+              </button>
+            </div>
+          </>
+        )}
+
+        {viewState === 'thinking' && (
+          <>
+            <div
+              style={{
+                width: isMobile ? 84 : 96,
+                height: isMobile ? 84 : 96,
+                borderRadius: '50%',
+                background: 'conic-gradient(from 0deg, #6366f1, #38bdf8, #10b981, #f59e0b, #6366f1)',
+                animation: 'tobiSpin 1.1s linear infinite',
+                marginBottom: 24,
+                boxShadow: '0 0 40px rgba(99, 102, 241, 0.55)',
+              }}
+            />
+            <div style={{ fontSize: isMobile ? 16 : 19, fontWeight: 800, color: '#f8fafc', marginBottom: 6 }}>
+              Analizando tu caso laboral…
+            </div>
+            <div style={{ fontSize: isMobile ? 12.5 : 14, color: '#94a3b8', maxWidth: 420, lineHeight: 1.5 }}>
+              Tobi está contrastando tu consulta con la Ley 213/93 y la jurisprudencia de la CSJ.
+            </div>
+          </>
+        )}
+
+        {viewState === 'responding' && (
+          <>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '5px 14px',
+                borderRadius: 999,
+                background: 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.4)',
+                color: '#34d399',
+                fontSize: 12,
+                fontWeight: 700,
+                marginBottom: 14,
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: '#10b981',
+                  animation: 'tobiPulse 1.2s infinite',
+                }}
+              />
+              Tobi te está respondiendo en voz alta
+            </div>
+
+            <div
+              style={{
+                width: '100%',
+                maxWidth: 520,
+                maxHeight: isMobile ? '42dvh' : '46dvh',
+                overflowY: 'auto',
+                padding: '16px 18px',
+                borderRadius: 16,
+                background: 'rgba(15, 23, 42, 0.78)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                fontSize: isMobile ? 15 : 16,
+                lineHeight: 1.65,
+                color: '#e2e8f0',
+                textAlign: 'left',
+                boxSizing: 'border-box',
+                whiteSpace: 'pre-wrap',
+                marginBottom: 22,
+              }}
+            >
+              {lastAssistantResponse}
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => stopSpeaking()}
+                style={{
+                  ...controlButtonBase,
+                  background: 'rgba(239, 68, 68, 0.18)',
+                  border: '1px solid rgba(239, 68, 68, 0.5)',
+                  color: '#fca5a5',
+                }}
+              >
+                ⏹️ Detener voz
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (lastAssistantResponse) {
+                    void speakAssistantText(lastAssistantResponse);
+                  }
+                }}
+                style={{
+                  ...controlButtonBase,
+                  background: 'rgba(16, 185, 129, 0.16)',
+                  border: '1px solid rgba(16, 185, 129, 0.5)',
+                  color: '#a7f3d0',
+                }}
+              >
+                🔊 Escuchar de nuevo
+              </button>
+              <button
+                type="button"
+                onClick={handleNewVoiceQuery}
+                style={{
+                  ...controlButtonBase,
+                  background: 'rgba(99, 102, 241, 0.18)',
+                  border: '1px solid rgba(99, 102, 241, 0.5)',
+                  color: '#c7d2fe',
+                }}
+              >
+                🎙️ Otra consulta por voz
+              </button>
+              <button
+                type="button"
+                onClick={handleSeeInChat}
+                style={{
+                  ...controlButtonBase,
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#e2e8f0',
+                }}
+              >
+                💬 Ver en el chat
+              </button>
+            </div>
+          </>
+        )}
+
+        {errorMessage && (
+          <div
             style={{
-              flex: 1,
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              marginTop: 18,
+              padding: '10px 14px',
               borderRadius: 12,
-              padding: '8px 12px',
-              fontSize: 13,
-              color: '#ffffff',
-              outline: 'none',
-              fontFamily: 'inherit',
-            }}
-          />
-          <button
-            type="submit"
-            disabled={!manualText.trim() || status === 'thinking'}
-            style={{
-              background: manualText.trim() ? '#10b981' : 'rgba(255, 255, 255, 0.1)',
-              color: manualText.trim() ? '#022c22' : '#64748b',
-              fontWeight: 700,
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              color: '#fca5a5',
               fontSize: 12.5,
-              border: 'none',
-              borderRadius: 12,
-              padding: '8px 14px',
-              cursor: manualText.trim() ? 'pointer' : 'not-allowed',
+              lineHeight: 1.45,
+              maxWidth: 440,
             }}
           >
-            Enviar
-          </button>
-        </form>
+            {errorMessage}
+          </div>
+        )}
       </div>
 
-      {/* CONTROLES INFERIORES */}
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 420,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 24,
-        }}
-      >
-        {/* Botón Silenciar / Escuchar voz de Tobi */}
-        <button
-          type="button"
-          onClick={() => {
-            if (status === 'speaking' || isSpeakingRef.current) {
-              stopSpeaking();
-            } else if (lastAssistantResponse) {
-              void speakAssistantText(lastAssistantResponse);
-            } else {
-              void speakAssistantText('Hola, soy Tobi. Tocá el micrófono o el orbe central para hacerme tu consulta laboral.');
-            }
-          }}
-          title={status === 'speaking' ? 'Silenciar a Tobi' : 'Escuchar a Tobi en voz alta'}
-          style={{
-            width: 50,
-            height: 50,
-            borderRadius: '50%',
-            background: status === 'speaking' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-            border: status === 'speaking' ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255, 255, 255, 0.2)',
-            color: '#ffffff',
-            cursor: 'pointer',
-            fontSize: 20,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          {status === 'speaking' ? '🔇' : '🔊'}
-        </button>
-
-        {/* Botón Principal de Micrófono (Hablar / Pausar) */}
-        <button
-          type="button"
-          onClick={toggleMic}
-          title={status === 'listening' ? 'Pausar micrófono' : 'Activar micrófono'}
-          style={{
-            width: 72,
-            height: 72,
-            borderRadius: '50%',
-            background: status === 'listening'
-              ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
-              : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-            border: 'none',
-            color: '#ffffff',
-            cursor: 'pointer',
-            fontSize: 30,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: status === 'listening'
-              ? '0 0 25px rgba(239, 68, 68, 0.6)'
-              : '0 0 25px rgba(16, 185, 129, 0.6)',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          {status === 'listening' ? '⏸' : '🎙️'}
-        </button>
-
-        {/* Botón Salir y volver al texto */}
-        <button
-          type="button"
-          onClick={onClose}
-          title="Cerrar y ver chat de texto"
-          style={{
-            width: 50,
-            height: 50,
-            borderRadius: '50%',
-            background: 'rgba(239, 68, 68, 0.2)',
-            border: '1px solid rgba(239, 68, 68, 0.4)',
-            color: '#fca5a5',
-            cursor: 'pointer',
-            fontSize: 18,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          ✕
-        </button>
+      {/* PIE */}
+      <div style={{ fontSize: 11.5, color: '#64748b', textAlign: 'center', maxWidth: 460, lineHeight: 1.45 }}>
+        Grabá una sola consulta por vez. Tobi responde en voz alta y también muestra el texto en pantalla.
       </div>
 
       <style>

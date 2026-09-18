@@ -9,6 +9,9 @@
  *  - Text-to-Speech (TTS) con SpeechSynthesis:
  *      * Lee las respuestas de Tobi con voz en español (removiendo markdown y JSON).
  *      * Control de pausa/cancelar.
+ *      * Expone el texto exacto que se está reproduciendo (currentlySpeakingText)
+ *        y un token incremental (playbackToken) para que la UI muestre "Detener"
+ *        sólo en la burbuja activa y descarte callbacks de lecturas reemplazadas.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -23,6 +26,10 @@ export interface UseTobiVoiceReturn {
   readonly isListening: boolean;
   readonly isSpeaking: boolean;
   readonly liveTranscript: string;
+  /** Texto crudo (markdown) que se está leyendo en voz alta ahora mismo; '' si no hay voz activa. */
+  readonly currentlySpeakingText: string;
+  /** Token incremental de reproducción: cambia en cada speak/stop para invalidar callbacks. */
+  readonly playbackToken: number;
   readonly startListening: () => void;
   readonly stopListening: () => void;
   readonly toggleListening: () => void;
@@ -106,14 +113,15 @@ export function getBestSpanishVoice(voices: SpeechSynthesisVoice[]): SpeechSynth
 /**
  * Segmenta el texto en fragmentos oracionales cortos para una cadencia humana y
  * evitar el bug de congelamiento de Chrome (speech synthesis freeze after 15s).
+ * Implementado SIN lookbehind para compatibilidad total con WebKit/iOS antiguos.
  */
 export function splitIntoSpeechChunks(text: string, maxChunkLength = 160): string[] {
   if (!text) return [];
   const clean = text.trim();
   if (!clean) return [];
 
-  // Dividir por delimitadores de oraciones mayores (punto, interrogación, exclamación, dos puntos, saltos de línea)
-  const sentences = clean.split(/(?<=[.?!:;\n])\s+/);
+  // Agrupa cada oración junto a sus signos de puntuación finales (sin lookbehind).
+  const sentences = clean.match(/[^.!?:;\n]+[.!?:;\n]*/g) ?? [clean];
   const chunks: string[] = [];
 
   for (const sentence of sentences) {
@@ -123,11 +131,13 @@ export function splitIntoSpeechChunks(text: string, maxChunkLength = 160): strin
     if (s.length <= maxChunkLength) {
       chunks.push(s);
     } else {
-      // Si la oración es muy larga, dividir por comas para simular pausas de respiración
-      const subParts = s.split(/(?<=[,])\s+/);
+      // Si la oración es muy larga, dividir por comas para simular pausas de respiración.
+      const subParts = s.match(/[^,]+,\s*|[^,]+$/g) ?? [s];
       let currentBuffer = '';
 
-      for (const part of subParts) {
+      for (const rawPart of subParts) {
+        const part = rawPart.trim();
+        if (!part) continue;
         if (!currentBuffer) {
           currentBuffer = part;
         } else if (currentBuffer.length + part.length + 1 <= maxChunkLength) {
@@ -168,6 +178,8 @@ export function useTobiVoice(options?: UseTobiVoiceOptions): UseTobiVoiceReturn 
   const [isListening, setIsListening] = useState<boolean>(false);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [liveTranscript, setLiveTranscript] = useState<string>('');
+  const [currentlySpeakingText, setCurrentlySpeakingText] = useState<string>('');
+  const [playbackToken, setPlaybackToken] = useState<number>(0);
 
   const recognitionRef = useRef<any>(null);
   const isSupportedRef = useRef<boolean>(false);
@@ -176,6 +188,8 @@ export function useTobiVoice(options?: UseTobiVoiceOptions): UseTobiVoiceReturn 
 
   const cancelPlaybackRef = useRef<boolean>(false);
   const voiceCacheRef = useRef<SpeechSynthesisVoice | null>(null);
+  // Token de reproducción: invalida callbacks (onend/onerror) de lecturas ya reemplazadas.
+  const playbackIdRef = useRef<number>(0);
 
   // Detección segura de soporte de Web Speech API
   const isVoiceSupported =
@@ -208,6 +222,7 @@ export function useTobiVoice(options?: UseTobiVoiceOptions): UseTobiVoiceReturn 
   useEffect(() => {
     return () => {
       cancelPlaybackRef.current = true;
+      playbackIdRef.current += 1;
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
@@ -240,9 +255,12 @@ export function useTobiVoice(options?: UseTobiVoiceOptions): UseTobiVoiceReturn 
 
     // Si ya estaba hablando Tobi, silenciarlo primero
     cancelPlaybackRef.current = true;
+    playbackIdRef.current += 1;
+    setPlaybackToken(playbackIdRef.current);
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
+      setCurrentlySpeakingText('');
     }
 
     const SpeechRecognition =
@@ -314,10 +332,13 @@ export function useTobiVoice(options?: UseTobiVoiceOptions): UseTobiVoiceReturn 
 
   const stopSpeaking = useCallback(() => {
     cancelPlaybackRef.current = true;
+    playbackIdRef.current += 1;
+    setPlaybackToken(playbackIdRef.current);
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
     setIsSpeaking(false);
+    setCurrentlySpeakingText('');
   }, []);
 
   const speakText = useCallback((rawMarkdown: string) => {
@@ -326,31 +347,40 @@ export function useTobiVoice(options?: UseTobiVoiceOptions): UseTobiVoiceReturn 
     const cleaned = sanitizeForSpeech(rawMarkdown);
     if (!cleaned) return;
 
-    // Desbloquear audio síncronamente en iOS WebKit (Chrome/Safari en iPhone)
+    // Detener reproducción en curso e invalidar callbacks previos.
+    cancelPlaybackRef.current = false;
+    playbackIdRef.current += 1;
+    const playbackId = playbackIdRef.current;
+    setPlaybackToken(playbackId);
+    window.speechSynthesis.cancel();
+
+    // Desbloquear audio síncronamente en iOS WebKit (Chrome/Safari en iPhone).
     try {
       const unlock = new SpeechSynthesisUtterance('');
       unlock.lang = 'es-ES';
+      unlock.volume = 0;
       window.speechSynthesis.speak(unlock);
     } catch {
       // ignore
     }
 
-    // Detener reproducción en curso
-    cancelPlaybackRef.current = false;
-    window.speechSynthesis.cancel();
-
     const chunks = splitIntoSpeechChunks(cleaned);
     if (chunks.length === 0) return;
 
     setIsSpeaking(true);
+    setCurrentlySpeakingText(rawMarkdown);
 
     const voices = window.speechSynthesis.getVoices();
     const voice = voiceCacheRef.current || getBestSpanishVoice(voices);
     const preferredLang = voice?.lang || (isIOSDevice() ? 'es-MX' : 'es-ES');
 
     const speakChunk = (index: number) => {
-      if (cancelPlaybackRef.current || index >= chunks.length) {
-        setIsSpeaking(false);
+      if (cancelPlaybackRef.current || playbackId !== playbackIdRef.current || index >= chunks.length) {
+        // Sólo limpiamos el estado si seguimos siendo la reproducción vigente
+        if (playbackId === playbackIdRef.current) {
+          setIsSpeaking(false);
+          setCurrentlySpeakingText('');
+        }
         return;
       }
 
@@ -363,8 +393,7 @@ export function useTobiVoice(options?: UseTobiVoiceOptions): UseTobiVoiceReturn 
       }
 
       utterance.onend = () => {
-        if (cancelPlaybackRef.current) {
-          setIsSpeaking(false);
+        if (cancelPlaybackRef.current || playbackId !== playbackIdRef.current) {
           return;
         }
         // Pausa de respiración natural de 50ms entre oraciones
@@ -374,9 +403,16 @@ export function useTobiVoice(options?: UseTobiVoiceOptions): UseTobiVoiceReturn 
       };
 
       utterance.onerror = (e) => {
-        console.warn('SpeechSynthesis error on chunk:', e);
-        if (cancelPlaybackRef.current) {
+        const reason = (e as SpeechSynthesisErrorEvent)?.error;
+        console.warn('SpeechSynthesis error on chunk:', reason || e);
+        if (cancelPlaybackRef.current || playbackId !== playbackIdRef.current) {
+          return;
+        }
+        // Errores terminales: no encadenar el resto de los chunks en cascada.
+        if (reason === 'language-unavailable' || (reason as string) === 'not-allowed') {
+          cancelPlaybackRef.current = true;
           setIsSpeaking(false);
+          setCurrentlySpeakingText('');
           return;
         }
         speakChunk(index + 1);
@@ -394,6 +430,8 @@ export function useTobiVoice(options?: UseTobiVoiceOptions): UseTobiVoiceReturn 
     isListening,
     isSpeaking,
     liveTranscript,
+    currentlySpeakingText,
+    playbackToken,
     startListening,
     stopListening,
     toggleListening,

@@ -1,10 +1,11 @@
 /**
- * HOOK DE GRABACIÓN DE AUDIO SIMPLE Y ROBUSTO — LABORAPY (TOBI)
+ * HOOK DE GRABACIÓN DE AUDIO SIMPLE Y SEGURO — LABORAPY (TOBI)
  * Estilo Gemini Web / WhatsApp / ChatGPT:
  *  - Graba audio mediante HTML5 MediaRecorder estándar.
  *  - Compatible con iOS (iPhone/iPad en Safari/Chrome con audio/mp4) y Android/Desktop (audio/webm).
  *  - Provee timer de duración en segundos.
  *  - Devuelve un objeto File estándar listo para procesar con processMediaFile.
+ *  - Maneja errores del grabador y pérdida de la pista de audio, liberando el micrófono.
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
@@ -17,6 +18,9 @@ export interface UseAudioRecorderReturn {
   readonly stopRecording: () => Promise<File | null>;
   readonly cancelRecording: () => void;
 }
+
+/** Tope duro de duración de una nota de voz (evita crecimiento ilimitado en memoria). */
+export const MAX_RECORDING_DURATION_SECONDS = 300;
 
 export function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -54,7 +58,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<any>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isSupported =
     typeof window !== 'undefined' &&
@@ -62,10 +66,18 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     Boolean(navigator.mediaDevices?.getUserMedia) &&
     typeof MediaRecorder !== 'undefined';
 
-  const cleanupTracks = () => {
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const cleanupTracks = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => {
         try {
+          track.onended = null;
           track.stop();
         } catch {
           // ignore
@@ -73,29 +85,59 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       });
       streamRef.current = null;
     }
-  };
+  }, []);
 
-  const cancelRecording = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+  const detachHandlers = useCallback((recorder: MediaRecorder | null) => {
+    if (!recorder) return;
+    recorder.ondataavailable = null;
+    recorder.onstop = null;
+    recorder.onerror = null;
+  }, []);
 
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.ondataavailable = null;
-      mediaRecorderRef.current.onstop = null;
-      try {
-        mediaRecorderRef.current.stop();
-      } catch {
-        // ignore
-      }
-    }
-
-    cleanupTracks();
+  const resetState = useCallback(() => {
     chunksRef.current = [];
     setIsRecording(false);
     setRecordingDuration(0);
   }, []);
+
+  /** Aborta la grabación ante fallos del dispositivo/pista, libera el micrófono y avisa. */
+  const failRecorder = useCallback(
+    (message: string) => {
+      clearTimer();
+      const recorder = mediaRecorderRef.current;
+      if (recorder && recorder.state !== 'inactive') {
+        detachHandlers(recorder);
+        try {
+          recorder.stop();
+        } catch {
+          // ignore
+        }
+      }
+      mediaRecorderRef.current = null;
+      cleanupTracks();
+      resetState();
+      alert(message);
+    },
+    [clearTimer, cleanupTracks, detachHandlers, resetState],
+  );
+
+  const cancelRecording = useCallback(() => {
+    clearTimer();
+
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      detachHandlers(recorder);
+      try {
+        recorder.stop();
+      } catch {
+        // ignore
+      }
+    }
+    mediaRecorderRef.current = null;
+
+    cleanupTracks();
+    resetState();
+  }, [clearTimer, cleanupTracks, detachHandlers, resetState]);
 
   // Limpiar recursos al desmontar el componente
   useEffect(() => {
@@ -117,8 +159,13 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       streamRef.current = stream;
 
       const mimeType = getSupportedAudioMimeType();
-      const options = mimeType ? { mimeType } : undefined;
-      const recorder = new MediaRecorder(stream, options);
+      let recorder: MediaRecorder;
+      try {
+        recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      } catch {
+        // Algunos navegadores rechazan mimeTypes aún "soportados": instanciar sin opciones.
+        recorder = new MediaRecorder(stream);
+      }
       mediaRecorderRef.current = recorder;
       chunksRef.current = [];
 
@@ -128,17 +175,53 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         }
       };
 
+      recorder.onerror = (event) => {
+        const err = (event as unknown as { error?: { message?: string } })?.error;
+        failRecorder(err?.message || 'Se interrumpió la grabación de audio. Probá de nuevo.');
+      };
+
+      const [audioTrack] = stream.getAudioTracks();
+      if (audioTrack) {
+        audioTrack.onended = () => {
+          if (mediaRecorderRef.current === recorder && recorder.state !== 'inactive') {
+            failRecorder('Se perdió el acceso al micrófono. Verificá los permisos e intentá de nuevo.');
+          }
+        };
+      }
+
       recorder.start(250); // Recolectar datos en intervalos cortos de 250ms
       setIsRecording(true);
       setRecordingDuration(0);
 
       const startTime = Date.now();
       timerRef.current = setInterval(() => {
-        setRecordingDuration(Math.floor((Date.now() - startTime) / 1000));
+        const seconds = Math.floor((Date.now() - startTime) / 1000);
+
+        if (seconds >= MAX_RECORDING_DURATION_SECONDS) {
+          clearTimer();
+          if (recorder.state !== 'inactive') {
+            detachHandlers(recorder);
+            try {
+              recorder.stop();
+            } catch {
+              // ignore
+            }
+          }
+          mediaRecorderRef.current = null;
+          cleanupTracks();
+          resetState();
+          alert(
+            `Alcanzaste el máximo de ${MAX_RECORDING_DURATION_SECONDS / 60} minutos por nota de voz. Enviá tu consulta y volvé a grabar el resto.`,
+          );
+          return;
+        }
+
+        setRecordingDuration(seconds);
       }, 1000);
     } catch (err: any) {
       console.warn('Error al iniciar grabación de micrófono:', err);
       cleanupTracks();
+      mediaRecorderRef.current = null;
       setIsRecording(false);
       if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
         alert('Permiso de micrófono no otorgado. Habilitá el micrófono en los permisos de tu navegador.');
@@ -146,14 +229,11 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         alert('No se pudo acceder al micrófono: ' + (err?.message || 'Error desconocido'));
       }
     }
-  }, [cancelRecording]);
+  }, [cancelRecording, cleanupTracks, clearTimer, detachHandlers, failRecorder, resetState]);
 
   const stopRecording = useCallback((): Promise<File | null> => {
     return new Promise((resolve) => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      clearTimer();
 
       const recorder = mediaRecorderRef.current;
       if (!recorder || recorder.state === 'inactive') {
@@ -164,6 +244,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
       recorder.onstop = () => {
         cleanupTracks();
+        mediaRecorderRef.current = null;
         const rawMime = recorder.mimeType || 'audio/webm';
         const blob = new Blob(chunksRef.current, { type: rawMime });
         chunksRef.current = [];
@@ -197,7 +278,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         resolve(null);
       }
     });
-  }, [cancelRecording]);
+  }, [cancelRecording, cleanupTracks, clearTimer]);
 
   return {
     isRecording,
