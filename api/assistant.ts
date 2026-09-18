@@ -1400,9 +1400,9 @@ export default async function handler(req: any, res: any): Promise<void> {
     ...(process.env.TOBI_LOCAL_LLM_URL?.trim()
       ? [{ name: 'local', run: (p: string, b: number) => callLocalLLM(p, Math.min(b, 45000), parsed.history, onDelta, abortController.signal, (m: string) => failedReasons.push(`local: ${m}`)) }]
       : []),
+    { name: 'cloudflare', run: (p, b) => callCloudflare(p, Math.min(b, 12000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`cloudflare: ${m}`)) },
     { name: 'gemini', run: (p, b) => callGemini(p, Math.min(b, 10000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`gemini: ${m}`)) },
     { name: 'groq', run: (p, b) => callGroq(p, Math.min(b, 15000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`groq: ${m}`)) },
-    { name: 'cloudflare', run: (p, b) => callCloudflare(p, Math.min(b, 8000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`cloudflare: ${m}`)) },
     { name: 'openrouter', run: (p, b) => callOpenRouter(p, Math.min(b, 10000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`openrouter: ${m}`)) },
     { name: 'openai', run: (p, b) => callOpenAI(p, Math.min(b, 15000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`openai: ${m}`)) },
     { name: 'deepseek', run: (p, b) => callDeepSeek(p, Math.min(b, 15000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`deepseek: ${m}`)) },
