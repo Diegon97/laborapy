@@ -70,14 +70,15 @@ const MAX_BASE64_LENGTH = 5.5 * 1024 * 1024; // ~4MB raw binary limit
 
 function sanitizeAttachment(raw: any): SanitizedAttachment | null {
   if (!raw || typeof raw !== 'object') return null;
-  const mimeType = typeof raw.mimeType === 'string' ? raw.mimeType.toLowerCase().trim() : '';
+  const rawMime = typeof raw.mimeType === 'string' ? raw.mimeType.toLowerCase().trim() : '';
+  const mimeType = rawMime.split(';')[0]; // Ignorar sufijos como ;codecs=opus
   const data = typeof raw.data === 'string' ? raw.data.trim() : '';
   const name = typeof raw.name === 'string' ? raw.name.slice(0, 120) : 'documento';
 
   if (!ALLOWED_MIME_TYPES.has(mimeType)) return null;
   if (!data || data.length > MAX_BASE64_LENGTH) return null;
 
-  const cleanBase64 = data.replace(/^data:[^;]+;base64,/, '').trim();
+  const cleanBase64 = data.replace(/^data:[^,]+,/, '').trim();
   // Validar caracteres base64 válidos
   if (!/^[A-Za-z0-9+/=]+$/.test(cleanBase64.slice(0, 1000))) return null;
 

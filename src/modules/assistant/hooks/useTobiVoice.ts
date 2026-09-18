@@ -65,48 +65,37 @@ export function getPreferredSpeechLang(): string {
 export function getBestSpanishVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
   if (!voices || voices.length === 0) return null;
 
-  // 1. Voces neuronales de Microsoft (Edge / Windows 11 / Chrome en Windows)
-  // Ej: "Microsoft Jorge Online (Natural) - Spanish (Mexico)", "Microsoft Gonzalo Online (Natural)"
-  const naturalOnline = voices.find((v) => {
-    const name = v.name.toLowerCase();
-    const isLangSpanish = v.lang.toLowerCase().startsWith('es');
-    return isLangSpanish && (name.includes('natural') || name.includes('online') || name.includes('neural'));
-  });
+  const isLangSpanish = (v: SpeechSynthesisVoice) => v.lang.toLowerCase().startsWith('es');
+  const getName = (v: SpeechSynthesisVoice) => v.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const MALE_NAMES = ['jorge', 'juan', 'gonzalo', 'diego', 'carlos', 'alonso', 'tomas', 'alvaro', 'pablo', 'antonio', 'federico', 'paco'];
+  const FEMALE_NAMES = ['monica', 'paulina', 'sabina', 'elena', 'conchita', 'laura', 'helena', 'lucia', 'maria', 'victoria', 'isabel'];
+
+  const isMale = (v: SpeechSynthesisVoice) => MALE_NAMES.some(n => getName(v).includes(n));
+  const isFemale = (v: SpeechSynthesisVoice) => FEMALE_NAMES.some(n => getName(v).includes(n));
+
+  // 1. Voces masculinas explícitas (Prioridad absoluta para Tobi)
+  const maleVoice = voices.find(v => isLangSpanish(v) && isMale(v));
+  if (maleVoice) return maleVoice;
+
+  // 2. Voces neuronales sin género explícito en el nombre (evitando las explícitamente femeninas)
+  const naturalOnline = voices.find(v => isLangSpanish(v) && !isFemale(v) && (getName(v).includes('natural') || getName(v).includes('online') || getName(v).includes('neural')));
   if (naturalOnline) return naturalOnline;
 
-  // 2. Voces neuronales de Google (Chrome en Android / Mac / PC)
-  const googleSpanish = voices.find((v) => {
-    const name = v.name.toLowerCase();
-    const isLangSpanish = v.lang.toLowerCase().startsWith('es');
-    return isLangSpanish && name.includes('google');
-  });
-  if (googleSpanish) return googleSpanish;
-
-  // 3. Voces mejoradas de Apple (Safari en iOS / macOS / Chrome iOS)
-  const appleEnhanced = voices.find((v) => {
-    const name = v.name.toLowerCase();
-    const isLangSpanish = v.lang.toLowerCase().startsWith('es');
-    return isLangSpanish && (name.includes('enhanced') || name.includes('premium') || name.includes('compact') || name.includes('siri'));
-  });
+  const appleEnhanced = voices.find(v => isLangSpanish(v) && !isFemale(v) && (getName(v).includes('enhanced') || getName(v).includes('premium')));
   if (appleEnhanced) return appleEnhanced;
 
-  // 4. Voces de calidad estándar de Apple en iOS (Mónica, Paulina, Jorge, Juan)
-  const appleStandard = voices.find((v) => {
-    const name = v.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const isLangSpanish = v.lang.toLowerCase().startsWith('es');
-    return isLangSpanish && (name.includes('monica') || name.includes('paulina') || name.includes('jorge') || name.includes('juan'));
-  });
-  if (appleStandard) return appleStandard;
+  const googleSpanish = voices.find(v => isLangSpanish(v) && !isFemale(v) && getName(v).includes('google'));
+  if (googleSpanish) return googleSpanish;
 
-  // 5. Español latinoamericano preferente (es-MX, es-US, es-419, es-PY, es-AR)
-  const latinSpanish = voices.find((v) => {
+  // 3. Fallbacks (si solo hay voces femeninas o genéricas, agarramos lo que haya de LATAM)
+  const latinSpanish = voices.find(v => {
     const lang = v.lang.toLowerCase();
-    return lang === 'es-mx' || lang === 'es-us' || lang === 'es-419' || lang === 'es-py' || lang === 'es-ar';
+    return !isFemale(v) && (lang === 'es-mx' || lang === 'es-us' || lang === 'es-419' || lang === 'es-py' || lang === 'es-ar');
   });
   if (latinSpanish) return latinSpanish;
 
-  // 6. Cualquier voz en español
-  const anySpanish = voices.find((v) => v.lang.toLowerCase().startsWith('es'));
+  const anySpanish = voices.find(isLangSpanish);
   return anySpanish || null;
 }
 

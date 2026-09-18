@@ -1887,5 +1887,395 @@
     "instruction": "¿Cómo debe notificarse la providencia de autos en el proceso laboral paraguayo según el Código Procesal del Trabajo?",
     "output": "La providencia de autos en el proceso laboral debe notificarse en forma automática (por ministerio de la ley), en virtud de la regla general consagrada en el artículo 81 del Código Procesal del Trabajo (C.P.T.). Las resoluciones que obligatoriamente deben notificarse por cédula se encuentran taxativamente enumeradas en el artículo 82 del C.P.T., catálogo dentro del cual no figura la providencia de autos; por tanto, su notificación automática no vulnera el derecho a la defensa en juicio ni el artículo 256 de la Constitución Nacional.",
     "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Puede un empleador negar a un trabajador los beneficios de un plan de retiro voluntario alegando presentación extemporánea si previamente otorgó dicho beneficio fuera de plazo a otros dependientes?",
+    "output": "No. De acuerdo con el principio de igualdad de trato que rige las relaciones laborales, el empleador no puede actuar de manera discriminatoria concediendo discrecionalmente beneficios a ciertos dependientes y negándoselos a otros en idénticas condiciones. Si la patronal abona la compensación por retiro voluntario a trabajadores que la solicitaron fuera del plazo fijado en el plan invocando un «carácter de excepción», tiene la carga probatoria de demostrar de manera fehaciente las circunstancias legítimas de dicha excepción; de lo contrario, quebranta el principio de igualdad entre los trabajadores y debe extender dicho beneficio al requirente en idéntica situación.\n\n(Nota jurisprudencial e histórica: Criterio convalidado por la Sala Constitucional de la Corte Suprema de Justicia en el A. y S. N° 129/2000 «Rubén Zayas Gutman c/ Banco de la Nación Argentina s/ Compensación por retiro voluntario», confirmando la condena al banco al pago de G. 55.470.532 más intereses, suma correspondiente a valores de la época de los hechos en la década de 1990).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la anulación de una sentencia laboral por haberse dictado antes de quedar firme la providencia de 'autos para sentencia' si la parte recurrente no demuestra el perjuicio concreto ni individualiza las pruebas que pretendía diligenciar?",
+    "output": "No, no procede la nulidad. Conforme al principio de trascendencia que rige las nulidades procesales en el derecho paraguayo («no existe la nulidad por la nulidad misma»), el dictado de una resolución judicial antes de quedar firme el proveído de «autos para sentencia» no justifica por sí solo su anulación si la parte afectada no precisa ni demuestra qué pruebas concretas pretendía diligenciar ni el perjuicio real que le ocasionó a su derecho a la defensa en juicio (Corte Suprema de Justicia, Sala Constitucional, Acuerdo y Sentencia N° 102/2000).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Cuáles son los requisitos fundamentales de admisibilidad de una acción de inconstitucionalidad contra resoluciones judiciales en el marco de un proceso laboral paraguayo?",
+    "output": "De acuerdo con el criterio de la Sala Constitucional de la Corte Suprema de Justicia (Acuerdo y Sentencia N° 99/2000) y las disposiciones del Código Procesal Civil (Arts. 550 y 557 aplicables supletoriamente):\n\n1. **Precisión del agravio constitucional:** El accionante debe individualizar con claridad la lesión concreta a sus legítimos derechos y citar de forma expresa la norma, derecho, garantía o principio constitucional infringido por la resolución impugnada. La omisión de estos extremos faculta a la Corte a desestimar la acción sin más trámite.\n\n2. **Agotamiento de recursos ordinarios:** La acción de inconstitucionalidad reviste carácter excepcional y subsidiario; no procede contra resoluciones dictadas en primera instancia (como autos interlocutorios que resuelven incidentes o recursos de reposición) si aún existen vías recursivas ordinarias disponibles ante el tribunal de apelación competente.\n\n3. **Materia estrictamente procesal:** Las discrepancias o vicios meramente procesales (por ejemplo, la validez o invalidez de una cédula de notificación practicada por ujier) no habilitan por sí solas la vía constitucional, salvo que impliquen una vulneración directa a garantías de rango constitucional como el debido proceso o el derecho a la defensa.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Resulta aplicable el régimen de estabilidad laboral del Código del Trabajo a los contratos regidos por el Protocolo de Trabajo y Seguridad Social de Yacyretá ante la falta de previsión en dicho tratado?",
+    "output": "Sí. Conforme a la jurisprudencia de los tribunales laborales y la Corte Suprema de Justicia (Acuerdo y Sentencia N° 226/2000), la omisión de normas sobre estabilidad laboral en el Protocolo de Trabajo y Seguridad Social de Yacyretá debe ser suplida mediante la aplicación de las disposiciones del Código del Trabajo (Capítulo X y concordantes), en concordancia con la garantía constitucional de la estabilidad laboral y con el criterio del propio Protocolo que sujeta la terminación del contrato de trabajo a la legislación del lugar de su celebración. Asimismo, la CSJ reafirma que la interpretación y aplicación analógica efectuada por los juzgadores ordinarios de las leyes vigentes frente a vacíos normativos no constituye arbitrariedad ni habilita la acción de inconstitucionalidad como tercera instancia. (Nota histórica: en este pronunciamiento dictado en el año 2000 se confirmó la condena de instancias ordinarias por Gs. 29.588.787 a favor del trabajador).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Se vulnera el debido proceso o la defensa en juicio si en segunda instancia laboral se dispone la recepción oral de la expresión de agravios habiéndose presentado también por escrito?",
+    "output": "No se conculca el derecho a la defensa en juicio ni el debido proceso constitucional. Según la jurisprudencia de la Sala Constitucional de la Corte Suprema de Justicia, si la parte recurrente tuvo la oportunidad de presentar sus agravios por escrito y adicionalmente en forma oral durante una audiencia fijada por el Tribunal de Apelación en lo Laboral, se hallan plenamente garantizados sus derechos de defensa y contradictorio, tratándose de cuestiones meramente procesales que no revisten rango constitucional para viabilizar una acción de inconstitucionalidad.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la acción de inconstitucionalidad en el fuero laboral cuando el empleador cuestiona la valoración probatoria o la interpretación de las normas del Código Laboral hechas por los jueces de instancia ordinaria?",
+    "output": "No, no procede. De acuerdo con el criterio invariable de la Sala Constitucional de la Corte Suprema de Justicia de Paraguay (v.gr., Acuerdo y Sentencia N° 96/2000 en 'Miguel Ángel Tofoletti Rius c/ Librería Internacional S.A.'), la vía de la inconstitucionalidad es de carácter excepcional y la Corte no constituye un tribunal de tercera instancia.\n\nPor tanto, no es admisible para reabrir el examen de hechos controvertidos, revalorar pruebas o discutir la interpretación legal efectuada por los magistrados ordinarios conforme a su ciencia y conciencia. La simple disconformidad de una de las partes con el criterio hermenéutico o aplicativo de las instancias ordinarias no amerita una declaración de arbitrariedad ni configura una vulneración de preceptos constitucionales.\n\n(Nota histórica: El caso analizado proviene de una condena laboral dictada en 1998/1999 por la suma de Gs. 47.806.405, monto que debe apreciarse en el contexto de los valores y salarios vigentes en dicha época).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿En qué casos procede el recurso de reposición ante la Corte Suprema de Justicia y qué consecuencia procesal puede acarrear su interposición indebida o dilatoria en el marco de un litigio laboral?",
+    "output": "Conforme al artículo 17 de la Ley N° 609/95 'Que organiza la Corte Suprema de Justicia', el recurso de reposición ante dicha máxima instancia únicamente es admisible contra providencias de mero trámite o contra resoluciones de regulación de honorarios originadas en esa misma sede.\n\nSi una de las partes interpone este recurso contra fallos o resoluciones definitivas de la Corte con fines meramente dilatorios (reiterando planteamientos ya resueltos o recusaciones previas), la Sala Constitucional/Corte Suprema no solo declarará la improcedencia absoluta del recurso, sino que además se encuentra facultada para aplicar sanciones disciplinarias a los profesionales intervinientes, tales como un apercibimiento severo con anotación en su legajo personal (conforme al criterio sentado en el A. y S. N° 220 del 28 de abril de 2000 en el juicio 'Luis Antonio Achar Villalba y otros c/ Azucarera Iturbe S.A. s/ reintegro al trabajo y cobro de salarios caídos').",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede el recurso de aclaratoria contra un fallo de la Sala Constitucional de la CSJ dictado en un juicio laboral para inquirir si se valoraron determinadas pruebas?",
+    "output": "No, es improcedente. Conforme al criterio de la Sala Constitucional de la Corte Suprema de Justicia (ver A. y S. N° 105/2000 en autos «Luis Antonio Achar Villalba y otros c/ Azucarera Iturbe S.A. s/ reintegro al trabajo y cobro de salarios caídos»), el recurso de aclaratoria no puede ser utilizado con carácter de absolución de posiciones para cuestionar si fueron o no considerados determinados elementos probatorios. La Sala Constitucional no se encuentra obligada a referirse exhaustivamente a todos los elementos de juicio de las instancias ordinarias, sino a fundar su decisión en aquellos criterios pertinentes para constatar la transgresión o no de normas constitucionales. Pretensiones de este tipo no se encuadran en los supuestos previstos en el Art. 387 del Código Procesal Civil.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Constituye una vulneración del derecho a la defensa en un juicio laboral que el Tribunal declare desierto el recurso de apelación por vencimiento del plazo legal?",
+    "output": "No. De acuerdo con la jurisprudencia de la Sala Constitucional de la Corte Suprema de Justicia (ver A. y S. N° 320/2000 en «Aparicio Fernández c/ Empresa de Transporte Choferes del Chaco S.R.L.»), no se configura vulneración del derecho a la defensa cuando el tribunal tiene por decaído el derecho no ejercido en término y declara desierto el recurso de apelación. Si la parte no ejerce sus facultades dentro del plazo perentorio fijado por la ley procesal laboral, dicha omisión es imputable exclusivamente a su propia inactividad, encontrándose la resolución judicial plenamente ajustada a derecho y a la realidad procesal.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Qué consecuencia procesal acarrea la falta de contestación de la demanda en el fuero laboral paraguayo respecto a la relación de dependencia y la antigüedad alegadas por el trabajador?",
+    "output": "Conforme al artículo 114 del Código Procesal Laboral paraguayo, la falta de contestación oportuna de la demanda genera una presunción legal a favor de los extremos fácticos afirmados por el trabajador (ficta confessio). En consecuencia, los jueces de mérito se encuentran plenamente facultados para tener por demostradas tanto la existencia de la relación de dependencia como la antigüedad denunciada en la demanda, en particular cuando se adminicula con la valoración de pruebas testificales aportadas al juicio.\n\n(Aclaración de contexto histórico: En el caso analizado, A. y S. N° 122 del año 2000, la condena impuesta en segunda instancia fue de Gs. 13.187.670 por rubros laborales e indemnización por accidente de tránsito/laboral, cifra correspondiente a valores salariales e indemnizatorios vigentes a fines de la década de 1990).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "En un juicio sobre justificación de causal de despido en el que la demanda patronal es rechazada, ¿procede la liquidación de salarios caídos durante la suspensión si estos fueron reconocidos en los considerandos de la sentencia pero se omitió incluirlos en la parte resolutiva?",
+    "output": "Sí, es procedente. Conforme a la doctrina de la Sala Constitucional de la Corte Suprema de Justicia (Acuerdo y Sentencia N° 289/2000), no constituye arbitrariedad admitir la liquidación de salarios caídos correspondientes al tiempo en que los dependientes estuvieron suspendidos durante el litigio, aun cuando dicha condena no haya quedado plasmada expresamente en la parte resolutiva pero sí en los considerandos de la sentencia definitiva.\n\nEsta interpretación se sustenta en dos pilares:\n1. El principio de irrenunciabilidad de los derechos laborales (art. 86 de la Constitución Nacional de Paraguay).\n2. Lo dispuesto de manera taxativa por el art. 96 del Código del Trabajo, el cual establece que si el empleador no prueba la causal de despido alegada, queda legalmente obligado a reintegrar al trabajador en su empleo y a pagarle el salario y demás remuneraciones devengadas durante el período de suspensión procesal.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es viable utilizar la acción de inconstitucionalidad para discutir la valoración de las pruebas sobre la relación laboral o la antigüedad resueltas en las instancias ordinarias?",
+    "output": "No. La Corte Suprema de Justicia del Paraguay ha reiterado que la acción de inconstitucionalidad no constituye una tercera instancia procesal para reabrir el debate sobre la apreciación y valoración de las pruebas efectuadas por los jueces ordinarios. Resulta improcedente la acción cuando el accionante se limita a reiterar agravios ya expuestos en la apelación ordinaria, dado que las sentencias fundadas en la presunción por falta de contestación de demanda (art. 114 del CPL) y en la valoración de las pruebas testificales constituyen resoluciones debidamente motivadas y carecen de tacha de arbitrariedad constitucional.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente el recurso de aclaratoria ante la Corte Suprema de Justicia si en una sentencia constitucional se omitió pronunciamiento sobre la imposición de costas en un juicio laboral?",
+    "output": "Sí. De acuerdo con el criterio de la Sala Constitucional de la Corte Suprema de Justicia (v.gr., Acuerdo y Sentencia N° 944/2001 en los autos «Raúl Linares c/ Consorcio ETIC s/ Reintegro y cobro de guaraníes en diversos conceptos»), procede el recurso de aclaratoria cuando el tribunal haya incurrido en omisión respecto a la condena o imposición de costas procesales. En tal caso, corresponde subsanar el fallo e imponer las costas a la parte perdidosa, conforme al principio objetivo de la derrota consagrado en el artículo 192 del Código Procesal Civil, aplicable supletoriamente.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es válida la cédula de notificación cursada a una empresa demandada en un juicio laboral en el domicilio que declaró e inscribió ante el Instituto de Previsión Social (IPS), si esta alega que su sede central o domicilio real es otro?",
+    "output": "Sí, es plenamente válida. De acuerdo con el criterio de la Corte Suprema de Justicia del Paraguay (Sala Constitucional, Acuerdo y Sentencia N° 385/2000), las notificaciones practicadas en el domicilio que la patronal consignó en su Hoja de Inscripción Patronal del IPS cumplen con las prescripciones de la ley y no vulneran el derecho a la defensa en juicio (art. 17 de la Constitución Nacional), especialmente si por escritura pública la sociedad previó la facultad de establecer sucursales o representaciones en dicha circunscripción territorial. Por lo tanto, no procede el incidente de nulidad de actuaciones fundado en que la sede principal o domicilio real de la empresa se encuentra en otra ciudad.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la acción de inconstitucionalidad contra sentencias laborales ordinarias para cuestionar la valoración de pruebas sobre la antigüedad del trabajador?",
+    "output": "No. De acuerdo con la doctrina de la Sala Constitucional de la Corte Suprema de Justicia del Paraguay (Acuerdo y Sentencia N° 887/2001), la acción de inconstitucionalidad es una vía extraordinaria y de excepción que no puede ser utilizada como una tercera instancia para reabrir el debate o reexaminar la valoración de pruebas ya analizadas en las instancias ordinarias. Siempre que los jueces de primera y segunda instancia hayan fundado debidamente sus resoluciones en la normativa aplicable y en los elementos de convicción arrimados al juicio (como declaraciones testificales no tachadas o absolución de posiciones no desvirtuadas que acrediten el inicio de la relación laboral), no existe arbitrariedad que justifique la nulidad constitucional.\n\n(Nota histórica: en el fallo del año 2001 citado, se confirmó la condena al empleador por la suma histórica de Gs. 16.500.000 en concepto de cobro de guaraníes en diversos conceptos laborales).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "En el marco de un juicio laboral en Paraguay, ¿es válida la notificación de la demanda a una persona jurídica diligenciada en una sucursal o en el domicilio registrado ante el Instituto de Previsión Social (IPS)?",
+    "output": "Sí, la notificación es plenamente válida. Según el criterio de la Corte Suprema de Justicia de Paraguay (Sala Constitucional, A. y S. N° 386/2000), resultan válidas las cédulas de notificación practicadas en una sucursal, agencia o representación de una sociedad mercantil cuando sus estatutos la facultan a operar en dicha circunscripción y, en particular, cuando la firma ha constituido y declarado ese domicilio en su Hoja de Inscripción Patronal ante el Instituto de Previsión Social (IPS). En tales circunstancias, no existe violación del derecho a la defensa en juicio (art. 17 de la CN) y resulta improcedente el incidente de nulidad de actuaciones deducido con el argumento de que la sede central o domicilio fiscal se encuentra en otra localidad.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la acción de inconstitucionalidad por supuesta arbitrariedad para reabrir el debate sobre cuestiones procesales (como incidentes de nulidad) ya resueltas en las instancias ordinarias en un juicio laboral?",
+    "output": "No. Conforme a la jurisprudencia uniforme de la Sala Constitucional de la Corte Suprema de Justicia de Paraguay (ver Ac. y Sent. N° 549/2000 en «Banco do Brasil S.A. c/ Manuel Emilio Suarez Sarquis s/ Justificación de causal de despido»), la acción de inconstitucionalidad no constituye una instancia para reabrir el debate sobre cuestiones que han sido ampliamente consideradas, debatidas y resueltas por los magistrados de las instancias ordinarias en ejercicio de sus facultades legales y bajo criterios razonables. La arbitrariedad solo se configura cuando existe un claro e injustificado apartamiento de la solución prevista en la ley para el caso o cuando la resolución carece enteramente de fundamentación.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la acción de inconstitucionalidad ante la Corte Suprema de Justicia para revisar la valoración de pruebas sobre la existencia de una relación laboral resuelta por los tribunales de apelación ordinarios?",
+    "output": "No. Conforme al criterio constante de la Sala Constitucional de la Corte Suprema de Justicia de Paraguay (v.gr., Acuerdo y Sentencia N° 949/2001 en el juicio 'Francisco Silvio Delfino c/ Policlínica Mayo'), la acción de inconstitucionalidad es una vía extraordinaria que tiene por único objeto comprobar vicios o transgresiones a las garantías del debido proceso y normas constitucionales. No actúa como un tribunal de tercera instancia para reexaminar hechos o valoración de pruebas ya debatidos y resueltos en instancias ordinarias ante la mera disconformidad de la parte recurrente, siempre que el fallo impugnado se encuentre fundado en ley y no adolezca de arbitrariedad. (Nota: En este caso del año 2001, la condena por cobro de guaraníes ascendió a Gs. 35.048.632, suma que corresponde a valores históricos de la época).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Cuáles son los elementos esenciales que configuran la existencia de un contrato o relación de trabajo subordinado según el análisis judicial laboral?",
+    "output": "Conforme a los presupuestos analizados por los tribunales laborales y referidos en el A&S N° 949/2001, la relación contractual de trabajo queda válidamente configurada y probada al demostrarse la concurrencia de cuatro notas tipificantes fundamentales: 1) Prestación personal del servicio (actividad personal), 2) Subordinación jurídica respecto al empleador, 3) Onerosidad (derecho a percibir una remuneración o salario) y 4) Durabilidad (prestación continua o de tracto sucesivo). Acreditados estos extremos, surge plenamente la obligación del empleador de responder por los créditos laborales correspondientes.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente plantear una acción de inconstitucionalidad para solicitar la revisión de la interpretación o aplicación de las causales de despido justificado (Art. 81 del Código del Trabajo) realizadas por los jueces del fuero laboral?",
+    "output": "No, la acción de inconstitucionalidad es improcedente para reabrir el debate sobre la interpretación y aplicación de las normas laborales de fondo al caso concreto. La Sala Constitucional de la Corte Suprema de Justicia de Paraguay ha sentado criterio constante en el sentido de que la interpretación y aplicación de las leyes vigentes (como el Art. 81 del Código del Trabajo) a las cuestiones fácticas debatidas en juicio es materia reservada exclusivamente a los jueces ordinarios de trabajo, en la medida en que sus resoluciones se apoyen en fundamentos razonables y descarten la arbitrariedad judicial (violación del art. 256 de la CN). La jurisdicción constitucional no constituye una tercera instancia para reexaminar cuestiones de hecho y derecho ordinario ya resueltas en primera y segunda instancia (Acuerdo y Sentencia N° 845/2001, 'Myryan Rossana Rojas Cardozo c/ South Food S.R.L. s/ Cobro de guaraníes en diversos conceptos'; caso histórico donde se confirmó la condena de Gs. 8.917.839 dictada en el año 2000/2001).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Constituye el atraso o falta de pago regular del salario por parte del empleador una causa justificada para la declaración de huelga según la jurisprudencia paraguaya?",
+    "output": "Sí. Conforme a los artículos 62 inc. b), 63 inc. a) y 232 del Código del Trabajo, el pago del salario en intervalos regulares es una obligación legal esencial del empleador. El incumplimiento patronal grave y reiterado en el abono oportuno de los salarios a la generalidad de los dependientes configura la causal prevista en el artículo 366 del Código del Trabajo, facultando legítimamente a los trabajadores a declarar la huelga, la cual resulta plenamente justificada (CSJ, Sala Constitucional, Ac. y Sent. N° 808/2001, 'ALPACO S.R.L. s/ Calificación de huelga').",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente la acción de inconstitucionalidad para cuestionar la valoración fáctica y probatoria realizada por el Tribunal de Apelación en un juicio de calificación de huelga?",
+    "output": "No. La Corte Suprema de Justicia de Paraguay ha reiterado que la acción de inconstitucionalidad no tiene por objeto sustituir a los jueces ordinarios ni abrir una tercera instancia para reexaminar hechos y pruebas ya juzgados en las instancias de mérito. Siempre que la sentencia del Tribunal laboral cuente con fundamentos razonables, serios y congruentes con la ley aplicable (como la ponderación del incumplimiento patronal en el pago de salarios), las meras discrepancias subjetivas de la patronal con la interpretación judicial no constituyen arbitrariedad susceptible de anulación constitucional (CSJ, Sala Constitucional, Ac. y Sent. N° 808/2001).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Cuál es la consecuencia jurídica en el Derecho Laboral paraguayo si un sindicato omite comunicar la declaración de huelga a la autoridad administrativa del trabajo con la antelación debida, y qué ha resuelto la Corte Suprema de Justicia respecto a la constitucionalidad de dicha exigencia?",
+    "output": "De conformidad con los artículos 364 y 376, inciso e) del Código Laboral paraguayo, la huelga debe ser declarada ilegal si el sindicato no cumple con los requisitos y formalidades legales previas. El artículo 364 exige que el acuerdo de declaración de huelga, el contenido del acta, las firmas de los asistentes y la designación de los negociadores o integrantes del Comité de Huelga sean remitidos a la autoridad administrativa competente con un preaviso mínimo de setenta y dos (72) horas de antelación a su inicio (así como la correspondiente comunicación al empleador).\n\nEn el Acuerdo y Sentencia N° 583 del 17 de octubre de 2000 (caso «ANDE c/ SITRANDE s/ Calificación ilegal de huelga»), la Sala Constitucional de la Corte Suprema de Justicia ratificó que calificar de ilegal una huelga por el incumplimiento de este preaviso no vulnera preceptos constitucionales (como el derecho a la huelga o el debido proceso). La Corte argumentó que la ley no desconoce el derecho a declararse en huelga, sino que reglamenta los requisitos formales indispensables para garantizar su ejercicio legítimo y posibilitar la conciliación de intereses, por lo que su inobservancia acarrea indefectiblemente la declaración de ilegalidad de la medida de fuerza.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Constituye causal de ilegalidad de una huelga la falta de comunicación previa al empleador y a la autoridad administrativa del trabajo dentro del plazo legal?",
+    "output": "Sí. De conformidad con el artículo 376, inciso e) del Código del Trabajo paraguayo, la huelga es declarada ilegal si el sindicato o comité de huelga no cumple con comunicar la declaración de la medida de fuerza a la autoridad administrativa del trabajo y al empleador con la antelación debida (plazo establecido en el artículo 364 del mismo cuerpo legal). En el marco jurisprudencial (ver CSJ, Sala Constitucional, Ac. y Sent. N° 482/2000), la omisión de dicha comunicación previa habilita a la justicia laboral a declarar la ilegalidad de la huelga sin que tal pronunciamiento configure una resolución arbitraria o violatoria de preceptos constitucionales.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente plantear una excepción de inconstitucionalidad contra una resolución o providencia judicial dictada en el marco de un juicio laboral?",
+    "output": "No. De acuerdo con la reiterada jurisprudencia de la Sala Constitucional de la Corte Suprema de Justicia de Paraguay (ver Ac. y Sent. N° 1084/2001), la excepción de inconstitucionalidad no constituye un recurso ni un medio de impugnación idóneo contra resoluciones o actuaciones judiciales. Dicha excepción solo es procedente en los casos en que se pretenda aplicar contra una de las partes una ley, decreto u otro instrumento normativo de carácter general reputado inconstitucional; por ende, no puede utilizarse para pretender la nulidad de resoluciones judiciales, las cuales deben atacarse, en su caso, mediante la acción de inconstitucionalidad.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "Conforme a la jurisprudencia de la Sala Constitucional de la Corte Suprema de Justicia de Paraguay (A.y S. N° 1105/2001), ¿es procedente la acción de inconstitucionalidad contra resoluciones dictadas en un juicio ejecutivo?",
+    "output": "Por regla general no es procedente, salvo que exista una flagrante violación de principios, derechos o garantías constitucionales. La Corte Suprema de Justicia no constituye una tercera instancia para reexaminar valoraciones de hechos o pruebas ya resueltas en las instancias ordinarias. Además, las sentencias dictadas en los juicios ejecutivos hacen cosa juzgada formal y no material, dejando expedita la vía del juicio ordinario posterior para que el afectado discuta plenamente el derecho reclamado.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procesalmente viable deducir una excepción de inconstitucionalidad contra una resolución judicial (como un Auto Interlocutorio) dictada dentro de un juicio laboral?",
+    "output": "No, es manifiestamente improcedente. De conformidad con el artículo 538 del Código Procesal Civil paraguayo, la excepción de inconstitucionalidad solo procede cuando la demanda, reconvención o sus respectivas contestaciones se funden en alguna ley u otro instrumento normativo que vulnere preceptos constitucionales. La vía de la excepción no puede ser utilizada para impugnar resoluciones judiciales; contra estas, la vía constitucional correspondiente es la acción de inconstitucionalidad (según criterio ratificado por la Corte Suprema de Justicia, Sala Constitucional, en el A. y S. N° 1076/2001).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿A partir de qué momento deben computarse los intereses en la liquidación de una condena laboral si la sentencia de primera instancia es recurrida o impugnada sin resultado favorable para el deudor?",
+    "output": "Conforme a la jurisprudencia de la Corte Suprema de Justicia de Paraguay (Sala Constitucional, A. y S. N° 1114/2001), los intereses se deben computar a partir del momento en que queda firme la sentencia de primera instancia, aun cuando la misma no se encuentre ejecutoriada formalmente con providencia de «cúmplase». El fundamento radica en que en dicha sentencia ya queda determinada la obligación; si el deudor recurre o interpone acciones (como la de inconstitucionalidad) sin éxito, el rechazo de las mismas retrotrae en su plenitud los efectos de la sentencia originaria, evitando que el obligado se beneficie o dilate indebidamente el devengamiento de intereses mediante recursos infundados.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente la acción de inconstitucionalidad fundada en la discrepancia con la valoración de las pruebas sobre la justificación del despido realizada por los jueces laborales?",
+    "output": "No, es improcedente. Conforme a la jurisprudencia de la Sala Constitucional de la Corte Suprema de Justicia del Paraguay (v.gr., Acuerdo y Sentencia N° 1083/2001 en los autos «Eladio Báez Ferreira c/ Alucenter S.R.L. s/ Cobro de Guaraníes en diversos conceptos»), a la Corte le está vedado revisar el acierto o desacierto del criterio de los magistrados del fuero laboral en la apreciación de las pruebas, siempre que sus conclusiones no deriven de interpretaciones caprichosas o manifiestamente apartadas de las constancias de la causa. Las meras críticas a la valoración probatoria sobre si el despido fue o no justificado no constituyen causal de arbitrariedad ni vulneración de los artículos 16 y 256 de la Constitución Nacional cuando el fallo cuenta con una motivación lógica y razonada.\n\n(Aclaración de caso histórico: La condena de segunda instancia confirmada en este juicio del año 2001 ascendía a la suma de G. 7.533.634, monto correspondiente a los valores salariales de la época).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es viable la acción de inconstitucionalidad ante la Corte Suprema de Justicia para revisar fallos ordinarios laborales que concedieron la doble indemnización por estabilidad laboral?",
+    "output": "No es viable. De acuerdo con el criterio pacífico y uniforme de la Sala Constitucional de la Corte Suprema de Justicia de Paraguay (reflejado en el A. y S. N° 998/2001 en los autos 'Florencio Portillo Fretes c/ ERIDAY UTE'), la determinación sobre la condición de trabajador con estabilidad laboral y la consecuente condena al pago de la doble indemnización por despido injustificado (conforme a las disposiciones del Código del Trabajo) son cuestiones de fondo debatidas y resueltas privativamente por los jueces ordinarios dentro del ámbito de su competencia. La vía de la acción de inconstitucionalidad no puede ser instrumentalizada para convertir a la Corte Suprema de Justicia en una tercera instancia ordinaria de revisión legal o fáctica.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente plantear una excepción de inconstitucionalidad contra una resolución judicial dentro de un juicio laboral en el derecho paraguayo?",
+    "output": "No, es improcedente. De conformidad con el artículo 538 del Código Procesal Civil, la excepción de inconstitucionalidad está reservada exclusivamente para impugnar leyes u otros actos normativos de carácter general en que se funde la demanda, reconvención o sus respectivas contestaciones. La Corte Suprema de Justicia de Paraguay (Sala Constitucional, en el A. y S. N° 1075/2001 en el juicio laboral 'Juana Isabel Laspina Sánchez c/ Gregorio Schvartzman S.A.C.I. y otros s/ Cobro de Guaraníes') ha ratificado que no se puede utilizar la vía de la excepción de inconstitucionalidad para cuestionar resoluciones judiciales (como providencias o autos interlocutorios), debiendo ser rechazada con costas.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la acción de inconstitucionalidad en el fuero laboral paraguayo para revisar la interpretación de los jueces ordinarios sobre las normas de estabilidad laboral (Arts. 94 de la CN, 95 y 97 del Código del Trabajo)?",
+    "output": "No procede. La Sala Constitucional de la Corte Suprema de Justicia (ver Acuerdo y Sentencia N° 1118/2001) ha establecido de forma constante que la acción de inconstitucionalidad no puede ser utilizada como una tercera instancia ordinaria para imponer un criterio interpretativo sobre normas de fondo del Derecho del Trabajo (como la aplicabilidad de la doble indemnización o la estabilidad laboral reguladas en los Arts. 94 de la CN y 95 y 97 del Código del Trabajo). La mera discordancia del accionante con la hermenéutica razonable y fundada adoptada por los magistrados del fuero laboral no constituye arbitrariedad ni lesión constitucional.\n\n(Nota sobre el contexto: El caso base corresponde al año 2000/2001, donde se reclamaba un monto histórico de Gs. 13.811.465 contra Eriday UTE / Entidad Binacional Yacyretá).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Constituye causal justificada de despido la desobediencia a las órdenes del empleador según el Código del Trabajo paraguayo y procede la acción de inconstitucionalidad por mera disconformidad con la valoración de la gravedad de la falta?",
+    "output": "De acuerdo con el artículo 81, inciso t) del Código del Trabajo paraguayo, constituye causa justificada de terminación del contrato por voluntad unilateral del empleador la desobediencia a las órdenes del empleador o sus representantes, siempre que estas sean relativas al trabajo contratado y se dicten en el marco de la relación laboral vigente.\n\nAsimismo, la Corte Suprema de Justicia de Paraguay (Sala Constitucional, A. y S. N° 1001/2001 en 'Eulalio Sindulfo Insaurralde y otros c/ Ceregral S.A.E.C.A.') ha sentado que la simple discrepancia de la parte trabajadora con el criterio de los jueces ordinarios respecto a si la falta cometida revestía o no gravedad suficiente para justificar la ruptura del vínculo no habilita la acción de inconstitucionalidad por arbitrariedad. La valoración de las pruebas y la subsunción de la conducta en las causales de despido justificadas del Código Laboral corresponden a la jurisdicción ordinaria; por ende, si el fallo cuenta con fundamentos razonables y serios, no existe transgresión de garantías constitucionales.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Puede el empleador considerar la pensión por vejez como una jubilación para justificar la desvinculación de un trabajador con estabilidad laboral según la jurisprudencia paraguaya?",
+    "output": "No. Conforme al criterio ratificado por la Corte Suprema de Justicia del Paraguay (Sala Constitucional, Acuerdo y Sentencia N° 1016/2001 en los autos «Agustina Mateu Vda. de Acosta c/ Fidesa s/ Reposición en el empleo y cobro de guaraníes»), la pensión por vejez no puede ser equiparada a una jubilación. Por consiguiente, alegar la percepción de una pensión por vejez no constituye causal válida para extinguir la relación laboral ni excluye la protección de la estabilidad adquirida (Arts. 94, 95 y 96 del Código del Trabajo), resultando procedente la reposición del trabajador en su puesto y el cobro de los salarios caídos.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la acción de inconstitucionalidad ante la Corte Suprema de Justicia para reexaminar la procedencia de la doble indemnización por estabilidad laboral resuelta por los tribunales ordinarios del trabajo?",
+    "output": "No. De acuerdo con la constante y uniforme jurisprudencia de la Sala Constitucional de la Corte Suprema de Justicia de Paraguay (expresada en el Acuerdo y Sentencia N° 162/2001 en los autos 'Florencio Quintana c/ ERIDAY UTE'), la acción de inconstitucionalidad no puede ser utilizada como una tercera instancia para reabrir el debate sobre cuestiones de hecho y de derecho ordinario. Cuando la condición del trabajador con estabilidad especial y la procedencia de la doble indemnización por antigüedad conforme a las normas del Código del Trabajo han sido suficientemente debatidas y resueltas de manera fundada y coincidente por los jueces de primera y segunda instancia, la Corte no puede reestudiar el fondo de la cuestión, debiendo rechazarse la acción.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente la acción de inconstitucionalidad para revisar la declaración de estabilidad laboral de un trabajador y la condena al pago de la doble indemnización resueltas en las instancias ordinarias laborales?",
+    "output": "No, no es procedente. Conforme al criterio uniforme y pacífico de la Sala Constitucional de la Corte Suprema de Justicia de Paraguay (reflejado en el Acuerdo y Sentencia N° 163/2001 en los autos «Erico Villagra Estigarribia c/ ERIDAY UTE s/ Diferencia de indemnización y doble indemnización»), las cuestiones atinentes a la calidad de personal con estabilidad laboral del demandante y la procedencia de la doble indemnización por antigüedad fijada por el Código del Trabajo constituyen cuestiones de fondo resueltas privativamente por los jueces de las instancias ordinarias según su saber y entender. Pretender que la Sala Constitucional reexamine tales hechos y normas de derecho común significaría convertir a la Corte en una indebida tercera instancia, desnaturalizando la acción de inconstitucionalidad.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente plantear una acción de inconstitucionalidad ante la Corte Suprema de Justicia para revisar resoluciones judiciales ordinarias que reconocen la estabilidad laboral y condenan al pago de la doble indemnización?",
+    "output": "No, es improcedente. La Sala Constitucional de la Corte Suprema de Justicia del Paraguay ha sentado como jurisprudencia constante que la determinación de la calidad del trabajador como personal con estabilidad laboral y la procedencia de la doble indemnización por antigüedad regulada en el Código del Trabajo son cuestiones de fondo debatidas y resueltas privativamente por los jueces de las instancias laborales ordinarias. La acción de inconstitucionalidad no puede utilizarse como una vía para convertir a la Corte Suprema en un tribunal de tercera instancia con el fin de reestudiar el mérito o la interpretación legal efectuada por las instancias ordinarias (Acuerdo y Sentencia N° 165/2001, Sala Constitucional, CSJ).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente la acción de inconstitucionalidad ante la Corte Suprema de Justicia para cuestionar la procedencia de la doble indemnización por estabilidad laboral resuelta en instancias ordinarias?",
+    "output": "No, es improcedente. Conforme a la doctrina pacífica y constante de la Sala Constitucional de la Corte Suprema de Justicia (Acuerdo y Sentencia N° 138/2001 en el juicio 'Nemesio Valdez B. c/ ERIDAY UTE'), las cuestiones relativas a la calidad del trabajador como personal con estabilidad laboral y la consecuente condena a la doble indemnización por antigüedad corresponden a la competencia exclusiva de los jueces y tribunales ordinarios del trabajo. La Corte Suprema no puede, a través de la acción de inconstitucionalidad, constituirse en una tercera instancia para reexaminar el mérito, la interpretación de la ley laboral o las conclusiones a las que arribaron los magistrados de grado en el ámbito de sus facultades jurisdiccionales ordinarias.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente la acción de inconstitucionalidad contra una sentencia que admite la excepción de prescripción en un juicio laboral basándose en la mera discrepancia con el criterio de los jueces?",
+    "output": "No, es improcedente. La Sala Constitucional de la Corte Suprema de Justicia del Paraguay (Acuerdo y Sentencia N° 1138/2001) ha establecido que la mera discrepancia con el criterio o la valoración jurídica de los magistrados al acoger la excepción de prescripción laboral no es motivo suficiente para hacer lugar a la acción de inconstitucionalidad. Si la resolución judicial impugnada se encuentra debidamente fundada, deriva del análisis de las pruebas y aplica las leyes que rigen la materia, no incurre en arbitrariedad ni vulnera las garantías del debido proceso o los derechos laborales constitucionales (Arts. 86, 247 y 256 de la CN), no pudiendo utilizarse esta vía extraordinaria como una instancia ordinaria de revisión.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la acción de inconstitucionalidad ante la Corte Suprema de Justicia para reexaminar la valoración de hechos e interpretación de la ley laboral realizada por los tribunales ordinarios en un juicio de justificación de despido?",
+    "output": "Conforme a la doctrina reiterada de la Sala Constitucional de la Corte Suprema de Justicia de Paraguay (reflejada en el Ac. y Sent. N° 1140/2001 en los autos 'Editorial El País S.A. c/ Oscar Silva s/ Justificación de despido'), la acción de inconstitucionalidad es improcedente si se fundamenta únicamente en la disconformidad de la parte con la valoración probatoria o el criterio de interpretación legal adoptado por los jueces laborales ordinarios. La Corte sostiene que no le compete reexaminar cuestiones debatidas y decididas en las instancias de mérito cuando las resoluciones cuentan con fundamentos razonables y no se constata una vulneración directa de normas constitucionales o del derecho a la defensa.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente el recurso de aclaratoria para revisar o modificar cuestiones de fondo en un juicio laboral, tales como el monto del salario mensual percibido o las sumas a ser abonadas por las demandadas?",
+    "output": "No, es improcedente. De acuerdo con el artículo 387 del Código Procesal Civil (aplicable supletoriamente en el fuero laboral), el recurso de aclaratoria tiene como único objeto corregir errores materiales, aclarar expresiones oscuras y suplir omisiones sobre alguna de las pretensiones oportunamente deducidas, siempre sin alterar lo sustancial de la decisión. Por tanto, pretender discutir o modificar aspectos de fondo, tales como la cuantía del salario percibido por el trabajador o las sumas correspondientes de condena, desborda los límites de este recurso procesal (Corte Suprema de Justicia de Paraguay, Sala Constitucional, Acuerdo y Sentencia N° 1119/2001).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la acción de inconstitucionalidad contra sentencias de instancias ordinarias laborales que condenan al pago de la doble indemnización a un trabajador con estabilidad adquirida?",
+    "output": "No procede. La Corte Suprema de Justicia (Sala Constitucional, en el A. y S. N° 140/2001) ha sentado postura pacífica y reiterada en cuanto a que la determinación sobre la condición de trabajador con estabilidad laboral y la consecuente condena a la doble indemnización constituyen cuestiones de fondo y de mera legalidad debatidas y juzgadas por las instancias ordinarias. Por tanto, no pueden ser reestudiadas mediante la acción de inconstitucionalidad, ya que ello desnaturalizaría la vía constitucional convirtiendo a la Sala Constitucional en una tercera instancia ordinaria.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la acción de inconstitucionalidad ante la Corte Suprema de Justicia para revisar la valoración probatoria o la aplicación de la ficta confesión del demandado en el proceso laboral?",
+    "output": "No, no procede. De acuerdo con la jurisprudencia de la Sala Constitucional de la Corte Suprema de Justicia (como en el A. y S. N° 1137/2001), la Corte no constituye una tercera instancia para reexaminar hechos o pruebas ampliamente discutidos y valorados en las instancias ordinarias. Si los magistrados de primera y segunda instancia fundamentaron debidamente sus resoluciones aplicando las reglas procesales laborales —como tener por confeso al empleador demandado y por ciertas las afirmaciones del trabajador en virtud de los artículos 146 y 161 del Código Procesal del Trabajo—, no existe arbitrariedad ni vulneración del artículo 256 de la Constitución Nacional. (Nota: En este precedente judicial histórico del año 2001, la condena por cobro de guaraníes ascendió a Gs. 6.120.000).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la acción de inconstitucionalidad para revisar fallos judiciales que conceden el cobro de la doble indemnización por estabilidad laboral adquirida?",
+    "output": "No. De acuerdo con el criterio pacífico de la Sala Constitucional de la Corte Suprema de Justicia de Paraguay (v.gr., A. y S. N° 164/2001), determinar la calidad del trabajador como personal con estabilidad laboral y resolver sobre el pago de la doble indemnización por antigüedad conforme a las normas del Código del Trabajo son cuestiones propias de la justicia ordinaria laboral. Habiendo sido debatidas y resueltas de manera fundada en primera y segunda instancia, no pueden ser reexaminadas en sede constitucional, ya que admitirlo convertiría indebidamente a la Sala Constitucional en una tercera instancia ordinaria de revisión.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "En el marco del derecho laboral paraguayo, ¿qué límites tiene el empleador para modificar unilateralmente el horario de trabajo de un empleado (ius variandi)?",
+    "output": "El ejercicio de la facultad de dirección del empleador (ius variandi) encuentra un límite expreso en el perjuicio que pueda causar al dependiente. Aunque el artículo 81, inciso ll), del Código del Trabajo establece la obligación del trabajador de acatar las directivas e instrucciones laborales, este deber se contrapone a lo dispuesto en el artículo 84, inciso n), del mismo cuerpo legal, que prohíbe al empleador modificar unilateralmente las condiciones contractuales en detrimento del dependiente. Si la modificación del horario (por ejemplo, pasar de una jornada continua a una discontinua) ocasiona mayores gastos de transporte o afecta sustancialmente la disponibilidad de su tiempo libre sin justificación de necesidad operativa, dicha alteración no puede fundamentar un despido justificado por desobediencia, sino que faculta al trabajador a considerar la medida como una causal de retiro justificado (despido indirecto).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente la acción de inconstitucionalidad contra fallos laborales de instancias ordinarias para cuestionar la valoración de la prueba sobre la existencia de la relación de trabajo?",
+    "output": "No, es improcedente. La Corte Suprema de Justicia del Paraguay (Sala Constitucional) ha sentado de forma reiterada (como en el A. y S. N° 184/2001) que la acción de inconstitucionalidad no puede utilizarse como una tercera instancia ordinaria para reexaminar cuestiones de hecho, prueba o de derecho de fondo ampliamente debatidas y resueltas de manera coincidente y razonable en las instancias inferiores. La intervención de la Sala Constitucional se limita exclusivamente a reparar arbitrariedades manifiestas o violaciones directas a preceptos constitucionales, no a sustituir la valoración de las pruebas de los jueces laborales sobre la existencia de la relación laboral o el derecho a reposición y salarios caídos.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la acción de inconstitucionalidad contra fallos dictados en juicios laborales ordinarios cuando el recurrente pretende rediscutir las cuestiones de fondo resueltas en las instancias de mérito?",
+    "output": "No. De acuerdo con el criterio de la Sala Constitucional de la Corte Suprema de Justicia del Paraguay (Sentencia N° 243/2001 en el juicio 'Enrique Rubén Pereira Honzi c/ Boutique Adán y Eva y otros s/ Cobro de guaraníes'), la acción de inconstitucionalidad no es procedente cuando se pretende un reestudio de los argumentos ya debatidos en las instancias ordinarias, ya que ello equivaldría a crear indebidamente una tercera instancia. Cuando las resoluciones de primera y segunda instancia se encuentran debidamente fundadas, ajustadas a la normativa laboral y dictadas respetando las etapas procesales sin incurrir en arbitrariedad o violación de preceptos constitucionales, la acción debe ser rechazada con costas.\n\n(Aclaración histórica: Las condenas referenciadas en este proceso corresponden a los montos de la época, años 1999 a 2001, donde la condena en segunda instancia quedó fijada en Gs. 17.250.563).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente plantear una excepción de inconstitucionalidad contra resoluciones judiciales o discrepancias sobre la producción de pruebas en el fuero laboral?",
+    "output": "No, es improcedente. Conforme a la doctrina sentada por la Sala Constitucional de la Corte Suprema de Justicia de Paraguay (Acuerdo y Sentencia N° 182/2001), la excepción de inconstitucionalidad no constituye un recurso ni un medio de impugnación dirigido contra resoluciones o actuaciones judiciales, resultando inviable pretender por esta vía la nulidad de fallos. La excepción de inconstitucionalidad solo es procedente cuando se pretende aplicar contra una de las partes un instrumento normativo (ley, ordenanza, decreto) considerado contrario a la Constitución Nacional. Asimismo, los cuestionamientos de fondo relativos a la producción o contenido de pruebas periciales escapan al ámbito de la justicia constitucional.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Puede promoverse una demanda por la vía laboral si el conflicto deriva de un contrato de naturaleza civil, bajo el argumento de que el Juzgado de Primera Instancia posee competencia multifuero (Civil, Comercial y Laboral)?",
+    "output": "No. De acuerdo con la doctrina y la jurisprudencia de la Corte Suprema de Justicia de Paraguay (Sala Constitucional, A. y S. N° 253/2001), el hecho de que un Juez de Primera Instancia tenga competencia atribuida en materia Civil, Comercial y Laboral en una circunscripción judicial no implica que dichas materias puedan fundirse procesal ni sustancialmente.\n\nLa competencia por razón de la materia es absoluta, improrrogable y de orden público (art. 11 del Código de Organización Judicial). Por su parte, el art. 23 del C.O.J. establece que el presupuesto indispensable para radicar una acción en el fuero laboral es que el litigio derive de un contrato de trabajo o de la legislación laboral. Si la relación jurídica es de índole civil, la demanda no puede sustentarse en las normas de fondo ni de forma laborales, debiendo el actor encauzar su pretensión por la vía civil y comercial correspondiente, aun cuando sea tramitada formalmente ante el mismo magistrado en ejercicio de dicha competencia material.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Constituye el adicional por peligrosidad parte de la remuneración o complemento salarial del trabajador según la jurisprudencia laboral paraguaya?",
+    "output": "Sí. Conforme a lo sostenido en las instancias laborales y ratificado en el marco del juicio «Carlos Acosta Monzón y otros c/ Itaipú Binacional s/ Cobro de guaraníes en diversos conceptos» (Acuerdo y Sentencia N° 223/2001 de la CSJ), el adicional por peligrosidad (como el otorgado por riesgo eléctrico) constituye un complemento salarial del trabajador sujeto a reintegro e indemnización compensatoria en caso de falta de pago indebido.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente plantear una excepción de inconstitucionalidad contra las pretensiones de la parte actora o cuestiones de fondo en un juicio laboral?",
+    "output": "No, es improcedente. Conforme al artículo 538 del Código Procesal Civil paraguayo y la reiterada jurisprudencia de la Sala Constitucional de la Corte Suprema de Justicia (como el A. y S. N° 294/2001), la excepción de inconstitucionalidad está prevista de manera exclusiva para cuestionar leyes u otros instrumentos normativos en los que se funda la demanda o la reconvención, con el objeto de evitar su aplicación por contrariar la Constitución Nacional.\n\nPor tanto, esta vía prejudicial no procede para atacar meras pretensiones de las partes (como calificar si una suspensión de funciones equivale a un despido injustificado con derecho a indemnización) ni aspectos sustanciales del litigio, cuya elucidación y valoración corresponden exclusivamente al juez laboral de la causa principal.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la acción de inconstitucionalidad en el fuero laboral paraguayo para cuestionar la valoración de pruebas o la interpretación legal realizada por los jueces de instancia?",
+    "output": "No. La Sala Constitucional de la Corte Suprema de Justicia ratificó que la acción de inconstitucionalidad es una vía extraordinaria y de excepción que no habilita una tercera instancia judicial. Por ende, no es procedente para reexaminar cuestiones de fondo, apreciación de elementos probatorios o la labor interpretativa del derecho ordinario efectuada por los juzgados y tribunales laborales, siempre que las resoluciones hayan sido fundadas en las constancias de autos y no lesionen derechos o garantías de rango constitucional (Art. 256 de la Constitución Nacional).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es viable la acción de inconstitucionalidad ante la Corte Suprema de Justicia para revisar resoluciones que declaran la perención de instancia en el fuero laboral con base en el Art. 217 del Código Procesal Laboral?",
+    "output": "No es viable. De acuerdo con el criterio establecido por la Sala Constitucional de la Corte Suprema de Justicia de Paraguay (ver A&S N° 259/2001 en los autos «Carlos Cirilo Pacher c/ Grandes Librerías El Colegio y/u otros s/ Cobro de Guaraníes»), el análisis y cómputo de la perención o caducidad de instancia en el proceso laboral (Art. 217 del CPL) constituye una cuestión de orden estrictamente procesal ordinario. Siempre que los magistrados intervinientes hayan resuelto en ejercicio de sus facultades legítimas y con base en las constancias de autos sin incurrir en violaciones constitucionales directas, la Sala Constitucional no puede reexaminar el fondo de lo resuelto, puesto que la Corte Suprema de Justicia no actúa como un tribunal de tercera instancia.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Qué derecho asiste al trabajador paraguayo cuando la suspensión del contrato de trabajo se prorroga y supera el plazo de 90 días?",
+    "output": "Conforme a la interpretación del Art. 77 del Código del Trabajo paraguayo aplicada en las instancias ordinarias y ratificada en el marco de la revisión constitucional (A. y S. N° 261/2001 de la Corte Suprema de Justicia, Sala Constitucional, en 'Mario Torres Villalba y otros c/ Cupar S.A.'), cuando la suspensión del contrato o sus sucesivas prórrogas exceden los 90 días (incluso bajo alegaciones patronales de crisis o convocatoria de acreedores según el Art. 71), el trabajador tiene la facultad legal de optar entre esperar la reanudación de las tareas o dar por terminado el contrato de trabajo con derecho a percibir las indemnizaciones pertinentes por despido.\n\nNota: La suma de condena citada en el fallo de primera instancia (Gs. 693.351.090 a favor de los actores) corresponde a valores monetarios históricos del año 1999.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente el recurso de aclaratoria para corregir un error material en la carátula o individualización del juicio en una sentencia de la Corte Suprema de Justicia?",
+    "output": "Sí. De conformidad con el artículo 387 del Código Procesal Civil paraguayo, procede hacer lugar al recurso de aclaratoria cuando en la sentencia se haya incurrido en un error material, tal como la errónea individualización o denominación de la carátula del juicio en alguna de las fojas del fallo, debiendo la Corte Suprema de Justicia rectificar los datos para consignar la carátula correcta que corresponde a los autos.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "En el marco del derecho procesal laboral y constitucional paraguayo, ¿es procedente anular actuaciones si el acto supuestamente viciado cumplió su finalidad y el recurrente no precisa qué defensas u oposiciones le fueron impedidas?",
+    "output": "No es procedente. Conforme a la doctrina de la relatividad de las nulidades procesales y la jurisprudencia de la Sala Constitucional de la Corte Suprema de Justicia (ej. Acuerdo y Sentencia N° 329/2001), las nulidades no proceden si el acto cuestionado cumplió su objetivo procesal. Asimismo, para que se configure una vulneración efectiva del derecho a la defensa (art. 16 de la Constitución Nacional), no basta con alegar una genérica situación de indefensión por no haber podido oponer excepciones; la parte incidentista o accionante debe acreditar el perjuicio real individualizando con precisión cuáles eran las excepciones o defensas concretas de las que fue privada y que hubieran cambiado el curso de la causa.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es admisible la acción de inconstitucionalidad para cuestionar la valoración de pruebas en un juicio laboral por retiro justificado?",
+    "output": "No. De acuerdo con el criterio establecido por la Sala Constitucional de la Corte Suprema de Justicia del Paraguay (Acuerdo y Sentencia N° 399/2001), la acción de inconstitucionalidad no puede ser utilizada como una instancia ordinaria adicional de revisión. La valoración de las pruebas ofrecidas por las partes corresponde al ámbito natural de los jueces ordinarios bajo las reglas de la sana crítica. Siempre que se hayan garantizado el debido proceso y el derecho a la defensa, la disconformidad con la valoración probatoria de las causales de retiro justificado (como la falta de pago de salarios) no constituye arbitrariedad con relevancia constitucional. (Nota: En este litigio se confirmó una condena histórica de Gs. 50.678.100 en concepto de salarios adeudados e indemnizaciones laborales, suma fijada conforme a los valores y liquidaciones de los años 1999-2000).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "En un juicio laboral por cobro de guaraníes y despido injustificado, ¿pueden aplicarse las presunciones legales a favor del demandante si no se demuestra la existencia del vínculo laboral?",
+    "output": "No. De acuerdo con los principios del derecho procesal laboral y la jurisprudencia de los tribunales (revisada en el A. y S. Nº 319/2001 por la Sala Constitucional de la CSJ en el juicio 'Liberato Gauto Benítez c/ Francisco Chmielewski'), la prueba de la existencia efectiva de la relación laboral es el presupuesto indispensable sobre el cual operan y se apoyan las presunciones legales. Si no se acredita fehacientemente la existencia de la relación de trabajo, el juzgador no puede recurrir a presunciones legales para tener por ciertos los hechos o hacer lugar a la demanda.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Cómo se aplica el principio de primacía de la realidad en el derecho laboral paraguayo cuando el trabajador demanda consignando erróneamente el tipo social o la denominación formal de su empleador?",
+    "output": "De acuerdo con la jurisprudencia de la Corte Suprema de Justicia de Paraguay (Sala Constitucional, A. y S. N° 372/2001), en virtud del principio de la primacía de la realidad se debe otorgar preeminencia a los hechos sustanciales y verdaderos por encima de las formalidades, apariencias o inexactitudes registrales. Por lo tanto, si el trabajador prestó servicios efectivamente en el establecimiento comercial demandado, el hecho de que formalmente se haya individualizado al empleador bajo una razón social o tipo societario impreciso (por ejemplo, demandar a una S.R.L. no inscripta formalmente en vez de a la sociedad anónima propietaria del establecimiento) no enerva la existencia de la relación de trabajo ni invalida la condena, siempre que se haya respetado el debido proceso y la debida notificación de las actuaciones.\n\n*(Nota histórica: En este fallo del año 2001 se resolvió una condena de Gs. 4.394.000, monto representativo de los valores económicos de la época).* ",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Cuáles son los límites de procedencia del recurso de aclaratoria y resulta admisible para exigir a la Corte Suprema de Justicia que justifique los motivos de mérito por los cuales rechazó una acción de inconstitucionalidad en un juicio laboral?",
+    "output": "Conforme al artículo 387 del Código Procesal Civil paraguayo, el recurso de aclaratoria procede exclusivamente para: a) corregir cualquier error material; b) aclarar alguna expresión oscura, sin alterar lo sustancial de la decisión; y c) suplir cualquier omisión en que se hubiere incurrido sobre pretensiones oportunamente deducidas y discutidas en el litigio.\n\nPor tanto, la Corte Suprema de Justicia (Sala Constitucional, en el marco del juicio 'Mario Torres Villalba y otros c/ Cupar S.A. s/ Cobro de Guaraníes', A. y S. Nº 517/2001) resolvió que resulta improcedente pretender vía aclaratoria que el Tribunal aclare o profundice si desestimó la acción por compartir el criterio de las instancias inferiores o por considerar que la acción de inconstitucionalidad no es apta para reabrir el debate, ya que dicho requerimiento desborda taxativamente los supuestos previstos en el Art. 387 del C.P.C. y no tiene por objeto corregir errores materiales ni salvar oscuridades u omisiones de pronunciamiento.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la acción de inconstitucionalidad contra fallos laborales que valoraron la nulidad de un recibo de pago mediante redargución de falsedad?",
+    "output": "No. De acuerdo con el criterio de la Sala Constitucional de la Corte Suprema de Justicia en el Acuerdo y Sentencia N° 519/2001 (juicio 'Celso Rafael Ayala c/ Club Olimpia s/ Cobro de Guaraníes'), la acción de inconstitucionalidad es improcedente si pretende una revaloración de las pruebas o cuestionar la interpretación de los jueces de las instancias ordinarias, siempre que estas se hayan fundado en criterios razonables. La discrepancia con el fallo no constituye agravio constitucional. Asimismo, los cuestionamientos atinentes a supuestas irregularidades procesales —tales como la extemporaneidad de un incidente de redargución de falsedad o la realización de pericias sobre fotocopias— deben ser canalizados y debatidos en las oportunidades procesales correspondientes del juicio ordinario laboral, no pudiendo reabrirse dicha discusión en sede constitucional.\n\n(Nota histórica: El caso analizado corresponde a una condena confirmada en el año 2000-2001 por cobro de porcentaje de transferencia internacional de futbolista profesional, establecida en segunda instancia en la suma histórica de US$ 201.250).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Es procedente la acción de inconstitucionalidad contra fallos laborales basada en la disconformidad con la valoración probatoria o la aplicación del derecho realizada por los tribunales de apelación?",
+    "output": "No. La Corte Suprema de Justicia de Paraguay sostiene de manera pacífica y constante que la acción de inconstitucionalidad no constituye una tercera instancia procesal ni un recurso ordinario de revisión. La mera discrepancia del accionante con la valoración de las pruebas realizada por los magistrados o con la interpretación de las leyes de fondo aplicables no configura una lesión constitucional ni vicio de arbitrariedad, por lo que resulta improcedente si las reglas del debido proceso y el derecho a la defensa en juicio fueron respetados cabalmente.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Resulta procedente la acción de inconstitucionalidad contra fallos laborales ordinarios que reconocen la antigüedad y reintegro por sustitución del empleador (Art. 28 del Código Laboral), fundada en la supuesta arbitrariedad por disconformidad en la valoración de pruebas?",
+    "output": "No. De acuerdo con el criterio uniforme de la Sala Constitucional de la Corte Suprema de Justicia (como en el A. y S. N° 360/2001), la acción de inconstitucionalidad es improcedente si únicamente se funda en la disconformidad de una de las partes con la valoración de los hechos, las pruebas y la aplicación e interpretación de la legislación ordinaria (como el Art. 28 del Código Laboral paraguayo sobre sustitución de empleador). La simple discrepancia con el criterio de los jueces ordinarios no torna arbitraria la sentencia ni configura vulneración constitucional, requiriéndose la transgresión fehaciente de principios o garantías fundamentales consagradas en la Constitución Nacional para habilitar la vía.",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "¿Procede la acción de inconstitucionalidad contra sentencias judiciales laborales cuando se alega arbitrariedad por disconformidad con la valoración probatoria efectuada por los jueces ordinarios?",
+    "output": "No, la acción de inconstitucionalidad no procede como una vía para reabrir el debate sobre la valoración de pruebas ni para cuestionar el criterio o razonamiento jurídico de los jueces ordinarios en el fuero laboral. \n\nConforme a la doctrina consolidada de la Sala Constitucional de la Corte Suprema de Justicia de Paraguay (reflejada en el Acuerdo y Sentencia N° 522/2001 en el juicio «Gilberto Penayo Zarza c/ Interbanco S.A. s/ Rescisión de contrato, retiro justificado y cobro de guaraníes»), la acción de inconstitucionalidad tiene carácter excepcional y no constituye una tercera instancia ordinaria de revisión. Cuando las resoluciones atacadas han sido dictadas respetando las garantías del debido proceso, con debida fundamentación fáctica y jurídica, y con base en las pruebas diligenciadas por las partes, la mera disconformidad del litigante perdidoso no configura arbitrariedad ni lesión constitucional (Art. 259 inc. 5 y 260 inc. 2 de la Constitución Nacional). En consecuencia, la CSJ rechaza la acción e impone costas al accionante.\n\n(Nota histórica: En este caso sustanciado entre 1999 y 2001, la condena impuesta a la parte empleadora por retiro justificado y cobro de guaraníes ascendió a la suma de Gs. 55.052.154, valor histórico de la época).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
+  },
+  {
+    "tipo": "qa",
+    "instruction": "Si un trabajador con estabilidad laboral demanda y obtiene una sentencia judicial que ordena su reintegro laboral, ¿puede posteriormente sustituir dicho reintegro por la doble indemnización prevista en el Código del Trabajo sin probar incompatibilidad?",
+    "output": "No. De acuerdo con el criterio de la Sala Constitucional de la Corte Suprema de Justicia (A. y S. N° 373/2001), el artículo 94, inciso 2) del Código del Trabajo no puede interpretarse de manera aislada, sino en concordancia armónica con los artículos 96 y 97 del mismo cuerpo legal. Por ende, para que el trabajador cuya reposición fue ordenada pueda sustituir el reintegro por la doble indemnización, es requisito ineludible que alegue y pruebe en juicio la existencia de una incompatibilidad sobreviniente con el empleador, conforme lo exige el artículo 97. Permitir la sustitución directa y unilateral tras haber litigado por el reintegro, sin sustanciar ni acreditar dicha incompatibilidad, lesiona el derecho a la defensa de la parte empleadora (artículo 16 de la Constitución Nacional).",
+    "system": "Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy..."
   }
 ]

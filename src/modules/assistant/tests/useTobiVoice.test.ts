@@ -85,14 +85,14 @@ El trabajador tiene derecho a **indemnización** y *preaviso*.
     expect(best?.name).toBe('Jorge (Enhanced)');
   });
 
-  it('prioriza voces estándar de Apple (Mónica/Paulina) sobre voces legacy', () => {
+  it('prioriza voces estándar de Apple (Jorge/Juan) sobre voces legacy', () => {
     const mockVoices = [
       { name: 'SAPI Legacy Voice', lang: 'es-ES' } as SpeechSynthesisVoice,
-      { name: 'Mónica', lang: 'es-ES' } as SpeechSynthesisVoice,
+      { name: 'Jorge', lang: 'es-MX' } as SpeechSynthesisVoice,
     ];
 
     const best = getBestSpanishVoice(mockVoices);
-    expect(best?.name).toBe('Mónica');
+    expect(best?.name).toBe('Jorge');
   });
 
   it('retorna null si no hay voces disponibles', () => {
