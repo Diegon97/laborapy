@@ -1,5 +1,6 @@
 import type { LiquidacionInput, LiquidacionResult, MotivoEgreso } from '../payroll/types';
 import { calcularLiquidacion } from '../payroll/liquidacion';
+import { SALARIO_MINIMO_MENSUAL_2026 } from '../payroll/constants';
 import type { TobiSettlementActionPayload } from './types';
 
 export const SETTLEMENT_ACTION_REGEX = /:::liquidacion_action\s*([\s\S]*?)\s*:::/;
@@ -69,11 +70,19 @@ export function extractSettlementAction(text: string): {
 }
 
 export function toLiquidacionInput(payload: TobiSettlementActionPayload): LiquidacionInput {
+  const salarioDeclarado = Math.round(payload.salarioMensual);
+  // Piso de orden público laboral (Art. 249 C.T.): si percibe menos del mínimo legal en jornada completa,
+  // el cálculo de la liquidación oficial se efectúa sobre la base piso de al menos el Salario Mínimo Legal Vigente.
+  const salarioEfectivo =
+    salarioDeclarado > 0 && salarioDeclarado < SALARIO_MINIMO_MENSUAL_2026
+      ? SALARIO_MINIMO_MENSUAL_2026
+      : salarioDeclarado;
+
   const input: LiquidacionInput = {
     fechaIngreso: payload.fechaIngreso,
     fechaEgreso: payload.fechaEgreso,
     motivo: payload.motivo,
-    salarioMensual: Math.round(payload.salarioMensual),
+    salarioMensual: salarioEfectivo,
     tieneVariables: payload.tieneVariables ?? false,
     regimen: payload.regimen,
     regimenLaboral: payload.regimenLaboral,
@@ -105,5 +114,20 @@ export function executeSettlementAction(payload: TobiSettlementActionPayload): {
 } {
   const input = toLiquidacionInput(payload);
   const result = calcularLiquidacion(input);
+
+  const salarioDeclarado = Math.round(payload.salarioMensual);
+  if (salarioDeclarado > 0 && salarioDeclarado < SALARIO_MINIMO_MENSUAL_2026) {
+    result.alertas = result.alertas || [];
+    const yaExiste = result.alertas.some((a) => a.id === 'ALERTA_PISO_SALARIO_MINIMO');
+    if (!yaExiste) {
+      result.alertas.unshift({
+        id: 'ALERTA_PISO_SALARIO_MINIMO',
+        tipo: 'info',
+        mensaje: `Piso de Protección Salarial (Art. 249 C.T.): Tu salario percibido (Gs. ${salarioDeclarado.toLocaleString('es-PY')}) es inferior al mínimo legal vigente. Por orden público, la liquidación fue calculada sobre el piso legal de Gs. ${SALARIO_MINIMO_MENSUAL_2026.toLocaleString('es-PY')} para proteger tus derechos irrenunciables.`,
+        accion: 'informar',
+      });
+    }
+  }
+
   return { input, result };
 }

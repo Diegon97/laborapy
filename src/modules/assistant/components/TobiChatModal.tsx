@@ -4,6 +4,7 @@ import { askDeepSeekAssistant, generateOfflineAnswer, recordTobiFeedback, saveCh
 import { createWhatsAppUrl, LABORAPY_CONFIG } from '../../../config/laborapy';
 import { processMediaFile, MAX_FILES_PER_DROP } from '../mediaProcessor';
 import { extractSettlementAction, executeSettlementAction } from '../tobiSettlementAction';
+import { SALARIO_MINIMO_MENSUAL_2026 } from '../../payroll/constants';
 import {
   extractDocumentAction,
   isDocumentIntent,
@@ -885,10 +886,16 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
         console.warn('Error calculando liquidación:', err);
       }
 
+      const salarioDeclarado = payload.salarioMensual;
+      const esMenorAlMinimo = salarioDeclarado > 0 && salarioDeclarado < SALARIO_MINIMO_MENSUAL_2026;
+      const explicacionSalario = esMenorAlMinimo
+        ? `Noté amablemente que tu salario mensual declarado (**Gs. ${salarioDeclarado.toLocaleString('es-PY')}**) es inferior al Salario Mínimo Legal Vigente (**Gs. ${SALARIO_MINIMO_MENSUAL_2026.toLocaleString('es-PY')}**).\n\n⚖️ **Protección Legal Pro-Operario (Art. 249 y concordantes del Código del Trabajo):** La legislación laboral paraguaya es de orden público. Tu empleador no puede beneficiarse de pagar por debajo del piso legal ni liquidarte indemnizaciones sobre un salario inferior a la ley. Por este motivo, **calculé tu liquidación oficial tomando como base el salario mínimo legal vigente de Gs. ${SALARIO_MINIMO_MENSUAL_2026.toLocaleString('es-PY')}** para proteger tus derechos y asegurar que reclames lo que legalmente te corresponde.`
+        : `Realicé el cálculo oficial de liquidación laboral conforme a la Ley 213/93 y 496/95 para un salario mensual de **Gs. ${salarioDeclarado.toLocaleString('es-PY')}**.`;
+
       const liqMessage: AssistantMessage = {
         id: nextId('assistant'),
         role: 'assistant',
-        content: `¡Listo! Realicé el cálculo oficial de liquidación laboral conforme a la Ley 213/93 y 496/95 para un salario mensual de **Gs. ${payload.salarioMensual.toLocaleString('es-PY')}**. Podés revisar los rubros desglosados y descargar el finiquito blindado:`,
+        content: `¡Listo! ${explicacionSalario}\n\nPodés revisar los rubros desglosados y descargar el finiquito blindado:`,
         createdAt: new Date().toISOString(),
         settlementData,
       };

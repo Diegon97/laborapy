@@ -83,4 +83,21 @@ Texto después`;
     expect(input.preaviso?.obligado).toBe('trabajador');
     expect(input.preaviso?.otorgado).toBe(true);
   });
+
+  it('aplica piso de salario mínimo legal vigente (Gs. 3.044.000) cuando el salario declarado es inferior', () => {
+    const payload = {
+      salarioMensual: 2000000, // Menor al mínimo de 3.044.000
+      fechaIngreso: '2023-01-01',
+      fechaEgreso: '2026-09-15',
+      motivo: 'despido_sin_causa' as const,
+      tieneVariables: false,
+    };
+
+    const { input, result } = executeSettlementAction(payload);
+
+    // Debe elevarse automáticamente al salario mínimo legal para proteger al trabajador
+    expect(input.salarioMensual).toBe(3044000);
+    expect(result.totalNetoEstimado).toBeGreaterThan(0);
+    expect(result.alertas.some((a) => a.id === 'ALERTA_PISO_SALARIO_MINIMO')).toBe(true);
+  });
 });

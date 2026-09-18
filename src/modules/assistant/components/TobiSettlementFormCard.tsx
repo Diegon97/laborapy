@@ -35,8 +35,8 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!salarioMensual || salarioMensual < 100000) {
-      setErrorMsg('Ingresá un salario mensual válido.');
+    if (!salarioMensual || salarioMensual <= 0) {
+      setErrorMsg('Ingresá el monto de tu salario mensual en Guaraníes.');
       return;
     }
     if (!fechaIngreso || !fechaEgreso) {
@@ -87,6 +87,7 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
 
   return (
     <form
+      noValidate
       onSubmit={handleSubmit}
       style={{
         marginTop: 12,
@@ -158,16 +159,32 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
         <label style={labelStyle}>Salario Mensual Bruto (Gs.) *</label>
         <input
           type="number"
-          min={0}
+          min={1}
           step="any"
-          required
           value={salarioMensual || ''}
           onChange={(e) => setSalarioMensual(parseInt(e.target.value, 10) || 0)}
           style={{ ...inputStyle, fontWeight: 700, color: '#34d399' }}
+          placeholder="Ej: 3044000"
         />
         <span style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 2, display: 'block' }}>
-          Salario mínimo legal vigente: Gs. 3.044.000
+          Salario mínimo legal vigente en Paraguay: Gs. 3.044.000
         </span>
+        {salarioMensual > 0 && salarioMensual < 3044000 && (
+          <div
+            style={{
+              marginTop: 6,
+              padding: '8px 10px',
+              borderRadius: 6,
+              background: 'rgba(59, 130, 246, 0.15)',
+              border: '1px solid rgba(59, 130, 246, 0.4)',
+              color: '#93c5fd',
+              fontSize: 11,
+              lineHeight: 1.45,
+            }}
+          >
+            ⚖️ <strong>Aviso Pro-Operario de Tobi:</strong> Percibir menos de Gs. 3.044.000 en jornada legal completa vulnera el orden público (Art. 249 C.T.). Tu empleador no puede beneficiarse de pagar menos de la ley: <strong>Tobi calculará tu liquidación usando el piso legal de Gs. 3.044.000</strong> para que reclames el monto íntegro que te corresponde.
+          </div>
+        )}
       </div>
 
       {/* Fechas de ingreso y egreso */}
@@ -273,6 +290,7 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
         )}
         <button
           type="submit"
+          formNoValidate
           style={{
             padding: '8px 18px',
             borderRadius: 8,
