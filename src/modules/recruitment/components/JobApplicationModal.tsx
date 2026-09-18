@@ -360,8 +360,8 @@ export const JobApplicationModal: React.FC<Props> = ({
                   <input
                     type="number"
                     required
-                    min={2000000}
-                    step={100000}
+                    min={0}
+                    step="any"
                     value={pretensionSalarialPYG}
                     onChange={(e) => setPretensionSalarialPYG(Number(e.target.value))}
                     style={{

@@ -456,7 +456,7 @@ export const IpsComplianceTab: React.FC<Props> = ({ empresa }) => {
                     <input
                       type="number"
                       min={0}
-                      step={1000}
+                      step="any"
                       value={newMonto}
                       onChange={e => setNewMonto(Number(e.target.value))}
                       style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '13px', boxSizing: 'border-box' }}

@@ -158,10 +158,10 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
         <label style={labelStyle}>Salario Mensual Bruto (Gs.) *</label>
         <input
           type="number"
-          min={500000}
-          step={10000}
+          min={0}
+          step="any"
           required
-          value={salarioMensual}
+          value={salarioMensual || ''}
           onChange={(e) => setSalarioMensual(parseInt(e.target.value, 10) || 0)}
           style={{ ...inputStyle, fontWeight: 700, color: '#34d399' }}
         />

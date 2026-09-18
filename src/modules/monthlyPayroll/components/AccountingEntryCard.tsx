@@ -287,7 +287,7 @@ export const AccountingEntryCard: React.FC<Props> = ({
               <input
                 type="number"
                 min={1}
-                step={50}
+                step="any"
                 value={tipoCambio}
                 onChange={(e) => {
                   const val = Number(e.target.value);

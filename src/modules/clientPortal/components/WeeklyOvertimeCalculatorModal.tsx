@@ -891,7 +891,8 @@ export const WeeklyOvertimeCalculatorModal: React.FC<WeeklyOvertimeCalculatorMod
                               onChange={(e) =>
                                 handleFieldChangeDia(idx, 'descansoMinutos', Math.max(0, parseInt(e.target.value, 10) || 0))
                               }
-                              step={5}
+                              min={0}
+                              step={1}
                               className="w-14 bg-white border border-slate-300 rounded px-2 py-1 text-center text-xs focus:ring-1 focus:ring-indigo-500"
                             />
                           </td>
