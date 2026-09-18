@@ -150,7 +150,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     cancelRecording();
 
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      alert('Tu navegador no soporta grabación de audio. Podés escribir tu consulta o adjuntar un archivo.');
+      alert('El micrófono requiere conexión segura (HTTPS). Si estás probando desde el celular en red local (HTTP), usa tu URL de Vercel o un túnel como ngrok.');
       return;
     }
 

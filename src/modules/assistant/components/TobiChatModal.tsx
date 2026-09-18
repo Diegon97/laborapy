@@ -2043,11 +2043,43 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
                   📎
                 </button>
 
-                {/* Botón de Micrófono para Grabar Directo (Estilo Gemini Web / WhatsApp) */}
-                {isAudioRecordingSupported && !isRecording && (
+                {/* Botón de Parar a Tobi */}
+                {isSpeaking && (
                   <button
                     type="button"
-                    onClick={() => void startRecording()}
+                    onClick={stopSpeaking}
+                    title="Interrumpir a Tobi"
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      border: '1px solid #ef4444',
+                      borderRadius: '50%',
+                      width: 34,
+                      height: 34,
+                      color: '#fca5a5',
+                      cursor: 'pointer',
+                      fontSize: 17,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      boxShadow: '0 0 10px rgba(239, 68, 68, 0.25)',
+                    }}
+                  >
+                    ⏹️
+                  </button>
+                )}
+                {/* Botón de Micrófono para Grabar Directo (Estilo Gemini Web / WhatsApp) */}
+                {!isRecording && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isAudioRecordingSupported) {
+                        alert("El micrófono requiere conexión segura (HTTPS). Si estás probando desde el celular en red local, usa tu URL de Vercel o un túnel como ngrok.");
+                        return;
+                      }
+                      if (isSpeaking) stopSpeaking();
+                      void startRecording();
+                    }}
                     disabled={isLoading || pdfProcessing}
                     aria-label="Grabar audio"
                     title="Grabar consulta por voz"

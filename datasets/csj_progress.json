@@ -1,0 +1,13 @@
+{
+  "stats": {
+    "procesados": 455,
+    "paresExtraidos": 0,
+    "aprobadosDeepSeek": 0,
+    "rechazadosDeepSeek": 0,
+    "combustiblePromedio": 79,
+    "archivosTotales": 456
+  },
+  "pendientes": [
+    "2013_32459.doc"
+  ]
+}
