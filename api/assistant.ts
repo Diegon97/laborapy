@@ -441,7 +441,36 @@ async function streamCloudflare(params: {
 /*                          Wrappers por proveedor                            */
 /* -------------------------------------------------------------------------- */
 
-// 0. (Opcional dev) Ollama local
+// 0. Granjero Protocol (API Gateway Local para Tobi)
+async function callGranjero(
+  prompt: string,
+  timeoutMs: number,
+  mode: 'simple' | 'deep' | 'investigate',
+  history: ChatTurn[],
+  onDelta: (text: string) => void,
+  externalSignal: AbortSignal,
+  onError?: (msg: string) => void,
+): Promise<{ provider: string; model: string } | null> {
+  const url = process.env.GRANJERO_URL?.trim();
+  if (!url) return null; // Salto silencioso a la cascada normal si no hay Granjero
+  const outcome = await streamOpenAiCompatible({
+    url,
+    model: mode, // El Granjero interpreta el mode (simple/deep/investigate)
+    messages: [
+      { role: 'system', content: TOBI_SYSTEM_PROMPT },
+      ...history,
+      { role: 'user', content: prompt },
+    ],
+    timeoutMs,
+    onDelta,
+    externalSignal,
+  });
+  if (outcome.committed) return { provider: 'granjero', model: mode };
+  onError?.(outcome.error ?? 'sin respuesta');
+  return null;
+}
+
+// 0.5. (Opcional dev) Ollama local
 async function callLocalLLM(
   prompt: string,
   timeoutMs: number,
@@ -1084,6 +1113,7 @@ export interface ParsedAssistantRequest {
   readonly attachment: SanitizedAttachment | null;
   readonly attachments: SanitizedAttachment[];
   readonly history: ChatTurn[];
+  readonly mode: 'simple' | 'deep' | 'investigate';
   readonly error?: string;
 }
 
@@ -1108,6 +1138,7 @@ export function parseAssistantRequestBody(rawBody: unknown): ParsedAssistantRequ
       attachment: null,
       attachments: [],
       history: [],
+      mode: 'simple',
       error: 'Prompt requerido',
     };
   }
@@ -1117,6 +1148,8 @@ export function parseAssistantRequestBody(rawBody: unknown): ParsedAssistantRequ
       ? body.context
       : JSON.stringify(body.context)
     : '';
+
+  const mode = ['simple', 'deep', 'investigate'].includes(body?.mode) ? body.mode : 'simple';
 
   // Compatibilidad total: adjuntos múltiples (nuevo) + adjunto legado (singular).
   const attachments = sanitizeAttachments([
@@ -1134,6 +1167,7 @@ export function parseAssistantRequestBody(rawBody: unknown): ParsedAssistantRequ
     attachment,
     attachments,
     history,
+    mode: mode as 'simple' | 'deep' | 'investigate',
   };
 }
 
@@ -1357,6 +1391,9 @@ export default async function handler(req: any, res: any): Promise<void> {
 
   const failedReasons: string[] = [];
   const steps: Array<{ name: string; run: (p: string, b: number) => Promise<{ provider: string; model: string } | null> }> = [
+    ...(process.env.GRANJERO_URL?.trim()
+      ? [{ name: 'granjero', run: (p: string, b: number) => callGranjero(p, Math.min(b, 45000), parsed.mode, parsed.history, onDelta, abortController.signal, (m: string) => failedReasons.push(`granjero: ${m}`)) }]
+      : []),
     ...(process.env.TOBI_LOCAL_LLM_URL?.trim()
       ? [{ name: 'local', run: (p: string, b: number) => callLocalLLM(p, Math.min(b, 45000), parsed.history, onDelta, abortController.signal, (m: string) => failedReasons.push(`local: ${m}`)) }]
       : []),
