@@ -12,7 +12,6 @@ import {
 import { extractContinuationOptions } from '../tobiOptionsAction';
 import { processMediaFile, MAX_FILES_PER_DROP } from '../mediaProcessor';
 import { useTobiVoice } from '../hooks/useTobiVoice';
-import { useAudioRecorder, formatDuration } from '../hooks/useAudioRecorder';
 import { evaluateTobiPeritaje } from '../systemOne';
 import { TobiSettlementCard } from './TobiSettlementCard';
 import { TobiDocumentCard } from './TobiDocumentCard';
@@ -582,18 +581,8 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
     }
   }, [currentSessionId]);
 
-  // Síntesis de voz (Text-to-Speech) para escuchar respuestas de Tobi
+  // Síntesis de voz (Text-to-Speech) para escuchar respuestas de Tobi bajo demanda
   const { isSpeaking, currentlySpeakingText, speakText, stopSpeaking } = useTobiVoice();
-
-  // Grabación de audio directa y universal con MediaRecorder (estilo Gemini Web / WhatsApp)
-  const {
-    isRecording,
-    recordingDuration,
-    isSupported: isAudioRecordingSupported,
-    startRecording,
-    stopRecording,
-    cancelRecording,
-  } = useAudioRecorder();
 
   // Estado de compartir chat
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -956,21 +945,6 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
     },
     [input, isLoading, pdfProcessing, attachments, messages, queryContext, currentSessionId, sessions],
   );
-
-  const handleFinishRecordingAndSend = useCallback(async () => {
-    const audioFile = await stopRecording();
-    if (!audioFile) return;
-
-    setPdfProcessing(true);
-    try {
-      const processed = await processMediaFile(audioFile);
-      void handleSend('Consulta grabada por nota de voz', processed);
-    } catch (err: any) {
-      alert(err?.message || 'Error al procesar el audio grabado.');
-    } finally {
-      setPdfProcessing(false);
-    }
-  }, [stopRecording, handleSend]);
 
   const handleClear = () => {
     setMessages([]);
@@ -1605,90 +1579,6 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
                       ⏹️
                     </button>
                   )}
-                  {/* Botón Grabar Audio (Estilo Gemini Web / WhatsApp) */}
-                  {!isRecording && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!isAudioRecordingSupported) {
-                          alert("El micrófono requiere conexión segura (HTTPS). Si estás probando desde el celular en red local, usa tu URL de Vercel o un túnel como ngrok.");
-                          return;
-                        }
-                        if (isSpeaking) stopSpeaking();
-                        void startRecording();
-                      }}
-                      disabled={isLoading || pdfProcessing}
-                      aria-label="Grabar audio"
-                      title="Grabar consulta por voz"
-                      style={{
-                        background: 'rgba(16, 185, 129, 0.15)',
-                        border: '1px solid #10b981',
-                        borderRadius: '50%',
-                        width: 34,
-                        height: 34,
-                        color: '#a7f3d0',
-                        cursor: 'pointer',
-                        fontSize: 17,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 0 10px rgba(16, 185, 129, 0.25)',
-                      }}
-                    >
-                      🎙️
-                    </button>
-                  )}
-
-                  {isRecording && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        background: 'rgba(239, 68, 68, 0.15)',
-                        border: '1px solid #ef4444',
-                        borderRadius: 20,
-                        padding: '4px 10px',
-                        animation: 'tobiPulse 1.2s infinite',
-                      }}
-                    >
-                      <span style={{ fontSize: 13, color: '#f87171', fontWeight: 700 }}>
-                        🔴 {formatDuration(recordingDuration)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={cancelRecording}
-                        title="Cancelar grabación"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#94a3b8',
-                          cursor: 'pointer',
-                          fontSize: 13,
-                          padding: 2,
-                        }}
-                      >
-                        ✕
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleFinishRecordingAndSend()}
-                        title="Enviar audio a Tobi"
-                        style={{
-                          background: '#10b981',
-                          border: 'none',
-                          borderRadius: 12,
-                          color: '#022c22',
-                          fontWeight: 700,
-                          fontSize: 11,
-                          padding: '3px 8px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Enviar
-                      </button>
-                    </div>
-                  )}
 
                   <input
                     ref={fileInputRef}
@@ -1737,49 +1627,6 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
                   </button>
                 </div>
               </div>
-            </div>
-
-            {/* Botón Destacado: Audio a Tobi */}
-            <div style={{ marginBottom: isMobile ? 18 : 24, width: '100%', maxWidth: 680, display: 'flex', justifyContent: 'center' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!isAudioRecordingSupported) {
-                    alert('El micrófono requiere conexión segura (HTTPS). Si estás probando desde el celular en red local, usa tu URL de Vercel o un túnel como ngrok.');
-                    return;
-                  }
-                  if (!isRecording) {
-                    if (isSpeaking) stopSpeaking();
-                    void startRecording();
-                    textareaRef.current?.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.16) 0%, rgba(99, 102, 241, 0.16) 100%)',
-                  border: '1.5px solid rgba(16, 185, 129, 0.45)',
-                  borderRadius: 16,
-                  padding: isMobile ? '12px 14px' : '14px 20px',
-                  color: '#ffffff',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 12,
-                  boxShadow: '0 4px 20px rgba(16, 185, 129, 0.2)',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <span style={{ fontSize: 24 }}>🎙️✨</span>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontWeight: 800, fontSize: isMobile ? 14 : 15, color: '#a7f3d0' }}>
-                    ¿Preferís hablar antes que escribir? Enviá una nota de voz a Tobi
-                  </div>
-                  <div style={{ fontSize: isMobile ? 11.5 : 12.5, color: '#94a3b8' }}>
-                    Tocá acá para grabar tu consulta laboral. Tobi la escuchará y analizará tu caso con la ley paraguaya
-                  </div>
-                </div>
-              </button>
             </div>
 
             {/* Action Pills */}
@@ -2184,12 +2031,10 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
                 alignItems: 'center',
                 gap: 8,
                 background: 'rgba(15, 23, 42, 0.85)',
-                border: isRecording
-                  ? '1px solid #ef4444'
-                  : '1px solid rgba(52, 211, 153, 0.3)',
+                border: '1px solid rgba(52, 211, 153, 0.3)',
                 borderRadius: 16,
                 padding: '8px 12px',
-                boxShadow: isRecording ? '0 0 16px rgba(239, 68, 68, 0.35)' : '0 8px 24px rgba(0,0,0,0.35)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                 transition: 'border 0.2s ease, box-shadow 0.2s ease',
               }}
             >
@@ -2241,113 +2086,26 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
                   ⏹️
                 </button>
               )}
-              {/* Botón de Micrófono de Grabación Directa (Estilo Gemini Web) */}
-              {!isRecording && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!isAudioRecordingSupported) {
-                      alert("El micrófono requiere conexión segura (HTTPS). Si estás probando desde el celular en red local, usa tu URL de Vercel o un túnel como ngrok.");
-                      return;
-                    }
-                    if (isSpeaking) stopSpeaking();
-                    void startRecording();
-                  }}
-                  disabled={isLoading || pdfProcessing}
-                  aria-label="Grabar audio"
-                  title="Grabar consulta por voz"
-                  style={{
-                    background: 'rgba(16, 185, 129, 0.15)',
-                    border: '1px solid #10b981',
-                    borderRadius: '50%',
-                    width: 32,
-                    height: 32,
-                    color: '#a7f3d0',
-                    cursor: 'pointer',
-                    fontSize: 16,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: '0 0 10px rgba(16, 185, 129, 0.25)',
-                  }}
-                >
-                  🎙️
-                </button>
-              )}
 
-              {isRecording ? (
-                <div
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 10,
-                    background: 'rgba(239, 68, 68, 0.12)',
-                    border: '1px solid rgba(239, 68, 68, 0.35)',
-                    borderRadius: 12,
-                    padding: '6px 12px',
-                    animation: 'tobiPulse 1.2s infinite',
-                  }}
-                >
-                  <span style={{ fontSize: 13, color: '#f87171', fontWeight: 700 }}>
-                    🔴 Grabando: {formatDuration(recordingDuration)}
-                  </span>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      type="button"
-                      onClick={cancelRecording}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#94a3b8',
-                        cursor: 'pointer',
-                        fontSize: 12,
-                        padding: '4px 8px',
-                      }}
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleFinishRecordingAndSend()}
-                      style={{
-                        background: '#10b981',
-                        border: 'none',
-                        borderRadius: 8,
-                        color: '#022c22',
-                        fontWeight: 700,
-                        fontSize: 12,
-                        padding: '4px 12px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Enviar audio
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  rows={1}
-                  placeholder="Escribí tu consulta o indicación adicional a Tobi…"
-                  style={{
-                    flex: 1,
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#f8fafc',
-                    fontSize: 14.5,
-                    resize: 'none',
-                    outline: 'none',
-                    fontFamily: 'inherit',
-                    maxHeight: 120,
-                  }}
-                />
-              )}
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                rows={1}
+                placeholder="Escribí tu consulta o indicación adicional a Tobi…"
+                style={{
+                  flex: 1,
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#f8fafc',
+                  fontSize: 14.5,
+                  resize: 'none',
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                  maxHeight: 120,
+                }}
+              />
 
               <button
                 type="button"
