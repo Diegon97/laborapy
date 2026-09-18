@@ -20,7 +20,6 @@ import { TobiContinuationOptions } from './TobiContinuationOptions';
 import { TobiPeritajeCard } from './TobiPeritajeCard';
 import { TobiDocumentFormCard } from './TobiDocumentFormCard';
 import { TobiSettlementFormCard } from './TobiSettlementFormCard';
-import { TobiGeminiLiveModal } from './TobiGeminiLiveModal';
 import type { TobiDocumentType, TobiDocumentActionPayload, TobiSettlementActionPayload } from '../types';
 
 export interface TobiChatModalProps {
@@ -286,12 +285,10 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const dragCounterRef = useRef<number>(0);
-  const [isVoiceMode, setIsVoiceMode] = useState<boolean>(true);
-  const [isLiveModalOpen, setIsLiveModalOpen] = useState<boolean>(false);
   const [activeDocFormTipo, setActiveDocFormTipo] = useState<TobiDocumentType | null>(null);
   const [activeDocInitialData, setActiveDocInitialData] = useState<TobiDocumentFormInitialData | null>(null);
   const [isSettlementFormActive, setIsSettlementFormActive] = useState<boolean>(false);
-  // Síntesis de voz (Text-to-Speech) para escuchar respuestas
+  // Síntesis de voz (Text-to-Speech) para escuchar respuestas manualmente
   const { isSpeaking, currentlySpeakingText, speakText, stopSpeaking } = useTobiVoice();
 
   // Grabación directa de audio estándar con MediaRecorder
@@ -471,7 +468,7 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
     async (
       rawText?: string,
       explicitAttachments?: AssistantAttachment[],
-      options?: { readonly skipTts?: boolean },
+      _options?: { readonly skipTts?: boolean },
     ): Promise<string | null> => {
       const activeAttachments = explicitAttachments ?? attachments;
       const text =
@@ -486,8 +483,6 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
       if (isGuest && guestQueriesCount >= GUEST_QUERY_LIMIT) {
         return null;
       }
-
-      const shouldSpeak = isVoiceMode && !options?.skipTts;
 
       activeRequestRef.current = true;
 
@@ -643,9 +638,6 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
             };
             setMessages((prev) => prev.map((m) => (m.id === draftId ? finalMessage : m)));
             void persist(finalMessage);
-            if (shouldSpeak) {
-              speakText(finalMessage.content);
-            }
             return finalMessage.content;
           } else {
             const finalMessage: AssistantMessage = {
@@ -658,9 +650,6 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
             };
             setMessages((prev) => [...prev, finalMessage]);
             void persist(finalMessage);
-            if (shouldSpeak) {
-              speakText(finalMessage.content);
-            }
             return finalMessage.content;
           }
         } else if (streamStarted) {
@@ -688,9 +677,6 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
             systemOneJudgment,
           };
           void persist(partial);
-          if (shouldSpeak) {
-            speakText(partial.content);
-          }
           return partial.content;
         } else {
           const offline = generateOfflineAnswer(text, queryContext);
@@ -703,9 +689,6 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
           };
           setMessages((prev) => [...prev, enrichedOffline]);
           void persist(enrichedOffline);
-          if (shouldSpeak) {
-            speakText(enrichedOffline.content);
-          }
           return enrichedOffline.content;
         }
       } catch (_err) {
@@ -736,11 +719,10 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
         setIsLoading(false);
       }
     },
-    [input, isLoading, persist, queryContext, isGuest, guestQueriesCount, attachments, pdfProcessing, messages, isVoiceMode, speakText],
+    [input, isLoading, persist, queryContext, isGuest, guestQueriesCount, attachments, pdfProcessing, messages],
   );
 
   const handleFinishRecordingAndSend = useCallback(async () => {
-    setIsVoiceMode(true);
     const audioFile = await stopRecording();
     if (!audioFile) return;
 
@@ -754,14 +736,6 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
       setPdfProcessing(false);
     }
   }, [stopRecording, handleSend]);
-
-  const handleLiveModalSend = useCallback(
-    async (text: string, explicitAttachments?: AssistantAttachment[]): Promise<string | null> => {
-      setIsVoiceMode(true);
-      return await handleSend(text, explicitAttachments, { skipTts: true });
-    },
-    [handleSend],
-  );
 
   const handleSendRef = useRef(handleSend);
   useEffect(() => {
@@ -897,11 +871,8 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
       };
       setMessages((prev) => [...prev, docMessage]);
       void persist(docMessage);
-      if (isVoiceMode) {
-        speakText(docMessage.content);
-      }
     },
-    [persist, isVoiceMode, speakText],
+    [persist],
   );
 
   const handleSettlementFormSubmit = useCallback(
@@ -923,11 +894,8 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
       };
       setMessages((prev) => [...prev, liqMessage]);
       void persist(liqMessage);
-      if (isVoiceMode) {
-        speakText(liqMessage.content);
-      }
     },
-    [persist, isVoiceMode, speakText],
+    [persist],
   );
 
   if (!isOpen) return null;
@@ -1080,62 +1048,6 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            {/* Toggle Respuesta por Voz */}
-            <button
-              type="button"
-              onClick={() => setIsVoiceMode((prev) => !prev)}
-              aria-label={isVoiceMode ? 'Desactivar voz de Tobi' : 'Activar voz de Tobi'}
-              title={isVoiceMode ? 'Voz activada (Tobi te responde hablando)' : 'Voz silenciada (solo texto)'}
-              style={{
-                background: isVoiceMode ? 'rgba(16, 185, 129, 0.18)' : 'rgba(255, 255, 255, 0.08)',
-                border: isVoiceMode ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.15)',
-                color: isVoiceMode ? '#a7f3d0' : '#94a3b8',
-                height: 34,
-                padding: isMobile ? '0 8px' : '0 11px',
-                borderRadius: 9,
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-              }}
-            >
-              <span>{isVoiceMode ? '🔊' : '🔇'}</span>
-              <span style={{ display: isMobile ? 'none' : 'inline' }}>
-                {isVoiceMode ? 'Voz ON' : 'Voz OFF'}
-              </span>
-            </button>
-
-            {/* Botón Modo Voz Gemini Live */}
-            <button
-              type="button"
-              aria-label="Abrir Modo Voz con Tobi"
-              title="Hablar por voz en pantalla completa (estilo Gemini)"
-              onClick={() => setIsLiveModalOpen(true)}
-              style={{
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(99, 102, 241, 0.25) 100%)',
-                border: '1px solid #10b981',
-                color: '#a7f3d0',
-                height: 34,
-                padding: isMobile ? '0 9px' : '0 12px',
-                borderRadius: 9,
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                transition: 'all 0.15s ease',
-                boxShadow: '0 0 12px rgba(16, 185, 129, 0.35)',
-              }}
-            >
-              <span>🎙️</span>
-              <span style={{ display: isMobile ? 'none' : 'inline' }}>
-                Modo Voz
-              </span>
-            </button>
-
             <button
               type="button"
               aria-label="Nueva consulta"
@@ -1999,8 +1911,6 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
                   background: 'rgba(30,41,59,0.65)',
                   border: isRecording
                     ? '1px solid #ef4444'
-                    : isVoiceMode
-                    ? '1px solid #10b981'
                     : '1px solid rgba(99,102,241,0.35)',
                   borderRadius: 22,
                   padding: '6px 6px 6px 10px',
@@ -2165,7 +2075,7 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
                         ? `Documento adjunto: ${attachments[0].name}${attachments.length > 1 ? ` (+${attachments.length - 1} archivos)` : ''}. Escribí una indicación o enviá directo…`
                         : isGuest
                         ? `Escribe tu consulta laboral (${GUEST_QUERY_LIMIT - guestQueriesCount} de ${GUEST_QUERY_LIMIT} restantes)…`
-                        : 'Escribe o tocá el micrófono 🎙️ para hablar por voz con Tobi…'
+                        : 'Escribe o tocá el micrófono 🎙️ para enviar una nota de voz a Tobi…'
                     }
                     rows={1}
                     disabled={isLoading || pdfProcessing}
@@ -2268,13 +2178,6 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
           }
         `}
       </style>
-      {/* MODAL INMERSIVO GEMINI LIVE (VOZ BIDIRECCIONAL CONTINUA) */}
-      <TobiGeminiLiveModal
-        isOpen={isLiveModalOpen}
-        onClose={() => setIsLiveModalOpen(false)}
-        onSendQuery={handleLiveModalSend}
-        isMobile={isMobile}
-      />
     </div>
   );
 };
