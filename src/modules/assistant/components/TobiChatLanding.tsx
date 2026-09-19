@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { AssistantAttachment, AssistantMessage, AssistantQueryContext } from '../types';
 import { askDeepSeekAssistant, generateOfflineAnswer } from '../assistantService';
-import { extractSettlementAction, executeSettlementAction } from '../tobiSettlementAction';
+import {
+  extractSettlementAction,
+  executeSettlementAction,
+  toSettlementActionPayload,
+  applyAgenticSettlementAdjustment,
+} from '../tobiSettlementAction';
 import { SALARIO_MINIMO_MENSUAL_2026 } from '../../payroll/constants';
 import {
   extractDocumentAction,
@@ -620,13 +625,22 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
   const saludoCompleto = nombreMostrado ? `${saludo}, ${nombreMostrado}` : saludo;
   const subtituloManos = nombreMostrado ? `¡Manos a la obra, ${nombreMostrado}!` : '¡Manos a la obra!';
 
+  const lastSettlement = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i]?.settlementData) return messages[i].settlementData;
+    }
+    return null;
+  }, [messages]);
+
   const queryContext: AssistantQueryContext = useMemo(
     () => ({
       clientId,
       companyId,
       companyName,
+      liquidacionInput: lastSettlement?.input,
+      liquidacionResult: lastSettlement?.result,
     }),
-    [clientId, companyId, companyName],
+    [clientId, companyId, companyName, lastSettlement],
   );
 
   const scrollToBottom = useCallback(() => {
@@ -830,6 +844,17 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
             } catch (err) {
               console.warn('Error calculando liquidación:', err);
             }
+          } else if (lastSettlement?.input) {
+            // Fallback agéntico determinístico: si el usuario solicitó un ajuste sobre una liquidación activa
+            try {
+              const basePayload = toSettlementActionPayload(lastSettlement.input);
+              const adjusted = applyAgenticSettlementAdjustment(basePayload, text);
+              if (adjusted) {
+                settlementData = executeSettlementAction(adjusted);
+              }
+            } catch (err) {
+              console.warn('Error en ajuste agéntico determinístico:', err);
+            }
           }
 
           const finalMessage: AssistantMessage = {
@@ -885,6 +910,16 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
               settlementData = executeSettlementAction(liqPayload);
             } catch (err) {
               console.warn('Error calculando liquidación:', err);
+            }
+          } else if (lastSettlement?.input) {
+            try {
+              const basePayload = toSettlementActionPayload(lastSettlement.input);
+              const adjusted = applyAgenticSettlementAdjustment(basePayload, text);
+              if (adjusted) {
+                settlementData = executeSettlementAction(adjusted);
+              }
+            } catch (err) {
+              console.warn('Error en ajuste agéntico determinístico:', err);
             }
           }
 

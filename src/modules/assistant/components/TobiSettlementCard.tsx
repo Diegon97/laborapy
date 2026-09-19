@@ -42,8 +42,8 @@ export const TobiSettlementCard: React.FC<TobiSettlementCardProps> = ({
 
   const indemnizacionConcepto = result.conceptos.find((c) => c.id === 'indemnizacion');
   const preavisoConcepto = result.conceptos.find((c) => c.id === 'preaviso');
-  const vacacionesConcepto = result.conceptos.find((c) => c.id.startsWith('vacaciones'));
-  const ipsConcepto = result.conceptos.find((c) => c.id === 'ips_obrero' || c.esDescuento);
+  const vacacionesConceptos = result.conceptos.filter((c) => c.id.startsWith('vacaciones'));
+  const ipsConcepto = result.conceptos.find((c) => c.id === 'ips_trabajador');
 
   return (
     <div
@@ -129,12 +129,12 @@ export const TobiSettlementCard: React.FC<TobiSettlementCardProps> = ({
           <span>Aguinaldo Proporcional (Exento):</span>
           <span style={{ color: '#e2e8f0' }}>{formatGs(result.aguinaldoProporcional)}</span>
         </div>
-        {vacacionesConcepto && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
-            <span>Vacaciones Proporcionales:</span>
-            <span style={{ color: '#e2e8f0' }}>{formatGs(vacacionesConcepto.monto)}</span>
+        {vacacionesConceptos.map((c) => (
+          <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
+            <span>{c.nombre}:</span>
+            <span style={{ color: '#e2e8f0' }}>{formatGs(c.monto)}</span>
           </div>
-        )}
+        ))}
         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
           <span>Total Descuentos {ipsConcepto ? '(inc. IPS 9%)' : ''}:</span>
           <span style={{ color: '#f87171' }}>-{formatGs(result.totalDescuentos)}</span>

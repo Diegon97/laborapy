@@ -3,7 +3,13 @@ import type { AssistantAttachment, AssistantMessage, AssistantQueryContext, Tobi
 import { askDeepSeekAssistant, generateOfflineAnswer, recordTobiFeedback, saveChatMessageToSupabase } from '../assistantService';
 import { createWhatsAppUrl, LABORAPY_CONFIG } from '../../../config/laborapy';
 import { processMediaFile, MAX_FILES_PER_DROP } from '../mediaProcessor';
-import { extractSettlementAction, executeSettlementAction } from '../tobiSettlementAction';
+import {
+  extractSettlementAction,
+  executeSettlementAction,
+  toSettlementActionPayload,
+  applyAgenticSettlementAdjustment,
+} from '../tobiSettlementAction';
+import { prepareContextForInference } from '../sessionManager';
 import { SALARIO_MINIMO_MENSUAL_2026 } from '../../payroll/constants';
 import {
   extractDocumentAction,
@@ -364,13 +370,22 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
   const safeClientId = clientId || 'anon-client';
   const safeCompanyId = companyId || 'anon-company';
 
+  const lastSettlement = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i]?.settlementData) return messages[i].settlementData;
+    }
+    return null;
+  }, [messages]);
+
   const queryContext: AssistantQueryContext = useMemo(
     () => ({
       companyName,
       clientId,
       companyId,
+      liquidacionInput: lastSettlement?.input,
+      liquidacionResult: lastSettlement?.result,
     }) as AssistantQueryContext,
-    [companyName, clientId, companyId],
+    [companyName, clientId, companyId, lastSettlement],
   );
 
   const lastUserQuestion = useMemo(() => {
@@ -400,8 +415,8 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
     hasBootstrapped.current = true;
 
     const greetingText = companyName
-      ? `¡Hola! Soy **Tobi**, tu Profesor y HR Lead con 30 años de experiencia en Recursos Humanos y Legislación Laboral para **${companyName}**.\n\nEstoy a tu disposición para orientarte en liquidaciones, cálculos de haberes, contratos, aportes de IPS, gestiones del MTESS y cualquier duda sobre la ley laboral en Paraguay con paciencia y tranquilidad.\n\n¿En qué consulta te puedo orientar hoy?`
-      : `¡Hola! Soy **Tobi**, tu Profesor y HR Lead con 30 años de experiencia en Recursos Humanos y Legislación Laboral de **LaboraPy**.\n\nEstoy a tu disposición para orientarte en liquidaciones, cálculos de haberes, contratos, aportes de IPS, trámites del MTESS y cualquier consulta laboral en Paraguay con paciencia y tranquilidad.\n\n¿En qué te puedo orientar hoy?`;
+      ? `¡Hola! Soy **Tobi**, tu Copilot y Profesor de Recursos Humanos y Legislación Laboral para **${companyName}**.\n\nEstoy a tu disposición para orientarte en liquidaciones, cálculos de haberes, contratos, aportes de IPS, gestiones del MTESS y cualquier duda sobre la ley laboral en Paraguay con paciencia y tranquilidad.\n\n¿En qué consulta te puedo orientar hoy?`
+      : `¡Hola! Soy **Tobi**, tu Copilot y Profesor de Recursos Humanos y Legislación Laboral de **LaboraPy**.\n\nEstoy a tu disposición para orientarte en liquidaciones, cálculos de haberes, contratos, aportes de IPS, trámites del MTESS y cualquier consulta laboral en Paraguay con paciencia y tranquilidad.\n\n¿En qué te puedo orientar hoy?`;
 
     const greeting: AssistantMessage = {
       id: nextId('assistant'),
@@ -490,10 +505,7 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
         attachment: activeAttachments.length ? { ...activeAttachments[0] } : null,
       };
 
-      const history = messages
-        .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .slice(-8)
-        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+      const history = prepareContextForInference(messages);
 
       setMessages((prev) => [...prev, userMessage]);
       setIsLoading(true);
@@ -591,6 +603,16 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
             } catch (err) {
               console.warn('Error al calcular liquidación automática de Tobi:', err);
             }
+          } else if (lastSettlement?.input) {
+            try {
+              const basePayload = toSettlementActionPayload(lastSettlement.input);
+              const adjusted = applyAgenticSettlementAdjustment(basePayload, text);
+              if (adjusted) {
+                settlementData = executeSettlementAction(adjusted);
+              }
+            } catch (err) {
+              console.warn('Error al aplicar ajuste agéntico determinístico:', err);
+            }
           }
 
           // Si el asistente emitió un documentData que requiere completar casillas o el usuario pidió redactarlo,
@@ -654,6 +676,16 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
               settlementData = executeSettlementAction(payload);
             } catch (err) {
               console.warn('Error al calcular liquidación automática de Tobi:', err);
+            }
+          } else if (lastSettlement?.input) {
+            try {
+              const basePayload = toSettlementActionPayload(lastSettlement.input);
+              const adjusted = applyAgenticSettlementAdjustment(basePayload, text);
+              if (adjusted) {
+                settlementData = executeSettlementAction(adjusted);
+              }
+            } catch (err) {
+              console.warn('Error al aplicar ajuste agéntico determinístico:', err);
             }
           }
           const partial: AssistantMessage = {

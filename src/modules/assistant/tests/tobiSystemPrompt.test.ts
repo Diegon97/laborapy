@@ -168,11 +168,13 @@ describe('TOBI_SYSTEM_PROMPT — sanciones disciplinarias y gradualidad (Arts. 3
   });
 });
 
-describe('TOBI_SYSTEM_PROMPT — identidad de Profesor y HR Lead de 30 años (Humanizer)', () => {
-  it('encarna la identidad de Profesor y HR Lead con 30 años de experiencia', () => {
-    expect(TOBI_SYSTEM_PROMPT).toContain('Profesor y HR Lead con 30 años de experiencia');
-    expect(TOBI_SYSTEM_PROMPT).toContain('IDENTIDAD DE PROFESOR Y HR LEAD DE 30 AÑOS');
-    expect(TOBI_SYSTEM_PROMPT).toContain('Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy');
+describe('TOBI_SYSTEM_PROMPT — identidad pedagógica de Profesor y Mentor de RRHH (Humanizer)', () => {
+  it('encarna la identidad de Copilot, Profesor y Asesor Senior sin atribuirse años ficticios de experiencia', () => {
+    expect(TOBI_SYSTEM_PROMPT).toContain('Copilot, Profesor y Asesor Senior de Recursos Humanos y Legislación Laboral');
+    expect(TOBI_SYSTEM_PROMPT).toContain('IDENTIDAD PEDAGÓGICA Y MENTOR DE RRHH');
+    expect(TOBI_SYSTEM_PROMPT).not.toContain('30 años de experiencia');
+    expect(TOBI_SYSTEM_PROMPT).not.toContain('tres décadas');
+    expect(TOBI_SYSTEM_PROMPT).toMatch(/Queda TERMINANTEMENTE PROHIBIDO inventar o atribuirte años o décadas de experiencia humana/);
   });
 
   it('declara sabiduría, contención, paciencia, empatía y simpatía humanas', () => {

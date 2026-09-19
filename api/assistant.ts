@@ -1146,10 +1146,9 @@ export function parseAssistantRequestBody(rawBody: unknown): ParsedAssistantRequ
     };
   }
 
-  const context = body?.context
-    ? typeof body.context === 'string'
-      ? body.context
-      : JSON.stringify(body.context)
+  const rawContext = body?.context;
+  const context = rawContext
+    ? (typeof rawContext === 'string' ? rawContext : JSON.stringify(rawContext)).slice(0, 12000)
     : '';
 
   const mode = ['simple', 'deep', 'investigate'].includes(body?.mode) ? body.mode : 'simple';
@@ -1172,6 +1171,41 @@ export function parseAssistantRequestBody(rawBody: unknown): ParsedAssistantRequ
     history,
     mode: mode as 'simple' | 'deep' | 'investigate',
   };
+}
+
+function formatContextBlock(rawContext?: string): string {
+  if (!rawContext) return '';
+  try {
+    const parsed = typeof rawContext === 'string' ? JSON.parse(rawContext) : rawContext;
+    if (parsed && typeof parsed === 'object' && parsed.liquidacionInput) {
+      const inp = parsed.liquidacionInput;
+      const res = parsed.liquidacionResult;
+      const vacAnt = inp.vacacionesPeriodosAnteriores ?? 0;
+      const vacAct = inp.vacacionesPeriodoActual ?? 0;
+      const antig = res?.antiguedad
+        ? `${res.antiguedad.years} años, ${res.antiguedad.months} meses, ${res.antiguedad.days} días`
+        : 'calculada';
+      const totalNeto = res?.totalNetoEstimado
+        ? `Gs. ${Number(res.totalNetoEstimado).toLocaleString('es-PY')}`
+        : 'calculado';
+
+      return (
+        `[Liquidación Laboral Activa en Pantalla]\n` +
+        `• Salario mensual: Gs. ${Number(inp.salarioMensual || 3044000).toLocaleString('es-PY')}\n` +
+        `• Fecha de ingreso: ${inp.fechaIngreso || '—'}\n` +
+        `• Fecha de egreso: ${inp.fechaEgreso || '—'}\n` +
+        `• Motivo de egreso: ${inp.motivo || 'despido_sin_causa'}\n` +
+        `• Antigüedad del colaborador: ${antig}\n` +
+        `• Vacaciones pendientes no gozadas (períodos anteriores): ${vacAnt} días\n` +
+        `• Vacaciones gozadas período actual: ${vacAct} días\n` +
+        `• Total neto calculado actualmente: ${totalNeto}\n\n` +
+        `[DIRECTIVA AGÉNTICA DE LIQUIDACIÓN]: El usuario ya tiene esta liquidación calculada en pantalla. Si solicita agregar o modificar días de vacaciones, salarios, fechas o conceptos, NO vuelvas a pedir los datos que ya tenés. Aplicá la adición o corrección inmediatamente sobre esta base y emití obligatoriamente el bloque :::liquidacion_action recalculado al final.`
+      );
+    }
+  } catch {
+    // Si no es JSON, continuar
+  }
+  return `[Contexto de Liquidación / Contrato]\n${rawContext}`;
 }
 
 export function buildEnrichedPrompt(params: {
@@ -1200,8 +1234,10 @@ export function buildEnrichedPrompt(params: {
     attachmentBlocks.push(`[Documento Adjunto: ${params.attachment.name} (${params.attachment.mimeType})]\nSe adjunta imagen/archivo del documento para auditoría pericial jurídica.`);
   }
 
+  const contextFormatted = formatContextBlock(params.context);
+
   return [
-    params.context ? `[Contexto de Liquidación / Contrato]\n${params.context}` : '',
+    contextFormatted,
     ...attachmentBlocks,
     params.jurisprudence
       ? `[Jurisprudencia y Criterios Prácticos de Abogados Laboralistas Paraguayos]\n${params.jurisprudence}`
@@ -1400,9 +1436,9 @@ export default async function handler(req: any, res: any): Promise<void> {
     ...(process.env.TOBI_LOCAL_LLM_URL?.trim()
       ? [{ name: 'local', run: (p: string, b: number) => callLocalLLM(p, Math.min(b, 45000), parsed.history, onDelta, abortController.signal, (m: string) => failedReasons.push(`local: ${m}`)) }]
       : []),
-    { name: 'cloudflare', run: (p, b) => callCloudflare(p, Math.min(b, 12000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`cloudflare: ${m}`)) },
-    { name: 'gemini', run: (p, b) => callGemini(p, Math.min(b, 10000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`gemini: ${m}`)) },
+    { name: 'gemini', run: (p, b) => callGemini(p, Math.min(b, 12000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`gemini: ${m}`)) },
     { name: 'groq', run: (p, b) => callGroq(p, Math.min(b, 15000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`groq: ${m}`)) },
+    { name: 'cloudflare', run: (p, b) => callCloudflare(p, Math.min(b, 10000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`cloudflare: ${m}`)) },
     { name: 'openrouter', run: (p, b) => callOpenRouter(p, Math.min(b, 10000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`openrouter: ${m}`)) },
     { name: 'openai', run: (p, b) => callOpenAI(p, Math.min(b, 15000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`openai: ${m}`)) },
     { name: 'deepseek', run: (p, b) => callDeepSeek(p, Math.min(b, 15000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`deepseek: ${m}`)) },

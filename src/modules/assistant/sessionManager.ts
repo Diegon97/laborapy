@@ -66,7 +66,6 @@ export function clearAllSessions(): void {
   const storage = getSafeStorage();
   storage.removeItem(STORAGE_SESSIONS_KEY);
   storage.removeItem(STORAGE_ACTIVE_SESSION_KEY);
-  if (storage.clear) storage.clear();
 }
 
 /** Genera un título limpio y descriptivo de 3 a 5 palabras a partir del primer mensaje. */
@@ -204,6 +203,15 @@ export function prepareContextForInference(
       if (!content.includes(m.attachment.name)) {
         content = `${summaryTag}\n${content}`;
       }
+    }
+
+    // Ficha técnica persistente de liquidación activa en pantalla
+    if (m.settlementData?.input && m.settlementData?.result && !content.includes('[Liquidación activa')) {
+      const s = m.settlementData.input;
+      const r = m.settlementData.result;
+      const vacAnt = s.vacacionesPeriodosAnteriores ?? 0;
+      const summaryTag = `[Liquidación activa en pantalla: Salario Gs. ${s.salarioMensual.toLocaleString('es-PY')} | Ingreso: ${s.fechaIngreso} | Egreso: ${s.fechaEgreso} | Motivo: ${s.motivo} | Antigüedad: ${r.antiguedad.years}a ${r.antiguedad.months}m ${r.antiguedad.days}d | Vacaciones anteriores adeudadas: ${vacAnt} días | Total neto: Gs. ${r.totalNetoEstimado.toLocaleString('es-PY')}]`;
+      content = `${summaryTag}\n${content}`;
     }
 
     return {
