@@ -30,14 +30,47 @@ Hola, según el Código del Trabajo tenés derecho al cobro de indemnizaciones.
     expect(result.cleanedText).toContain('tenés derecho al cobro de indemnizaciones');
   });
 
+  it('prioriza opciones de identidad y creador cuando el texto menciona a Diego Núñez o LaboraPy', () => {
+    const textCreador =
+      'Fui creado y desarrollado por Diego Núñez, fundador de LaboraPy, el Copilot de RRHH paraguayo.';
+    const options = generateFallbackOptions(textCreador);
+
+    expect(options).toHaveLength(4);
+    expect(options[0]).toMatch(/Diego Núñez/i);
+    expect(JSON.stringify(options)).toMatch(/liquidación|LaboraPy/i);
+    expect(options[3]).toMatch(/WhatsApp/i);
+    expect(JSON.stringify(options)).not.toMatch(/pelea|agresión|golpes/i);
+  });
+
+  it('ofrece la opción de adjuntar la nota de despido en contextos de liquidación y despido (Art. 81 vs 84)', () => {
+    const textLiquidacion =
+      'Vamos a calcular tu liquidación por despido. Necesito tu salario mensual y las fechas de ingreso y egreso.';
+    const options = generateFallbackOptions(textLiquidacion);
+
+    expect(options).toHaveLength(4);
+    expect(options[0]).toContain('Cargar datos en casillas y calcular liquidación');
+    expect(options.some((o) => /Adjuntar nota de despido/i.test(o))).toBe(true);
+    expect(JSON.stringify(options)).toMatch(/justificado o injustificado/i);
+  });
+
+  it('detecta la variante verbal "me despidieron" y ofrece liquidación y nota de despido, NUNCA agresión física', () => {
+    const textDespidoVerbal = 'Me despidieron el viernes sin explicación alguna y sin carta.';
+    const options = generateFallbackOptions(textDespidoVerbal);
+
+    expect(options).toHaveLength(4);
+    expect(options[0]).toContain('Cargar datos en casillas y calcular liquidación');
+    expect(options.some((o) => /Adjuntar nota de despido/i.test(o))).toBe(true);
+    expect(JSON.stringify(options)).not.toMatch(/agresión física|pelea|golpes/i);
+  });
+
   it('genera 4 opciones inteligentes por fallback temático si Tobi no emitió el bloque', () => {
     const textDespido = 'Te despidieron sin causa justificada conforme al Art. 84 del Código del Trabajo.';
     const result = extractContinuationOptions(textDespido);
 
     expect(result.options).not.toBeNull();
     expect(result.options).toHaveLength(4);
-    expect(result.options?.[0]).toMatch(/antigüedad|salario/i);
-    expect(result.options?.[3]).toMatch(/WhatsApp/i);
+    expect(JSON.stringify(result.options)).toMatch(/liquidación|nota de despido/i);
+    expect(result.options?.[3]).toMatch(/despido injustificado|WhatsApp/i);
   });
 
   it('genera opciones adaptadas a maternidad y lactancia si detecta fuero maternal', () => {
@@ -96,8 +129,8 @@ Tu consulta sobre el aguinaldo proporcional fue analizada.
     const options = generateFallbackOptions(textCasoUsuario);
 
     expect(options[0]).toContain('Cargar datos en casillas y calcular liquidación');
-    expect(options[1]).toContain('Emitía facturas con RUC sin IPS');
-    expect(options[2]).toContain('Estaba en planilla formal con seguro social IPS');
+    expect(options[1]).toContain('Adjuntar nota de despido');
+    expect(options[2]).toContain('Emitía facturas con RUC sin IPS');
     expect(JSON.stringify(options)).not.toMatch(/agresión física|pelea|golpes/i);
   });
 });

@@ -4,6 +4,7 @@
  * Extrae el bloque estructurado `:::opciones_continuar [...] :::` emitido por
  * Tobi al final de sus respuestas de profundización. Si el bloque no está presente
  * o resulta inválido, genera 4 opciones inteligentes de respaldo considerando:
+ *  - Bloque 0: identidad, creador (Diego Núñez), LaboraPy y capacidades periciales.
  *  - 3 opciones de profundización (contexto, causal/fáctica y tipo de salida/liquidación/nota).
  *  - 1 opción libre/alternativa ("Consultar otro tema laboral" o "Hablar con un asesor por WhatsApp").
  */
@@ -45,6 +46,34 @@ export function generateFallbackOptions(text: string): string[] {
 
   const norm = normalizeForSearch(text);
 
+  // 0. Identidad, creador, autoría de LaboraPy y capacidades periciales de Tobi
+  if (
+    norm.includes('diego nunez') ||
+    norm.includes('creador') ||
+    norm.includes('creado por') ||
+    norm.includes('creado y desarrollado') ||
+    norm.includes('concebido') ||
+    norm.includes('fundador') ||
+    norm.includes('quien te creo') ||
+    norm.includes('quien te desarrollo') ||
+    norm.includes('quien te entreno') ||
+    norm.includes('quien te hizo') ||
+    norm.includes('quien sos') ||
+    norm.includes('quien eres') ||
+    norm.includes('como te formaste') ||
+    norm.includes('como fuiste creado') ||
+    norm.includes('tu origen') ||
+    norm.includes('como se formo') ||
+    norm.includes('quien le creo')
+  ) {
+    return [
+      '¿Quién es Diego Núñez y cómo nació LaboraPy?',
+      '¿Qué capacidades periciales tiene Tobi en derecho laboral?',
+      'Quiero calcular una liquidación laboral paraguaya exacta',
+      'Hablar con un asesor por WhatsApp (+595 984 469 005)',
+    ];
+  }
+
   // 1. Faltas gravísimas, agresión física, peleas y violencia en el lugar de trabajo
   if (
     norm.includes('pelea') ||
@@ -67,16 +96,19 @@ export function generateFallbackOptions(text: string): string[] {
     norm.includes('liquidacion') ||
     norm.includes('finiquito') ||
     norm.includes('cuanto me corresponde') ||
-    norm.includes('despido') ||
+    norm.includes('despid') ||
     norm.includes('indemniz') ||
     norm.includes('preaviso') ||
     norm.includes('desvincul') ||
-    norm.includes('echaron')
+    norm.includes('echaron') ||
+    norm.includes('preparar liquidacion') ||
+    norm.includes('nota de despido') ||
+    norm.includes('carta de despido')
   ) {
     return [
       '📊 Cargar datos en casillas y calcular liquidación',
+      '📎 Adjuntar nota de despido para evaluar si es justificado o injustificado',
       '📄 Emitía facturas con RUC sin IPS (Art. 19 C.T.)',
-      '💼 Estaba en planilla formal con seguro social IPS',
       '¿Qué me corresponde cobrar por despido injustificado?',
     ];
   }
@@ -91,7 +123,7 @@ export function generateFallbackOptions(text: string): string[] {
   ) {
     return [
       '📊 Cargar datos en casillas y calcular liquidación',
-      '📄 Emitía factura con RUC sin IPS (Art. 19 C.T.)',
+      '📎 Adjuntar nota de despido para evaluar si es justificado o injustificado',
       'Llevo más de un año en la empresa y quiero saber el plazo de preaviso',
       'Hablar con un asesor por WhatsApp (+595 984 469 005)',
     ];
@@ -126,9 +158,9 @@ export function generateFallbackOptions(text: string): string[] {
   ) {
     return [
       'Notifiqué mi estado de gravidez con certificado médico y ecografía',
-      'Pretenden despedirme o modificar mis condiciones de trabajo',
+      'El despido en embarazo es NULO (Ley 5508/15): ¿qué me corresponde?',
       'Conocer subsidios de IPS y descansos obligatorios de lactancia',
-      'Hablar con un asesor por WhatsApp (+595 984 469 005)',
+      'Hablar con Diego Núñez por WhatsApp (+595 984 469 005)',
     ];
   }
 

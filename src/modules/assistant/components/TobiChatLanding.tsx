@@ -73,6 +73,13 @@ const ACTION_PILLS: readonly ActionPill[] = [
     prompt: 'Quiero calcular la liquidación laboral oficial de un colaborador con salario mensual y fechas de ingreso y egreso.',
   },
   {
+    id: 'auditar_despido',
+    icon: '🕵️',
+    title: 'Auditar Nota de Despido',
+    subtitle: 'Art. 81 (justificado) vs Art. 84 (injustificado)',
+    prompt: 'Tengo una nota de despido y necesito auditarla: evaluá si la causal invocada se ajusta al Art. 81 C.T. (despido justificado) o si se tipifica como despido injustificado (Art. 84 C.T.).',
+  },
+  {
     id: 'suspension',
     icon: '⚠️',
     title: 'Suspensión Disciplinaria',
@@ -1260,6 +1267,22 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
   const handleSuggestionClick = useCallback(
     (suggestion: string) => {
       const norm = suggestion.toLowerCase();
+
+      if (norm.includes('whatsapp')) {
+        const text = encodeURIComponent('Hola Diego, estuve consultando con Tobi en LaboraPy sobre mi caso y quiero asesorarme directamente.');
+        window.open(`https://wa.me/595984469005?text=${text}`, '_blank');
+        return;
+      }
+
+      if (
+        (norm.includes('adjuntar') || norm.includes('adjunto')) &&
+        (norm.includes('nota') || norm.includes('despido') || norm.includes('documento') || norm.includes('archivo'))
+      ) {
+        setInput(suggestion);
+        window.setTimeout(() => fileInputRef.current?.click(), 0);
+        return;
+      }
+
       if (norm.includes('casillas') || norm.includes('cargar datos')) {
         if (norm.includes('liquidación') || norm.includes('calcular')) {
           setIsSettlementFormActive(true);
@@ -2285,27 +2308,58 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
             )}
 
             {attachments.length > 0 && (
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  background: 'rgba(99, 102, 241, 0.15)',
-                  border: '1px solid rgba(99, 102, 241, 0.35)',
-                  borderRadius: 8,
-                  padding: '4px 10px',
-                  fontSize: 12,
-                  marginBottom: 8,
-                }}
-              >
-                <span>📎 {attachments[0].name}</span>
-                <button
-                  type="button"
-                  onClick={() => setAttachments([])}
-                  style={{ background: 'none', border: 'none', color: '#fca5a5', cursor: 'pointer' }}
+              <div style={{ marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    background: 'rgba(99, 102, 241, 0.15)',
+                    border: '1px solid rgba(99, 102, 241, 0.35)',
+                    borderRadius: 8,
+                    padding: '4px 10px',
+                    fontSize: 12,
+                    width: 'fit-content',
+                  }}
                 >
-                  ✕
-                </button>
+                  <span>📎 {attachments[0].name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAttachments([])}
+                    style={{ background: 'none', border: 'none', color: '#fca5a5', cursor: 'pointer' }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {[
+                    '📑 Auditar Nota de Despido (Art. 81 vs 84)',
+                    '📄 Auditar Carta de Renuncia / Vicios (Art. 19)',
+                    '🧾 Validar conceptos de este Recibo/Liquidación',
+                    '📬 Auditar Notificación / Plazos Fatales (Art. 399)',
+                  ].map((pText) => (
+                    <button
+                      key={pText}
+                      type="button"
+                      onClick={() => void handleSend(pText, attachments)}
+                      disabled={isLoading || pdfProcessing}
+                      style={{
+                        background: 'rgba(16,185,129,0.14)',
+                        border: '1px solid rgba(16,185,129,0.4)',
+                        color: '#a7f3d0',
+                        fontSize: 11,
+                        padding: '4px 10px',
+                        borderRadius: 999,
+                        cursor: isLoading || pdfProcessing ? 'not-allowed' : 'pointer',
+                        fontWeight: 600,
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      {pText}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 

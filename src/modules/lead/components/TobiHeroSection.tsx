@@ -32,6 +32,13 @@ const ACTION_PILLS: readonly ActionPill[] = [
     prompt: 'Quiero calcular la liquidación laboral oficial de un colaborador con salario mensual y fechas de ingreso y egreso.',
   },
   {
+    id: 'auditar_despido',
+    icon: '🕵️',
+    title: 'Auditar Nota de Despido',
+    subtitle: 'Art. 81 (justificado) vs Art. 84 (injustificado)',
+    prompt: 'Tengo una nota de despido y necesito auditarla: evaluá si la causal invocada se ajusta al Art. 81 C.T. (despido justificado) o si se tipifica como despido injustificado (Art. 84 C.T.).',
+  },
+  {
     id: 'suspension',
     icon: '⚠️',
     title: 'Suspensión Disciplinaria',

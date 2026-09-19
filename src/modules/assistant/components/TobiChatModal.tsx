@@ -47,10 +47,10 @@ let guestMemoryFallback = 0;
 const WHATSAPP_NUMBER = LABORAPY_CONFIG.whatsAppNumber || '595984469005';
 
 const QUICK_SUGGESTIONS: string[] = [
-  '¿Cómo calculo el aguinaldo proporcional?',
+  '📎 Adjuntar nota de despido para evaluar Art. 81 vs Art. 84',
+  '¿Cómo calculo mi liquidación y finiquito laboral?',
   '¿Qué me corresponde por despido injustificado?',
-  'Me hacen facturar pero cumplo horario (Art. 19)',
-  '¿Cuáles son los plazos de comunicación a IPS y MTESS?',
+  '¿Quién es Diego Núñez y quién creó a Tobi en LaboraPy?',
 ];
 
 const SPECIALIST_KEYWORDS = [
@@ -878,6 +878,22 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
   const handleSuggestionClick = useCallback(
     (suggestion: string) => {
       const norm = suggestion.toLowerCase();
+
+      if (norm.includes('whatsapp')) {
+        const text = encodeURIComponent('Hola Diego, estuve consultando con Tobi en LaboraPy sobre mi caso y quiero asesorarme directamente.');
+        window.open(`https://wa.me/595984469005?text=${text}`, '_blank');
+        return;
+      }
+
+      if (
+        (norm.includes('adjuntar') || norm.includes('adjunto')) &&
+        (norm.includes('nota') || norm.includes('despido') || norm.includes('documento') || norm.includes('archivo'))
+      ) {
+        setInput(suggestion);
+        window.setTimeout(() => fileInputRef.current?.click(), 0);
+        return;
+      }
+
       if (norm.includes('casillas') || norm.includes('cargar datos')) {
         if (norm.includes('liquidación') || norm.includes('calcular')) {
           setIsSettlementFormActive(true);
