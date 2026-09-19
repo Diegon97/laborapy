@@ -97,6 +97,7 @@ export const FinalSettlementModal: React.FC<Props> = ({ onClose }) => {
   // Descuentos comerciales o anticipos
   const [anticipoAguinaldo, setAnticipoAguinaldo] = useState<number | ''>(0);
   const [otrosDescuentos, setOtrosDescuentos] = useState<number | ''>(0);
+  const [embargoJudicial, setEmbargoJudicial] = useState<number | ''>(0);
 
   // ── Cálculo reactivo instantáneo ───────────────────────────────────────────
   const { resultado, error } = useMemo(() => {
@@ -111,6 +112,10 @@ export const FinalSettlementModal: React.FC<Props> = ({ onClose }) => {
       const esTopeBonificacion = (Number(salarioMensual) || 0) > ASIGNACION_FAMILIAR_LIMITE_SALARIO;
       const hijosACargoFinal = esTopeBonificacion ? 0 : (Number(hijosMenoresACargo) || 0);
       const bonifPendienteFinal = esTopeBonificacion ? undefined : (adeudaBonificacionAnterior ? Number(montoBonificacionAnterior) || 0 : undefined);
+
+      const salarioImponibleBase = Number(salarioMensual) || 0;
+      const topeEmbargo25 = Math.round(salarioImponibleBase * 0.25);
+      const montoEmbargoEfectivo = Math.min(Number(embargoJudicial) || 0, topeEmbargo25);
 
       const input: LiquidacionInput = {
         empresa,
@@ -146,6 +151,9 @@ export const FinalSettlementModal: React.FC<Props> = ({ onClose }) => {
             : []),
           ...(Number(otrosDescuentos) > 0
             ? [{ concepto: 'Descuentos Varios', monto: Number(otrosDescuentos) }]
+            : []),
+          ...(montoEmbargoEfectivo > 0
+            ? [{ concepto: 'Embargo Judicial (Tope 25% Art. 245 C.T.)', monto: montoEmbargoEfectivo }]
             : []),
         ],
       };
@@ -1286,6 +1294,21 @@ export const FinalSettlementModal: React.FC<Props> = ({ onClose }) => {
                       placeholder="0"
                     />
                   </div>
+                </div>
+
+                <div className="field-group" style={{ marginBottom: '12px' }}>
+                  <label className="field-label">Embargo Judicial (Gs., tope 25% Art. 245 C.T.)</label>
+                  <input
+                    type="number"
+                    value={embargoJudicial}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setEmbargoJudicial(val === '' ? '' : Math.max(0, Number(val)));
+                    }}
+                    onFocus={e => e.target.select()}
+                    className="input-control"
+                    placeholder="0"
+                  />
                 </div>
 
                 {/* Datos para el documento formal */}

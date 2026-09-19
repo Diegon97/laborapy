@@ -29,9 +29,15 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
   const [motivo, setMotivo] = useState<MotivoEgreso>('despido_sin_causa');
   const [regimen, setRegimen] = useState<RegimenIPS>('general');
   const [preavisoOtorgado, setPreavisoOtorgado] = useState<boolean>(false);
+  const [vacacionesPeriodosAnteriores, setVacacionesPeriodosAnteriores] = useState<number | ''>('');
+  const [comisionesHorasExtras, setComisionesHorasExtras] = useState<number | ''>('');
+  const [aguinaldoAnterior, setAguinaldoAnterior] = useState<number | ''>('');
+  const [embargoJudicial, setEmbargoJudicial] = useState<number | ''>('');
   const [nombreEmpleado, setNombreEmpleado] = useState<string>('');
   const [ciEmpleado, setCiEmpleado] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const maxEmbargo = Math.round((salarioMensual || 0) * 0.25);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +54,9 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
       return;
     }
 
+    const embargoNum = Number(embargoJudicial) || 0;
+    const embargoTopeado = Math.min(embargoNum, maxEmbargo);
+
     const payload: TobiSettlementActionPayload = {
       salarioMensual,
       fechaIngreso,
@@ -56,9 +65,13 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
       regimen,
       preavisoOtorgado,
       preavisoObligado: motivo === 'renuncia' ? 'trabajador' : 'empleador',
+      vacacionesPeriodosAnteriores: Number(vacacionesPeriodosAnteriores) || undefined,
+      comisiones: Number(comisionesHorasExtras) || undefined,
+      aguinaldoAnteriorPendiente: Number(aguinaldoAnterior) || undefined,
+      embargoJudicial: embargoTopeado > 0 ? embargoTopeado : undefined,
       nombreEmpleado: nombreEmpleado.trim() || undefined,
       ciEmpleado: ciEmpleado.trim() || undefined,
-      tieneVariables: false,
+      tieneVariables: (Number(comisionesHorasExtras) || 0) > 0,
     };
 
     onSubmit(payload);
@@ -243,6 +256,98 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
           </label>
         </div>
       )}
+
+      {/* ── Casillas Adicionales / Novedades y Descuentos Legales ── */}
+      <div
+        style={{
+          marginTop: 10,
+          marginBottom: 12,
+          padding: '10px 12px',
+          borderRadius: 10,
+          background: 'rgba(15, 23, 42, 0.55)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+        }}
+      >
+        <div style={{ fontSize: 11.5, fontWeight: 700, color: '#38bdf8', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span>⚖️</span>
+          <span>Conceptos Adicionales y Límites Legales (Opcional):</span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 8, marginBottom: 8 }}>
+          <div>
+            <label style={labelStyle}>Vacaciones pendientes otros períodos (Días)</label>
+            <input
+              type="number"
+              min={0}
+              placeholder="0 días"
+              value={vacacionesPeriodosAnteriores}
+              onChange={(e) => {
+                const val = e.target.value;
+                setVacacionesPeriodosAnteriores(val === '' ? '' : Math.max(0, parseInt(val, 10) || 0));
+              }}
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Comisiones / Horas Extras pendientes (Gs.)</label>
+            <input
+              type="number"
+              min={0}
+              placeholder="0 Gs."
+              value={comisionesHorasExtras}
+              onChange={(e) => {
+                const val = e.target.value;
+                setComisionesHorasExtras(val === '' ? '' : Math.max(0, parseInt(val, 10) || 0));
+              }}
+              style={inputStyle}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 8 }}>
+          <div>
+            <label style={labelStyle}>Aguinaldo adeudado año anterior (Gs.)</label>
+            <input
+              type="number"
+              min={0}
+              placeholder="0 Gs."
+              value={aguinaldoAnterior}
+              onChange={(e) => {
+                const val = e.target.value;
+                setAguinaldoAnterior(val === '' ? '' : Math.max(0, parseInt(val, 10) || 0));
+              }}
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label style={labelStyle}>Embargo Judicial (Gs.)</label>
+              <span style={{ fontSize: 10, color: '#f59e0b', fontWeight: 600 }}>
+                Tope 25%: Gs. {maxEmbargo.toLocaleString('es-PY')}
+              </span>
+            </div>
+            <input
+              type="number"
+              min={0}
+              placeholder={`Máx: ${maxEmbargo.toLocaleString('es-PY')}`}
+              value={embargoJudicial}
+              onChange={(e) => {
+                const val = e.target.value;
+                setEmbargoJudicial(val === '' ? '' : Math.max(0, parseInt(val, 10) || 0));
+              }}
+              style={{
+                ...inputStyle,
+                borderColor: Number(embargoJudicial) > maxEmbargo ? '#f59e0b' : undefined,
+              }}
+            />
+            {Number(embargoJudicial) > maxEmbargo && (
+              <span style={{ fontSize: 10, color: '#fcd34d', marginTop: 2, display: 'block', lineHeight: 1.2 }}>
+                ℹ️ Se topará automáticamente al máximo legal del 25% (Art. 245 C.T.).
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Nombre y CI opcionales */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 8, marginBottom: 12 }}>

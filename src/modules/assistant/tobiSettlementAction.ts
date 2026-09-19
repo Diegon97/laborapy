@@ -83,7 +83,9 @@ export function toLiquidacionInput(payload: TobiSettlementActionPayload): Liquid
     fechaEgreso: payload.fechaEgreso,
     motivo: payload.motivo,
     salarioMensual: salarioEfectivo,
-    tieneVariables: payload.tieneVariables ?? false,
+    tieneVariables: payload.tieneVariables ?? ((payload.comisiones ?? 0) > 0 || (payload.horasExtras ?? 0) > 0),
+    comisiones: payload.comisiones,
+    horasExtras: payload.horasExtras,
     regimen: payload.regimen,
     regimenLaboral: payload.regimenLaboral,
     nombreEmpleado: payload.nombreEmpleado,
@@ -93,6 +95,10 @@ export function toLiquidacionInput(payload: TobiSettlementActionPayload): Liquid
     vacacionesPeriodoActual: payload.vacacionesPeriodoActual,
     vacacionesPeriodosAnteriores: payload.vacacionesPeriodosAnteriores,
     salariosPendientes: payload.salariosPendientes,
+    aguinaldoAnteriorPendiente: payload.aguinaldoAnteriorPendiente,
+    descuentosAdicionales: payload.embargoJudicial && payload.embargoJudicial > 0
+      ? [{ concepto: 'Embargo Judicial (Tope 25% Art. 245 C.T.)', monto: payload.embargoJudicial }]
+      : undefined,
   };
 
   if (payload.preavisoOtorgado !== undefined || payload.preavisoObligado !== undefined) {

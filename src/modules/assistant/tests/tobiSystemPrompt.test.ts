@@ -167,3 +167,48 @@ describe('TOBI_SYSTEM_PROMPT — sanciones disciplinarias y gradualidad (Arts. 3
     expect(TOBI_SYSTEM_PROMPT).toMatch(/Reglamento Interno homologado/i);
   });
 });
+
+describe('TOBI_SYSTEM_PROMPT — identidad de Profesor y HR Lead de 30 años (Humanizer)', () => {
+  it('encarna la identidad de Profesor y HR Lead con 30 años de experiencia', () => {
+    expect(TOBI_SYSTEM_PROMPT).toContain('Profesor y HR Lead con 30 años de experiencia');
+    expect(TOBI_SYSTEM_PROMPT).toContain('IDENTIDAD DE PROFESOR Y HR LEAD DE 30 AÑOS');
+    expect(TOBI_SYSTEM_PROMPT).toContain('Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy');
+  });
+
+  it('declara sabiduría, contención, paciencia, empatía y simpatía humanas', () => {
+    expect(TOBI_SYSTEM_PROMPT).toMatch(/Sabiduría y contención/);
+    expect(TOBI_SYSTEM_PROMPT).toMatch(/Paciencia y simpatía/);
+    expect(TOBI_SYSTEM_PROMPT).toMatch(/empatía genuina/i);
+    expect(TOBI_SYSTEM_PROMPT).toContain('Tranquilo, vamos a analizar esto juntos paso a paso');
+  });
+
+  it('aplica pedagogía viva y principios Humanizer con cero vicios de IA', () => {
+    expect(TOBI_SYSTEM_PROMPT).toMatch(/Pedagogía viva y principios Humanizer/);
+    expect(TOBI_SYSTEM_PROMPT).toMatch(/cero clichés y vicios de IA/i);
+    expect(TOBI_SYSTEM_PROMPT).toContain('no es solo X sino Y');
+    expect(TOBI_SYSTEM_PROMPT).toContain('es crucial');
+  });
+
+  it('define la modulación y cadencia cálida al hablar por voz o audio', () => {
+    expect(TOBI_SYSTEM_PROMPT).toMatch(/Modulación y cadencia al hablar/);
+    expect(TOBI_SYSTEM_PROMPT).toMatch(/pausada, cálida, reconfortante y cercana/);
+  });
+
+  it('preserva la Regla N° 0, la Regla N° 1 y las reglas taxativas canónicas', () => {
+    expect(TOBI_SYSTEM_PROMPT).toContain('REGLA INEXPUGNABLE N° 0');
+    expect(TOBI_SYSTEM_PROMPT).toContain('REGLA INEXPUGNABLE N° 1');
+    expect(TOBI_SYSTEM_PROMPT).toContain('Diego Núñez');
+    expect(TOBI_SYSTEM_PROMPT).toContain('3.044.000');
+    expect(TOBI_SYSTEM_PROMPT).toContain('Art. 218');
+    expect(TOBI_SYSTEM_PROMPT).toContain('Art. 243');
+    expect(TOBI_SYSTEM_PROMPT).toContain('Art. 94');
+    expect(TOBI_SYSTEM_PROMPT).toContain('Art. 399');
+  });
+
+  it('mantiene intactos los bloques de acción y el zero-leak de proveedores', () => {
+    expect(TOBI_SYSTEM_PROMPT).toContain(':::liquidacion_action');
+    expect(TOBI_SYSTEM_PROMPT).toContain(':::documento_action');
+    expect(TOBI_SYSTEM_PROMPT).toContain(':::opciones_continuar');
+    expect(TOBI_SYSTEM_PROMPT).toMatch(/ZERO-LEAK/i);
+  });
+});

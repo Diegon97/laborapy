@@ -400,8 +400,8 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
     hasBootstrapped.current = true;
 
     const greetingText = companyName
-      ? `¡Hola! Soy **Tobi**, tu Asesor Especialista de Recursos Humanos para **${companyName}**.\n\nEstoy a tu disposición para orientarte en liquidaciones, cálculos de haberes, contratos, aportes de IPS, gestiones del MTESS y cualquier duda sobre la legislación laboral en Paraguay.\n\n¿En qué consulta te puedo colaborar hoy?`
-      : `¡Hola! Soy **Tobi**, tu Copilot de Recursos Humanos y Legislación Laboral de **LaboraPy**.\n\nEstoy a tu disposición para orientarte en liquidaciones, cálculos de haberes, contratos, aportes de IPS, trámites del MTESS y cualquier consulta laboral en Paraguay.\n\n¿En qué te puedo colaborar hoy?`;
+      ? `¡Hola! Soy **Tobi**, tu Profesor y HR Lead con 30 años de experiencia en Recursos Humanos y Legislación Laboral para **${companyName}**.\n\nEstoy a tu disposición para orientarte en liquidaciones, cálculos de haberes, contratos, aportes de IPS, gestiones del MTESS y cualquier duda sobre la ley laboral en Paraguay con paciencia y tranquilidad.\n\n¿En qué consulta te puedo orientar hoy?`
+      : `¡Hola! Soy **Tobi**, tu Profesor y HR Lead con 30 años de experiencia en Recursos Humanos y Legislación Laboral de **LaboraPy**.\n\nEstoy a tu disposición para orientarte en liquidaciones, cálculos de haberes, contratos, aportes de IPS, trámites del MTESS y cualquier consulta laboral en Paraguay con paciencia y tranquilidad.\n\n¿En qué te puedo orientar hoy?`;
 
     const greeting: AssistantMessage = {
       id: nextId('assistant'),

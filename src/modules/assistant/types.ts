@@ -249,6 +249,10 @@ export interface TobiSettlementActionPayload {
   readonly vacacionesPeriodoActual?: number;
   readonly vacacionesPeriodosAnteriores?: number;
   readonly salariosPendientes?: number;
+  readonly comisiones?: number;
+  readonly horasExtras?: number;
+  readonly aguinaldoAnteriorPendiente?: number;
+  readonly embargoJudicial?: number;
   readonly nombreEmpleado?: string;
   readonly ciEmpleado?: string;
   readonly cargoEmpleado?: string;
