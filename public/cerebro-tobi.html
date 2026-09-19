@@ -3,24 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cerebro de Tobi — Grafo Sináptico Interactivo | LaboraPy</title>
+  <title>Cerebro de Tobi 3D — Grafo Cognitivo & Pericial | LaboraPy</title>
+  
+  <!-- CDNs: Three.js r128 + OrbitControls + Postprocessing (UnrealBloom) + TWEEN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+
   <style>
     :root {
-      --bg-dark: #070a13;
-      --bg-panel: rgba(13, 21, 38, 0.85);
-      --bg-panel-solid: #0d1526;
-      --border-panel: rgba(56, 189, 248, 0.2);
-      --border-highlight: rgba(56, 189, 248, 0.6);
-      --text-main: #f1f5f9;
+      --bg-space: #05070f;
+      --glass-panel: rgba(11, 17, 33, 0.85);
+      --glass-border: rgba(56, 189, 248, 0.25);
+      --text-main: #f8fafc;
       --text-dim: #94a3b8;
       --accent-cyan: #00f0ff;
+      --accent-purple: #c084fc;
       --accent-gold: #f59e0b;
       --accent-green: #10b981;
-      --accent-purple: #c084fc;
-      --accent-blue: #3b82f6;
       --accent-pink: #ec4899;
-      --accent-red: #f43f5e;
-      --font-mono: "Fira Code", "Cascadia Code", Consolas, monospace;
+      --accent-crimson: #f43f5e;
+      --accent-blue: #38bdf8;
+      --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
 
     * {
@@ -35,32 +45,27 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: var(--bg-dark);
+      background-color: var(--bg-space);
       color: var(--text-main);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-family: var(--font-ui);
     }
 
-    #canvas-container {
+    #webgl-canvas {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
       z-index: 1;
-    }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
+      outline: none;
     }
 
     /* TOP HEADER & HUD */
-    header {
+    .hud-header {
       position: absolute;
-      top: 14px;
-      left: 16px;
-      right: 16px;
+      top: 16px;
+      left: 20px;
+      right: 20px;
       z-index: 10;
       display: flex;
       justify-content: space-between;
@@ -68,1721 +73,2130 @@
       pointer-events: none;
     }
 
-    .brand-hud {
+    .brand-glass {
+      pointer-events: auto;
       display: flex;
       align-items: center;
-      gap: 12px;
-      background: var(--bg-panel);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border-panel);
-      padding: 10px 18px;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-      pointer-events: auto;
+      gap: 14px;
+      background: var(--glass-panel);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      padding: 10px 20px;
+      border-radius: 14px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(0, 240, 255, 0.05);
     }
 
-    .brain-pulse-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #00f0ff, #3b82f6);
+    .brain-symbol {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #00f0ff, #7c3aed);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
-      box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
-      animation: pulse-icon 2.5s infinite ease-in-out;
+      font-size: 19px;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+      animation: pulse-symbol 2.8s infinite ease-in-out;
     }
 
-    @keyframes pulse-icon {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 14px rgba(0, 240, 255, 0.4); }
-      50% { transform: scale(1.08); box-shadow: 0 0 24px rgba(0, 240, 255, 0.8); }
+    @keyframes pulse-symbol {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 16px rgba(0, 240, 255, 0.5); }
+      50% { transform: scale(1.08); box-shadow: 0 0 28px rgba(0, 240, 255, 0.9); }
     }
 
-    .brand-titles h1 {
+    .brand-title {
       font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
+      font-weight: 800;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
       background: linear-gradient(90deg, #ffffff, #38bdf8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    .brand-titles p {
+    .brand-subtitle {
       font-size: 11px;
       color: var(--text-dim);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
-    .badge-paraguay {
-      background: rgba(239, 68, 68, 0.2);
+    .pill-py {
+      background: rgba(239, 68, 68, 0.18);
       border: 1px solid rgba(239, 68, 68, 0.5);
       color: #fca5a5;
       font-size: 9px;
-      padding: 1px 5px;
+      padding: 1px 6px;
       border-radius: 4px;
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: 0.05em;
     }
 
-    .hud-metrics {
+    .telemetry-row {
+      pointer-events: auto;
       display: flex;
       gap: 10px;
-      pointer-events: auto;
     }
 
-    .metric-card {
-      background: var(--bg-panel);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border-panel);
+    .telemetry-tag {
+      background: var(--glass-panel);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
       padding: 8px 14px;
-      border-radius: 10px;
+      border-radius: 12px;
+      font-size: 11.5px;
       display: flex;
-      flex-direction: column;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      align-items: center;
+      gap: 8px;
+      color: var(--text-dim);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     }
 
-    .metric-label {
-      font-size: 9px;
+    .telemetry-tag b {
+      color: #ffffff;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    .dot-live {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981;
+      animation: live-blink 1.5s infinite;
+    }
+
+    @keyframes live-blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.85); }
+    }
+
+    /* CONTROL DASHBOARD (LEFT) */
+    .controls-dashboard {
+      position: absolute;
+      top: 85px;
+      left: 20px;
+      width: 290px;
+      background: var(--glass-panel);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 16px;
+      z-index: 10;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .section-headline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 11px;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.08em;
+      color: var(--accent-cyan);
+    }
+
+    .search-container {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 8px 12px 8px 32px;
+      font-size: 12px;
+      color: #ffffff;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 9px;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .clusters-scroll {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      max-height: 230px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+      padding-right: 4px;
+    }
+
+    .cluster-chip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .cluster-chip:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .cluster-chip.active {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--accent-cyan);
+    }
+
+    .chip-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chip-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .chip-count {
+      font-size: 10px;
+      font-family: monospace;
+      color: var(--text-dim);
+      background: rgba(0, 0, 0, 0.35);
+      padding: 1px 6px;
+      border-radius: 8px;
+    }
+
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
       color: var(--text-dim);
       font-weight: 600;
     }
 
-    .metric-val {
-      font-size: 13px;
-      font-weight: 700;
+    .slider-header b {
       color: var(--accent-cyan);
-      font-family: var(--font-mono);
-      display: flex;
-      align-items: center;
-      gap: 5px;
+      font-family: monospace;
     }
 
-    .dot-live {
-      width: 7px;
-      height: 7px;
+    .sci-slider {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.15);
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .sci-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
-      background: #10b981;
-      box-shadow: 0 0 8px #10b981;
-      display: inline-block;
-      animation: blink 1.5s infinite;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan);
+      cursor: pointer;
     }
 
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    /* CONTROLS BAR & SIMULATIONS */
-    .controls-panel {
+    /* BOTTOM DOCK */
+    .dock-container {
       position: absolute;
-      bottom: 20px;
+      bottom: 22px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 10;
       display: flex;
       align-items: center;
-      gap: 8px;
-      background: var(--bg-panel);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--border-panel);
-      padding: 8px 16px;
-      border-radius: 30px;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+      gap: 10px;
+      background: var(--glass-panel);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid var(--glass-border);
+      padding: 8px 18px;
+      border-radius: 40px;
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.6), inset 0 0 14px rgba(0, 240, 255, 0.05);
     }
 
-    .btn-action {
+    .dock-action-btn {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: var(--text-main);
       padding: 8px 14px;
-      border-radius: 20px;
+      border-radius: 24px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      gap: 7px;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .btn-action:hover {
-      background: rgba(56, 189, 248, 0.15);
+    .dock-action-btn:hover {
+      background: rgba(0, 240, 255, 0.18);
       border-color: var(--accent-cyan);
-      transform: translateY(-2px);
       color: #ffffff;
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
     }
 
-    .btn-action.active {
-      background: linear-gradient(135deg, rgba(0, 240, 255, 0.3), rgba(59, 130, 246, 0.3));
+    .dock-action-btn.active {
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.4), rgba(124, 58, 237, 0.4));
       border-color: var(--accent-cyan);
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+      box-shadow: 0 0 22px rgba(0, 240, 255, 0.6);
     }
 
-    .btn-icon {
-      width: 34px;
-      height: 34px;
+    .dock-icon-btn {
+      width: 36px;
+      height: 36px;
       padding: 0;
-      display: flex;
-      align-items: center;
       justify-content: center;
       border-radius: 50%;
     }
 
-    .divider {
+    .dock-divider {
       width: 1px;
-      height: 20px;
+      height: 22px;
       background: rgba(255, 255, 255, 0.15);
-      margin: 0 4px;
+      margin: 0 3px;
     }
 
-    /* LAYER FILTER BAR (LEFT) */
-    .layers-panel {
+    /* 3D INSPECTOR DRAWER (RIGHT) — ULTRA RESPONSIVO */
+    .inspector-panel {
       position: absolute;
       top: 85px;
-      left: 16px;
-      z-index: 10;
-      background: var(--bg-panel);
-      backdrop-filter: blur(14px);
-      border: 1px solid var(--border-panel);
-      border-radius: 14px;
-      padding: 12px;
-      width: 250px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      transition: transform 0.3s ease;
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .panel-header h3 {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-dim);
-      font-weight: 700;
-    }
-
-    .layer-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 8px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-bottom: 4px;
-      font-size: 11.5px;
-    }
-
-    .layer-item:hover {
-      background: rgba(255, 255, 255, 0.06);
-    }
-
-    .layer-item.dimmed {
-      opacity: 0.35;
-    }
-
-    .layer-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .layer-indicator {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      box-shadow: 0 0 8px currentColor;
-    }
-
-    .layer-count {
-      font-size: 10px;
-      font-family: var(--font-mono);
-      color: var(--text-dim);
-      background: rgba(255, 255, 255, 0.06);
-      padding: 1px 6px;
-      border-radius: 10px;
-    }
-
-    /* SEARCH BAR */
-    .search-box {
-      margin-bottom: 10px;
-      position: relative;
-    }
-
-    .search-input {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 8px;
-      padding: 7px 10px 7px 28px;
-      font-size: 12px;
-      color: #fff;
-      outline: none;
-      transition: border 0.2s;
-    }
-
-    .search-input:focus {
-      border-color: var(--accent-cyan);
-    }
-
-    .search-icon {
-      position: absolute;
-      left: 9px;
-      top: 8px;
-      font-size: 12px;
-      color: var(--text-dim);
-    }
-
-    /* INSPECTOR DRAWER (RIGHT) */
-    .inspector-drawer {
-      position: absolute;
-      top: 85px;
-      right: 16px;
-      bottom: 24px;
-      width: 390px;
-      background: var(--bg-panel);
-      backdrop-filter: blur(18px);
-      border: 1px solid var(--border-panel);
-      border-radius: 16px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-      z-index: 20;
+      right: 20px;
+      bottom: 22px;
+      width: 420px;
+      background: var(--glass-panel);
+      backdrop-filter: blur(26px);
+      -webkit-backdrop-filter: blur(26px);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      z-index: 100;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transform: translateX(420px);
-      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+      transform: translateX(460px);
+      transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: auto;
     }
 
-    .inspector-drawer.open {
-      transform: translateX(0);
+    .inspector-panel.open {
+      transform: translateX(0) !important;
     }
 
-    .drawer-header {
-      padding: 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    .inspector-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--glass-border);
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       background: rgba(255, 255, 255, 0.02);
     }
 
-    .drawer-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
+    .cluster-pill-badge {
+      display: inline-block;
       font-size: 10px;
-      font-weight: 700;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       padding: 3px 8px;
-      border-radius: 6px;
+      border-radius: 5px;
       margin-bottom: 8px;
     }
 
-    .drawer-title {
-      font-size: 16px;
-      font-weight: 700;
+    .inspector-title {
+      font-size: 18px;
+      font-weight: 800;
       color: #ffffff;
-      line-height: 1.3;
+      line-height: 1.25;
     }
 
-    .drawer-subtitle {
+    .inspector-sub {
       font-size: 12px;
-      color: var(--text-dim);
-      margin-top: 3px;
+      color: var(--accent-cyan);
+      margin-top: 4px;
+      font-weight: 600;
     }
 
-    .drawer-close {
+    .inspector-close {
       background: none;
       border: none;
       color: var(--text-dim);
-      font-size: 18px;
+      font-size: 20px;
       cursor: pointer;
-      padding: 4px;
+      padding: 4px 8px;
       border-radius: 6px;
       transition: all 0.2s;
     }
 
-    .drawer-close:hover {
+    .inspector-close:hover {
       background: rgba(255, 255, 255, 0.1);
-      color: #fff;
+      color: #ffffff;
     }
 
-    .drawer-body {
-      padding: 16px;
+    .inspector-body {
+      padding: 18px 20px;
       overflow-y: auto;
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
-    .drawer-section {
-      background: rgba(0, 0, 0, 0.25);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+    .content-box {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--glass-border);
       border-radius: 10px;
-      padding: 12px;
+      padding: 14px;
     }
 
-    .section-title {
-      font-size: 10.5px;
+    .box-title {
+      font-size: 11px;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--accent-cyan);
-      font-weight: 700;
       margin-bottom: 8px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
     }
 
-    .section-content {
-      font-size: 12.5px;
-      line-height: 1.6;
+    .box-text {
+      font-size: 13px;
+      line-height: 1.65;
       color: #cbd5e1;
     }
 
-    .code-block {
-      background: #040711;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 6px;
-      padding: 10px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: #38bdf8;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-break: break-all;
-      margin-top: 6px;
-    }
-
-    .connections-list {
+    .synapse-list {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      margin-top: 6px;
+      gap: 7px;
+      margin-top: 8px;
     }
 
-    .connection-tag {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 11.5px;
-      cursor: pointer;
+    .synapse-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      cursor: pointer;
       transition: all 0.2s;
     }
 
-    .connection-tag:hover {
-      background: rgba(56, 189, 248, 0.12);
+    .synapse-item:hover {
+      background: rgba(0, 240, 255, 0.15);
       border-color: var(--accent-cyan);
-      color: #fff;
+      color: #ffffff;
+      transform: translateX(3px);
     }
 
-    .conn-label {
+    .synapse-role {
       font-size: 10px;
       color: var(--text-dim);
     }
 
-    /* SIMULATION TOAST BANNER */
-    .sim-toast {
+    /* TOOLTIP */
+    .node-tooltip {
+      position: absolute;
+      pointer-events: none;
+      z-index: 50;
+      background: rgba(11, 17, 33, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--accent-cyan);
+      box-shadow: 0 10px 25px rgba(0, 240, 255, 0.35);
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 12px;
+      color: #ffffff;
+      display: none;
+      transform: translate(-50%, -130%);
+      white-space: nowrap;
+    }
+
+    .node-tooltip-sub {
+      font-size: 10px;
+      color: var(--accent-cyan);
+      margin-top: 2px;
+      font-weight: 600;
+    }
+
+    /* TOAST BANNER */
+    .sci-toast {
       position: absolute;
       top: 80px;
       left: 50%;
       transform: translateX(-50%) translateY(-20px);
-      background: rgba(15, 23, 42, 0.92);
-      backdrop-filter: blur(14px);
+      background: rgba(11, 17, 33, 0.95);
+      backdrop-filter: blur(20px);
       border: 1px solid var(--accent-cyan);
-      box-shadow: 0 10px 30px rgba(0, 240, 255, 0.35);
+      box-shadow: 0 12px 35px rgba(0, 240, 255, 0.4);
       border-radius: 30px;
-      padding: 9px 20px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      padding: 9px 22px;
       font-size: 13px;
-      font-weight: 600;
-      color: #fff;
+      font-weight: 700;
+      color: #ffffff;
       z-index: 100;
       opacity: 0;
       pointer-events: none;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    .sim-toast.show {
+    .sci-toast.show {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
 
-    /* INSTRUCTIONS OVERLAY */
-    .help-tooltip {
+    .nav-hint {
       position: absolute;
       bottom: 24px;
-      right: 20px;
+      right: 24px;
       font-size: 11px;
-      color: rgba(255, 255, 255, 0.4);
+      color: rgba(255, 255, 255, 0.35);
       pointer-events: none;
       z-index: 10;
       text-align: right;
       line-height: 1.5;
     }
 
-    /* CUSTOM SCROLLBAR */
-    ::-webkit-scrollbar {
-      width: 5px;
-      height: 5px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.2);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(56, 189, 248, 0.4);
-    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.25); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
   </style>
 </head>
 <body>
 
-  <!-- CANVAS FOR FORCE GRAPH -->
-  <div id="canvas-container">
-    <canvas id="synapseCanvas"></canvas>
+  <!-- 3D WEBGL CANVAS -->
+  <div id="webgl-canvas"></div>
+
+  <!-- FLOATING TOOLTIP -->
+  <div id="nodeTooltip" class="node-tooltip">
+    <div id="tooltipTitle" style="font-weight: 700;">Título</div>
+    <div id="tooltipSub" class="node-tooltip-sub">Subtítulo</div>
   </div>
 
-  <!-- TOP HEADER -->
-  <header>
-    <div class="brand-hud">
-      <div class="brain-pulse-icon">🧠</div>
-      <div class="brand-titles">
-        <h1>Cerebro de Tobi — LaboraPy</h1>
-        <p>
-          <span>Arquitectura Neuronal & Jurídica</span>
-          <span class="badge-paraguay">PARAGUAY · 2026</span>
-        </p>
+  <!-- TOP HEADER HUD -->
+  <div class="hud-header">
+    <div class="brand-glass">
+      <div class="brain-symbol">🧠</div>
+      <div>
+        <div class="brand-title">Cerebro de Tobi 3D · LaboraPy</div>
+        <div class="brand-subtitle">
+          <span>Mapa de Inteligencia Cognitiva & Peritaje Laboral</span>
+          <span class="pill-py">PARAGUAY · 2026</span>
+        </div>
       </div>
     </div>
 
-    <div class="hud-metrics">
-      <div class="metric-card">
-        <span class="metric-label">Estado del Núcleo</span>
-        <span class="metric-val"><span class="dot-live"></span> SINÁPTICO ONLINE</span>
+    <div class="telemetry-row">
+      <div class="telemetry-tag">
+        <span class="dot-live"></span>
+        <span>Módulos Periciales: <b>Operativos (60 FPS)</b></span>
       </div>
-      <div class="metric-card">
-        <span class="metric-label">Piso Salarial Guard</span>
-        <span class="metric-val" style="color: var(--accent-gold);">Gs. 3.044.000</span>
+      <div class="telemetry-tag">
+        <span>Piso Salarial Vigente: <b style="color: var(--accent-gold);">Gs. 3.044.000</b></span>
       </div>
-      <div class="metric-card">
-        <span class="metric-label">Latencia RAG Dual</span>
-        <span class="metric-val" style="color: var(--accent-green);">< 900 ms</span>
+      <div class="telemetry-tag">
+        <span>Respuesta Pericial: <b style="color: var(--accent-green);">&lt; 900 ms</b></span>
       </div>
-      <div class="metric-card">
-        <span class="metric-label">Creador & Arquitecto</span>
-        <span class="metric-val" style="color: #fff; font-size: 11px;">Diego Núñez</span>
+      <div class="telemetry-tag">
+        <span>Autor & Titular: <b>Diego Núñez</b></span>
       </div>
     </div>
-  </header>
+  </div>
 
-  <!-- LAYER FILTERS & SEARCH (LEFT) -->
-  <div class="layers-panel">
-    <div class="search-box">
+  <!-- CONTROL DASHBOARD (LEFT) -->
+  <div class="controls-dashboard">
+    <div class="section-headline">
+      <span>Dimensiones Cognitivas (7)</span>
+      <button style="background:none; border:none; color:var(--accent-cyan); font-size:10px; cursor:pointer; font-weight:700;" onclick="resetClusterFilter()">Ver Todas</button>
+    </div>
+
+    <div class="search-container">
       <span class="search-icon">🔍</span>
-      <input type="text" id="nodeSearch" class="search-input" placeholder="Buscar neurona o artículo..." autocomplete="off">
+      <input type="text" id="nodeSearch" class="search-input" placeholder="Buscar módulo o artículo..." autocomplete="off">
     </div>
 
-    <div class="panel-header">
-      <h3>Capas Sinápticas (8)</h3>
-      <button class="btn-action" style="padding: 2px 8px; font-size: 10px;" onclick="resetLayerFilters()">Ver Todas</button>
+    <div class="clusters-scroll" id="clusterChips">
+      <!-- Populated by JS -->
     </div>
 
-    <div id="layersList">
-      <!-- Generated by JS -->
+    <div class="section-headline">
+      <span>Ajustes Visuales & Dinámica</span>
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-header">
+        <span>Intensidad Bloom (Glow)</span>
+        <b id="valBloom">1.4</b>
+      </div>
+      <input type="range" class="sci-slider" id="sliderBloom" min="0" max="3" step="0.1" value="1.4">
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-header">
+        <span>Velocidad de Simulación</span>
+        <b id="valSpeed">1.0x</b>
+      </div>
+      <input type="range" class="sci-slider" id="sliderSpeed" min="0.2" max="2.5" step="0.1" value="1.0">
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-header">
+        <span>Repulsión 3D</span>
+        <b id="valRepulsion">1800</b>
+      </div>
+      <input type="range" class="sci-slider" id="sliderRepulsion" min="500" max="4000" step="100" value="1800">
     </div>
   </div>
 
-  <!-- SIMULATION HUD & CONTROLS (BOTTOM) -->
-  <div class="controls-panel">
-    <button class="btn-action" onclick="triggerSimulation('rag')" title="Simula el flujo de consulta legal híbrida con Supabase pgvector">
-      <span>⚡</span> Flujo RAG Híbrido
+  <!-- BOTTOM DOCK -->
+  <div class="dock-container">
+    <button class="dock-action-btn" onclick="triggerSimulation('rag')" title="Simula el flujo de dictamen y consulta de precedentes judiciales">
+      <span>⚡</span> Dictamen Jurídico
     </button>
-    <button class="btn-action" onclick="triggerSimulation('settlement')" title="Simula la derivación determinista al motor numérico de liquidaciones">
-      <span>🧮</span> Finiquito Determinista
+    <button class="dock-action-btn" onclick="triggerSimulation('math')" title="Simula el cálculo pericial de liquidación exacta">
+      <span>🧮</span> Finiquito Exacto
     </button>
-    <button class="btn-action" onclick="triggerSimulation('ocr')" title="Simula la ingesta y extracción multimodal de recibos o telegramas">
-      <span>📄</span> OCR Multimodal
+    <button class="dock-action-btn" onclick="triggerSimulation('ocr')" title="Simula la auditoría visual de telegramas y recibos">
+      <span>📄</span> Peritaje Documental
     </button>
-    <button class="btn-action" onclick="triggerSimulation('ciso')" title="Simula la activación del escudo Zero-Leak ante intentos de fuga">
-      <span>🛡️</span> Escudo Zero-Leak
+    <button class="dock-action-btn" onclick="triggerSimulation('shield')" title="Simula la activación de la bóveda de privacidad y confidencialidad">
+      <span>🛡️</span> Bóveda Privacidad
     </button>
 
-    <div class="divider"></div>
+    <div class="dock-divider"></div>
 
-    <button class="btn-action btn-icon" id="btnSound" onclick="toggleAudio()" title="Activar/Silenciar sonido de pulsos sinápticos">
+    <button class="dock-action-btn" id="btnToggleDrawer" onclick="toggleDrawerManual()" title="Abrir/Cerrar panel pericial interactivo">
+      <span>📋</span> Ficha Pericial
+    </button>
+    <button class="dock-action-btn dock-icon-btn" id="btnAutoRotate" onclick="toggleAutoRotate()" title="Activar/Desactivar rotación orbital lenta">
+      <span>🔄</span>
+    </button>
+    <button class="dock-action-btn dock-icon-btn" id="btnAudio" onclick="toggleAudio()" title="Activar/Silenciar sonido de pulsos sinápticos">
       <span>🔊</span>
     </button>
-    <button class="btn-action btn-icon" onclick="resetCamera()" title="Centrar grafo">
+    <button class="dock-action-btn dock-icon-btn" onclick="resetCamera3D()" title="Recentrar cámara 3D">
       <span>🎯</span>
     </button>
-    <button class="btn-action btn-icon" onclick="togglePlayPause()" id="btnPlay" title="Pausar/Reanudar física y partículas">
+    <button class="dock-action-btn dock-icon-btn" id="btnPlay" onclick="togglePausePhysics()" title="Pausar/Reanudar física de resortes">
       <span>⏸️</span>
     </button>
   </div>
 
-  <!-- SIMULATION TOAST -->
-  <div id="simToast" class="sim-toast">
-    <span id="simToastIcon">⚡</span>
-    <span id="simToastText">Iniciando impulso sináptico...</span>
-  </div>
-
-  <!-- NODE INSPECTOR DRAWER (RIGHT) -->
-  <div id="inspectorDrawer" class="inspector-drawer">
-    <div class="drawer-header">
+  <!-- INSPECTOR DRAWER -->
+  <div class="inspector-panel" id="inspectorDrawer">
+    <div class="inspector-header">
       <div>
-        <div id="drawerBadge" class="drawer-badge">CAPA CEREBRAL</div>
-        <div id="drawerTitle" class="drawer-title">Nombre del Nodo</div>
-        <div id="drawerSubtitle" class="drawer-subtitle">Subtítulo o rol</div>
+        <div id="drawerBadge" class="cluster-pill-badge">DIMENSIÓN</div>
+        <div id="drawerTitle" class="inspector-title">Nombre del Módulo</div>
+        <div id="drawerSub" class="inspector-sub">Subtítulo o Función</div>
       </div>
-      <button class="drawer-close" onclick="closeInspector()">✕</button>
+      <button class="inspector-close" onclick="closeInspector()">✕</button>
     </div>
 
-    <div class="drawer-body">
-      <div class="drawer-section">
-        <div class="section-title"><span>📌</span> Función Arquitectónica</div>
-        <div id="drawerDesc" class="section-content">Descripción técnica y arquitectónica.</div>
+    <div class="inspector-body">
+      <div class="content-box">
+        <div class="box-title"><span>📌</span> Misión & Rol en LaboraPy</div>
+        <div id="drawerRole" class="box-text">Texto</div>
       </div>
 
-      <div class="drawer-section" id="drawerLegalSection">
-        <div class="section-title"><span>⚖️</span> Marco Normativo / Especificación</div>
-        <div id="drawerLegal" class="section-content">Artículo o pauta legal aplicable.</div>
+      <div class="content-box">
+        <div class="box-title"><span>⚖️</span> Fundamento Legal Paraguayo</div>
+        <div id="drawerLegal" class="box-text">Texto</div>
       </div>
 
-      <div class="drawer-section" id="drawerCodeSection">
-        <div class="section-title"><span>💻</span> Código / Implementación Canónica</div>
-        <div id="drawerCode" class="code-block">// Código de referencia</div>
+      <div class="content-box">
+        <div class="box-title"><span>💡</span> Aplicación Ejecutiva en RRHH</div>
+        <div id="drawerPractical" class="box-text">Texto</div>
       </div>
 
-      <div class="drawer-section">
-        <div class="section-title"><span>🔗</span> Sinapsis Conectadas (<span id="connCount">0</span>)</div>
-        <div id="drawerConnections" class="connections-list">
+      <div class="content-box">
+        <div class="box-title"><span>🔗</span> Sinapsis Funcionales (<span id="drawerConnCount">0</span>)</div>
+        <div class="synapse-list" id="drawerSynapses">
           <!-- Populated by JS -->
         </div>
       </div>
     </div>
   </div>
 
-  <div class="help-tooltip">
-    Arrastrá con el mouse para rotar o mover nodos · Rueda para Zoom<br>
-    Hacé click en cualquier nodo para abrir su ficha técnica profunda
+  <!-- TOAST BANNER -->
+  <div class="sci-toast" id="sciToast">
+    <span id="toastIcon">⚡</span>
+    <span id="toastText">Iniciando simulación...</span>
+  </div>
+
+  <div class="nav-hint">
+    Clic en cualquier planeta: Abre la ficha pericial derecha interactiva<br>
+    Rotación Orbital: Arrastrar clic izquierdo · Zoom: Rueda del mouse
   </div>
 
   <script>
     /* ==========================================================================
-       DEFINICIÓN EXHAUSTIVA DE NODOS Y CAPAS DEL CEREBRO DE TOBI
+       DIMENSIONES COGNITIVAS (100% FUNCIONALES, JURÍDICAS Y EJECUTIVAS)
+       CERO DATOS DE INFRAESTRUCTURA O SECRETOS DE BACKEND (ESTRICTO ZERO-LEAK)
        ========================================================================== */
-
-    const LAYERS = {
-      core: { id: 'core', name: 'Identidad & Núcleo', color: '#00f0ff', count: 0 },
-      legal: { id: 'legal', name: 'Corteza Jurídica (Leyes PY)', color: '#f59e0b', count: 0 },
-      memory: { id: 'memory', name: 'Memoria Vectorial & CSJ', color: '#10b981', count: 0 },
-      rag: { id: 'rag', name: 'Pipeline RAG Híbrido', color: '#c084fc', count: 0 },
-      cascade: { id: 'cascade', name: 'Cascada de Inferencia', color: '#3b82f6', count: 0 },
-      math: { id: 'math', name: 'Hemisferio Determinista', color: '#ec4899', count: 0 },
-      motor: { id: 'motor', name: 'Sistema Motor (Acciones)', color: '#38bdf8', count: 0 },
-      shield: { id: 'shield', name: 'Escudo CISO Zero-Leak', color: '#f43f5e', count: 0 }
+    const CLUSTERS = {
+      core: { id: 'core', name: 'Identidad & Mentoría', color: '#00f0ff', hex: 0x00f0ff, count: 0 },
+      legal: { id: 'legal', name: 'Corteza Normativa (Ley 213/93)', color: '#f59e0b', hex: 0xf59e0b, count: 0 },
+      doctrina: { id: 'doctrina', name: 'Jurisprudencia CSJ & Doctrina', color: '#10b981', hex: 0x10b981, count: 0 },
+      forense: { id: 'forense', name: 'Peritaje Documental Forense', color: '#c084fc', hex: 0xc084fc, count: 0 },
+      calculo: { id: 'calculo', name: 'Motor Matemático Exacto', color: '#ec4899', hex: 0xec4899, count: 0 },
+      ejecutivo: { id: 'ejecutivo', name: 'Acciones & Documentos Oficiales', color: '#38bdf8', hex: 0x38bdf8, count: 0 },
+      seguridad: { id: 'seguridad', name: 'Bóveda de Privacidad & Cumplimiento', color: '#f43f5e', hex: 0xf43f5e, count: 0 }
     };
 
-    const NODES = [
-      // --- CAPA 1: IDENTIDAD Y NÚCLEO ---
+    const NODES_DATA = [
+      // 1. Core: Identidad & Mentoría
       {
         id: 'tobi_core',
         label: 'Tobi Copilot RRHH',
-        layer: 'core',
-        size: 26,
-        x: 0, y: 0,
+        cluster: 'core',
+        radius: 6.0,
         sub: 'Copilot & Mentor Senior de RRHH',
-        desc: 'Núcleo de inteligencia artificial pericial y pedagógica concebido en LaboraPy para asesorar en legislación laboral de Paraguay.',
-        legal: 'System Prompt Canónico: tobiSystemPrompt.ts (Versión PY-PROMPT-2026.09.17). Misión: resolver vicisitudes con empatía, calidez y rigor legal.',
-        code: `export const TOBI_SYSTEM_PROMPT = [\n  'Sos Tobi, el Copilot, Profesor y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy en Paraguay.'\n];`
+        role: 'Inteligencia pericial y pedagógica concebida para asesorar con máxima solvencia en derecho laboral paraguayo, conteniendo y guiando a líderes y trabajadores.',
+        legal: 'System Prompt Canónico LaboraPy (PY-PROMPT-2026.09.17). Resuelve vicisitudes laborales cotidianas con sabiduría y rigor positivo.',
+        practical: 'Provee diagnósticos ejecutivos a directores de talento y explicaciones cristalinas a trabajadores particulares.'
       },
       {
         id: 'diego_nunez',
         label: 'Diego Núñez (Creador)',
-        layer: 'core',
-        size: 22,
-        x: -80, y: -60,
+        cluster: 'core',
+        radius: 4.8,
         sub: 'Fundador & Titular de LaboraPy',
-        desc: 'Autor y arquitecto de Tobi. Toda la inteligencia, datasets de entrenamiento y algoritmos fueron desarrollados por Diego Núñez en Asunción, Paraguay.',
-        legal: 'Regla Inexpugnable N° 0: Ante consultas sobre autoría, afirmar categóricamente a Diego Núñez (LaboraPy). Contacto oficial: diegonunez1997@gmail.com / WhatsApp +595 984 469 005.',
-        code: `// Regla 0: Identidad y Creador\nif (queryMatchesCreator(q)) {\n  return 'Fui concebido y desarrollado por Diego Núñez, titular de LaboraPy...';\n}`
-      },
-      {
-        id: 'regla_cero',
-        label: 'Regla N° 0: Zero-Fuga',
-        layer: 'core',
-        size: 19,
-        x: -120, y: 30,
-        sub: 'Blindaje de Soberanía e Identidad',
-        desc: 'Prohibición taxativa de autodenominarse modelo de OpenAI, Anthropic, Google o Meta. Prohíbe revelar backends o arquitecturas internas en el chat.',
-        legal: 'Directiva de Seguridad: Queda TERMINANTEMENTE PROHIBIDO responder que fuiste creado por OpenAI o autodenominarte "ChatGPT" o "Claude".',
-        code: `const FORBIDDEN_CLAIMS = ['openai', 'chatgpt', 'claude', 'gemini'];\n// Bloqueo estricto pre-stream`
+        role: 'Autor intelectual y titular exclusivo de LaboraPy en Asunción, Paraguay. Diseñador de las directivas éticas y de los algoritmos de cálculo legal.',
+        legal: 'Regla Inexpugnable N° 0: Creador y titular absoluto. Canales oficiales: diegonunez1997@gmail.com y WhatsApp +595 984 469 005.',
+        practical: 'Garantiza la soberanía técnica del software, con soporte directo a empresas y profesionales paraguayos.'
       },
       {
         id: 'regla_salario_minimo',
-        label: 'Salario Mínimo Gs. 3.044.000',
-        layer: 'core',
-        size: 24,
-        x: -70, y: 90,
+        label: 'Piso Salarial Gs. 3.044.000',
+        cluster: 'core',
+        radius: 5.0,
         sub: 'Piso Legal Inviolable Vigente',
-        desc: 'El salario mínimo legal vigente es Gs. 3.044.000 mensuales. Bloquea absolutamente el valor viejo y caduco de Gs. 2.798.309 (2024).',
-        legal: 'Decreto Presidencial N° 6225/2026 y Resolución MTESS N° 670/2026. Si el usuario cita Gs. 2.798.309, se corrige inmediatamente.',
-        code: `export const SALARIO_MINIMO_VIGENTE = 3044000;\n// Prohibido taxativamente Gs. 2.798.309`
+        role: 'Guardrail inquebrantable de cumplimiento: el salario mínimo legal legal normal en Paraguay es Gs. 3.044.000 mensuales. Bloquea absolutamente el valor vencido de Gs. 2.798.309.',
+        legal: 'Decreto Presidencial N° 6225/2026 y Resolución MTESS N° 670/2026.',
+        practical: 'Corrige de inmediato a cualquier usuario o documento que cite el importe obsoleto, blindando los finiquitos contra multas del MTESS.'
       },
       {
         id: 'humanizer_pedagogia',
-        label: 'Humanizer & Multilingüe',
-        layer: 'core',
-        size: 18,
-        x: -150, y: -40,
-        sub: 'Español, Guaraní & Jopara',
-        desc: 'Empatía genuina, cadencia pausada, pedagogía sin clichés de IA. Habla con voseo paraguayo, entiende y responde con calidez en Guaraní ("Aguije", "Mba\'éichapa").',
-        legal: 'Directiva Pedagógica: Cero clichés ("no es solo X sino Y", listas forzadas). Traduce tecnicismos complejos a lenguaje cotidiano y comprensible.',
-        code: `// Soporte nativo de Jopara y modulación serena de voz\nconst PARAGUAYAN_VOICE_CADENCE = { voseo: true, guaraniFluency: 'native' };`
+        label: 'Pedagogía & Jopara',
+        cluster: 'core',
+        radius: 4.0,
+        sub: 'Español, Guaraní & Jopara Natural',
+        role: 'Voz humana empática, modulación serena y calidez paraguaya. Responde con naturalidad en español, Jopara o Guaraní ("Mba\'éichapa", "Aguije"). Cero clichés mecánicos.',
+        legal: 'Directiva Pedagógica Humanizer: comprensión sin barreras idiomáticas ni tecnicismos oscuros.',
+        practical: 'Genera contención genuina tanto ante un reclamo de fábrica como en una consulta directiva de directorio.'
       },
       {
         id: 'anti_abrumacion',
         label: 'Protocolo Anti-Abrumación',
-        layer: 'core',
-        size: 16,
-        x: -30, y: -130,
-        sub: 'Respuestas Orgánicas 2-3 Párrafos',
-        desc: 'No vuelca enciclopedias de golpe. Diagnóstico directo y accionable en 2 o 3 párrafos digeribles, invitando a profundizar gradualmente.',
-        legal: 'Regla de Respuesta Orgánica: Respuestas concisas (máx. 350-500 palabras) con opciones interactivas de continuación para evitar abrumar al usuario.',
-        code: `function formatResponse(text) {\n  return enforceOrganicParagraphs(text, { maxParagraphs: 3 });\n}`
+        cluster: 'core',
+        radius: 3.8,
+        sub: 'Estructura Orgánica 2-3 Párrafos',
+        role: 'Estructura cada respuesta en 2 o 3 párrafos digeribles y bien separados, priorizando el diagnóstico directo y la acción inmediata.',
+        legal: 'Regla de Comunicación Orgánica y Diagnóstico Progresivo.',
+        practical: 'Evita la parálisis por sobrecarga cognitiva, invitando a profundizar gradualmente a través de opciones interactivas.'
       },
 
-      // --- CAPA 2: CORTEZA JURÍDICA POSITIVA (LEYES PY) ---
+      // 2. Corteza Normativa
       {
         id: 'codigo_trabajo',
         label: 'Código del Trabajo (Ley 213/93)',
-        layer: 'legal',
-        size: 25,
-        x: 140, y: -90,
-        sub: 'Eje Normativo de Fondo y Modif. Ley 496/95',
-        desc: 'Cuerpo normativo que rige los derechos y deberes laborales en el territorio paraguayo. Base de todas las reglas sustantivas de Tobi.',
-        legal: 'Ley N° 213/93 y su modificatoria Ley N° 496/95. Orden público e irrenunciabilidad de los derechos del trabajador.',
-        code: `// Whitelist normativa taxativa en tobiSystemPrompt.ts`
+        cluster: 'legal',
+        radius: 5.2,
+        sub: 'Eje Normativo Laboral de Fondo',
+        role: 'Cuerpo normativo de orden público que regula los derechos y deberes laborales en Paraguay (y su modificatoria Ley 496/95).',
+        legal: 'Ley N° 213/93. Principio de irrenunciabilidad de los derechos consagrados.',
+        practical: 'Base sustantiva para auditar contratos, jornadas, causales de terminación y obligaciones patronales.'
       },
       {
         id: 'art19_primacia',
         label: 'Art. 19: Primacía de Realidad',
-        layer: 'legal',
-        size: 18,
-        x: 230, y: -140,
+        cluster: 'legal',
+        radius: 4.4,
         sub: 'Anti-Fraude por Facturación',
-        desc: 'La realidad fáctica de subordinación y horario prima sobre contratos comerciales o emisión de facturas. Exige inscripción retroactiva a IPS.',
-        legal: 'Art. 19 C.T.: En las relaciones de trabajo rige el principio de primacía de la realidad ante fraudes contractuales.',
-        code: `if (hasSubordination && issuesInvoices) {\n  triggerLaborFraudAlert({ appliesIPS: true, claimDirectRights: true });\n}`
+        role: 'La realidad de los hechos (subordinación, horario y exclusividad) prevalece sobre contratos civiles o facturas comerciales.',
+        legal: 'Art. 19 del Código del Trabajo.',
+        practical: 'Desarma simulaciones de facturación de servicios y exige aportes e indemnizaciones laborales completas.'
       },
       {
         id: 'art81_causales',
-        label: 'Art. 81: Causal Justificada',
-        layer: 'legal',
-        size: 18,
-        x: 240, y: -70,
-        sub: 'Causales Taxativas & Inmediatez',
-        desc: 'Lista cerrada de motivos de despido justificado imputables al trabajador. Exige cumplimiento estricto del principio de inmediatez procesal.',
-        legal: 'Art. 81 C.T.: Sin indemnización ni preaviso si se comprueba causal taxativa; pero la sanción debe ser oportuna o caduca.',
-        code: `const CAUSALES_ART_81 = ['falta_disciplina', 'embriaguez', 'injuria', 'revelacion_secretos'];`
+        label: 'Art. 81: Causales de Despido',
+        cluster: 'legal',
+        radius: 4.4,
+        sub: 'Taxatividad & Inmediatez',
+        role: 'Lista cerrada de motivos graves que justifican el despido sin indemnización ni preaviso imputables al trabajador.',
+        legal: 'Art. 81 C.T.: Falta de disciplina, injurias, ebriedad, revelación de secretos industriales.',
+        practical: 'Exige que la sanción se aplique en plazo oportuno; si el empleador deja pasar el tiempo, opera el perdón tácito.'
       },
       {
         id: 'art87_preaviso',
         label: 'Art. 87: Escala de Preaviso',
-        layer: 'legal',
-        size: 18,
-        x: 210, y: -20,
-        sub: '30, 45, 60 y 90 Días',
-        desc: 'Notificación previa obligatoria en caso de despido o renuncia. Escala: hasta 1 año = 30d; 1 a 5 años = 45d; 5 a 10 años = 60d; +10 años = 90d.',
-        legal: 'Art. 87 y 88 C.T.: Si no se otorga el preaviso, debe abonarse su importe en dinero.',
-        code: `function calcPreaviso(anios) {\n  if (anios < 1) return 30;\n  if (anios < 5) return 45;\n  if (anios < 10) return 60;\n  return 90;\n}`
+        cluster: 'legal',
+        radius: 4.4,
+        sub: 'Plazos Tarifados 30 a 90 Días',
+        role: 'Notificación previa de la terminación laboral: hasta 1 año = 30d; 1 a 5 años = 45d; 5 a 10 años = 60d; +10 años = 90d.',
+        legal: 'Arts. 87 a 90 C.T.',
+        practical: 'Determina si el preaviso fue trabajado (con 2 horas diarias de licencia) o si debe abonarse en dinero en el finiquito.'
       },
       {
         id: 'art91_indemnizacion',
         label: 'Art. 91: Indemnización Despido',
-        layer: 'legal',
-        size: 20,
-        x: 160, y: 30,
-        sub: '15 Días de Salario por Año',
-        desc: 'Resarcimiento legal por despido injustificado: 15 días de salario por cada año de servicio o fracción superior a 6 meses.',
-        legal: 'Art. 91 C.T.: En ningún caso la indemnización será inferior al equivalente a 15 días de salario.',
-        code: `const diasIndemnizacion = Math.floor(antiguedadAnios + (fraccionMeses > 6 ? 1 : 0)) * 15;`
+        cluster: 'legal',
+        radius: 4.6,
+        sub: '15 Días por Año o Fracción > 6m',
+        role: 'Resarcimiento tarifado obligatorio ante el despido sin causa justificada.',
+        legal: 'Art. 91 C.T.: Base de cálculo sobre salario diario ordinario (salario / 30).',
+        practical: 'Rubro principal no sujeto a descuento de IPS que repara la rescisión intempestiva del contrato.'
       },
       {
         id: 'art94_estabilidad',
-        label: 'Art. 94: Estabilidad de 10 Años',
-        layer: 'legal',
-        size: 19,
-        x: 230, y: 60,
+        label: 'Art. 94: Estabilidad 10 Años',
+        cluster: 'legal',
+        radius: 4.5,
         sub: 'Estabilidad Adquirida Reforzada',
-        desc: 'Al alcanzar 10 años de antigüedad ininterrumpida, el trabajador adquiere estabilidad especial. El despido requiere causa justificada probada en juicio.',
-        legal: 'Art. 94 y 95 C.T.: Si el empleador no reincorpora, debe pagar el doble de la indemnización tarifada.',
-        code: `if (antiguedadAnios >= 10) {\n  indemnizacionDoble = true;\n  requiereJuicioPrevio = true;\n}`
+        role: 'Protección especial al cumplir 10 años ininterrumpidos de antigüedad. El despido requiere juicio previo de justificación.',
+        legal: 'Arts. 94 y 95 C.T.',
+        practical: 'Si el empleador se niega a la reincorporación ordenada por el juez, se abona la doble indemnización legal.'
       },
       {
         id: 'jornadas_laborales',
-        label: 'Arts. 194-206: Jornadas & Horas',
-        layer: 'legal',
-        size: 19,
-        x: 180, y: 120,
+        label: 'Arts. 194-206: Jornadas & Extras',
+        cluster: 'legal',
+        radius: 4.2,
         sub: 'Diurna 8h, Nocturna 7h (+30%), Mixta 7.5h',
-        desc: 'Regulación estricta de tiempos de labor. Jornada nocturna (20:00 a 06:00) con 30% de recargo obligatorio. Jornada mixta máximo 7 horas y media.',
-        legal: 'Arts. 194, 196, 202 y 234 inc. c C.T. Horas extras diurnas +50%, horas extras nocturnas +100%.',
-        code: `const MAX_JORNADA_MIXTA_SEMANAL = 45;\nconst RECARGO_NOCTURNO = 1.30;`
+        role: 'Regulación estricta de tiempos de trabajo y recargos obligatorios por horas extras (50% diurnas, 100% nocturnas).',
+        legal: 'Arts. 194, 196, 202 y 234 inc. c C.T.',
+        practical: 'Audita planillas de asistencia biométrica y detecta sobretiempos impagos o jornadas mixtas abusivas.'
       },
       {
         id: 'art218_vacaciones',
         label: 'Art. 218: Vacaciones Hábiles',
-        layer: 'legal',
-        size: 18,
-        x: 90, y: 150,
-        sub: '12, 18 y 30 Días Hábiles Remunerados',
-        desc: 'Descanso anual remunerado en días laborables: 1 a 5 años = 12 días; 5 a 10 años = 18 días; más de 10 años = 30 días continuos.',
-        legal: 'Art. 218 C.T. Prohibido compensar en dinero salvo terminación del contrato de trabajo.',
-        code: `function diasVacaciones(anios) {\n  if (anios < 5) return 12;\n  if (anios < 10) return 18;\n  return 30;\n}`
+        cluster: 'legal',
+        radius: 4.0,
+        sub: '12, 18 y 30 Días Hábiles Continuos',
+        role: 'Descanso anual pagado en días laborables: 1-5 años = 12 días; 5-10 años = 18 días; +10 años = 30 días.',
+        legal: 'Art. 218 C.T. Prohibido compensar en dinero durante la vigencia del contrato.',
+        practical: 'Calcula la compensación en dinero de las vacaciones causadas no gozadas al extinguirse el vínculo laboral.'
       },
       {
         id: 'art243_aguinaldo',
         label: 'Art. 243: Aguinaldo Legal',
-        layer: 'legal',
-        size: 19,
-        x: 30, y: 190,
+        cluster: 'legal',
+        radius: 4.4,
         sub: '1/12 Exento de IPS e Inembargable',
-        desc: 'Remuneración anual complementaria equivalente a la doceava parte de todas las remuneraciones devengadas en el año. No sufre descuento de IPS.',
-        legal: 'Art. 243 C.T. y Art. 76 Decreto-Ley 1860/50. Queda TERMINANTEMENTE PROHIBIDO retener el 9% de IPS sobre el aguinaldo.',
-        code: `const aguinaldo = totalRemuneracionesAnio / 12;\nconst ipsAguinaldo = 0; // Exención taxativa por ley`
+        role: 'Remuneración anual complementaria equivalente a la doceava parte de todo lo devengado en el año.',
+        legal: 'Art. 243 C.T. y Art. 76 Dec-Ley 1860/50: Libre de todo descuento y exento del 9% de IPS.',
+        practical: 'Cálculo del aguinaldo proporcional con prohibición absoluta de retención de aportes previsionales.'
       },
       {
         id: 'art399_prescripcion',
         label: 'Art. 399: Prescripción 60 Días',
-        layer: 'legal',
-        size: 17,
-        x: 100, y: -160,
-        sub: 'Plazo Fatal para Reclamar Despido',
-        desc: 'Las acciones para reclamar despido injustificado o indemnizaciones prescriben fatalmente a los 60 días corridos de terminado el contrato.',
-        legal: 'Art. 399 C.T.: Prescripción extintiva de 60 días. Prohibido citar erróneamente 2 años para el despido injustificado.',
-        code: `const DIAS_PRESCRIPCION_DESPIDO = 60; // Días corridos fatales`
+        cluster: 'legal',
+        radius: 4.0,
+        sub: 'Caducidad Fatal de Reclamo',
+        role: 'Plazo perentorio de 60 días corridos para demandar por despido injustificado o reclamo de indemnizaciones.',
+        legal: 'Art. 399 C.T. Prohibido citar erróneamente 2 años para el despido injustificado.',
+        practical: 'Alerta crucial a trabajadores para evitar que sus derechos económicos se extingan por prescripción.'
       },
       {
         id: 'ley_maternidad',
         label: 'Ley 5508/15 Maternidad',
-        layer: 'legal',
-        size: 18,
-        x: 160, y: -200,
-        sub: '18 Semanas Reposo & Fuero Maternal',
-        desc: 'Protección integral de la maternidad y lactancia. Subsidio del 100% a cargo del IPS durante 18 semanas ininterrumpidas. Inmunidad de despido.',
-        legal: 'Ley N° 5508/15 y Ley N° 7140/23. Permiso de lactancia de 90 minutos diarios remunerados.',
-        code: `const FUERO_MATERNAL = {\n  reposoTotalSemanas: 18,\n  coberturaIPS: '100%',\n  despidoNulo: true\n};`
+        cluster: 'legal',
+        radius: 4.2,
+        sub: '18 Semanas 100% IPS & Fuero',
+        role: 'Protección integral del embarazo, parto y lactancia materna.',
+        legal: 'Ley N° 5508/15 y Ley N° 7140/23. Subsidio al 100% a cargo del IPS y fuero maternal absoluto.',
+        practical: 'Nulidad del despido durante la gestación y lactancia; derecho a permisos diarios remunerados para amamantar.'
       },
       {
         id: 'regimen_ips',
-        label: 'IPS Dec-Ley 1860/50',
-        layer: 'legal',
-        size: 19,
-        x: -40, y: 220,
-        sub: '9% Obrero / 16.5% Patronal',
-        desc: 'Régimen previsional y de salud obligatorio del Instituto de Previsión Social. Base de cálculo sobre salarios reales.',
-        legal: 'Decreto-Ley N° 1860/50 y leyes complementarias. Inscripción obligatoria desde el primer día de trabajo.',
-        code: `const APORTE_IPS_OBRERO = 0.09;\nconst APORTE_IPS_PATRONAL = 0.165;`
+        label: 'Dec-Ley 1860/50 IPS',
+        cluster: 'legal',
+        radius: 4.5,
+        sub: 'Aporte Obrero 9% / Patronal 16.5%',
+        role: 'Régimen previsional y de salud obligatorio del Instituto de Previsión Social.',
+        legal: 'Decreto-Ley N° 1860/50 y leyes complementarias.',
+        practical: 'Separa de forma estricta los haberes imponibles (salarios, horas extras) de los rubros indemnizatorios exentos.'
       },
 
-      // --- CAPA 3: MEMORIA FORENSE & VECTORIAL (SUPABASE) ---
+      // 3. Doctrina & Jurisprudencia
       {
-        id: 'supabase_cluster',
-        label: 'Supabase AWS São Paulo',
-        layer: 'memory',
-        size: 24,
-        x: -240, y: 120,
-        sub: 'Postgres Relacional & Vectorial',
-        desc: 'Base de datos en la nube con pgvector y esquemas relacionales optimizados para latencia mínima a Asunción (<65ms ping).',
-        legal: 'Infraestructura certificada SOC 2 / ISO 27001 con aislamiento Row Level Security y cifrado AES-256 en reposo.',
-        code: `// Conexión segura Supabase Edge\nconst supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);`
+        id: 'acuerdos_csj',
+        label: 'Fallos de la Corte Suprema (CSJ)',
+        cluster: 'doctrina',
+        radius: 5.0,
+        sub: 'Salas Laboral & Constitucional',
+        role: 'Criterios judiciales vinculantes y precedentes de la máxima instancia sobre despidos, inmediatez y cargas probatorias.',
+        legal: 'Acuerdos y Sentencias (A&S) de la Corte Suprema de Justicia de Paraguay.',
+        practical: 'Permite fundamentar dictámenes con las mismas sentencias que aplican los magistrados paraguayos.'
       },
       {
-        id: 'jurisprudencia_csj',
-        label: 'Tabla: jurisprudencia_csj',
-        layer: 'memory',
-        size: 20,
-        x: -190, y: 190,
-        sub: 'Fallos de la Corte Suprema (FTS)',
-        desc: 'Repositorio de Acuerdos y Sentencias de las Salas Laboral y Constitucional de la CSJ con índice Full-Text Search en español.',
-        legal: 'Doctrina de inmediatez, causales de despido y presunciones laborales fijadas por el máximo tribunal paraguayo.',
-        code: `CREATE INDEX idx_csj_fts ON jurisprudencia_csj\nUSING gin(to_tsvector('spanish', caratula || ' ' || doctrina));`
+        id: 'doctrina_inmediatez',
+        label: 'Doctrina de Inmediatez Procesal',
+        cluster: 'doctrina',
+        radius: 4.2,
+        sub: 'Oportunidad de la Sanción',
+        role: 'Principio forense que exige correlación temporal estricta entre la falta conocida y la sanción disciplinaria.',
+        legal: 'Jurisprudencia uniforme del fuero laboral paraguayo.',
+        practical: 'Invalida despidos con causa cuando el empleador tardó semanas o meses en notificar el hecho.'
       },
       {
-        id: 'jurisprudencia_multimedia',
-        label: 'Tabla: pgvector 768d',
-        layer: 'memory',
-        size: 21,
-        x: -290, y: 180,
-        sub: 'Embeddings HNSW Cosine (768 dims)',
-        desc: 'Vectores densos de 768 dimensiones que almacenan transcripciones de ponencias forenses, audios laborales y criterios prácticos.',
-        legal: 'Criterios de tratadistas Enrique Yampey y Jorge Bernis estructurados para similitud de coseno en menos de 100ms.',
-        code: `CREATE INDEX idx_multimedia_hnsw ON jurisprudencia_multimedia\nUSING hnsw (embedding vector_cosine_ops);`
+        id: 'tratadistas_nacionales',
+        label: 'Tratadistas Laborales (Bernis & Yampey)',
+        cluster: 'doctrina',
+        radius: 4.2,
+        sub: 'Doctrina Científica Paraguaya',
+        role: 'Compendio de las obras de referencia forense de Jorge Bernis y Enrique Yampey.',
+        legal: 'Doctrina de tratadistas nacionales sobre Derecho del Trabajo.',
+        practical: 'Resuelve zonas grises sobre despidos indirectos, retenciones y régimen disciplinario.'
       },
       {
-        id: 'tobi_events',
-        label: 'Tabla: tobi_events',
-        layer: 'memory',
-        size: 16,
-        x: -330, y: 110,
-        sub: 'Telemetría Append-Only Inmutable',
-        desc: 'Auditoría forense de inferencia: tiempo de respuesta, tokens y tipo de consulta sin almacenar información confidencial.',
-        legal: 'Cumplimiento de auditoría de IA responsable y control de costos de API sin vulnerar el secreto profesional.',
-        code: `INSERT INTO tobi_events (event_type, provider, latency_ms, tokens_est)\nVALUES ('query', 'groq', 380, 240);`
-      },
-      {
-        id: 'hr_audit_records',
-        label: 'Tabla: hr_audit_records',
-        layer: 'memory',
-        size: 16,
-        x: -280, y: 50,
-        sub: 'Historial Protegido por RLS',
-        desc: 'Registro de liquidaciones certificadas y auditorías de contratos vinculadas exclusivamente a la organización autenticada.',
-        legal: 'Políticas RLS en Postgres: auth.uid() = user_id. Los clientes jamás pueden acceder a datos de otras empresas.',
-        code: `CREATE POLICY "Tenant Isolation" ON hr_audit_records\nFOR ALL USING (org_id = current_setting('request.jwt.claim.org_id'));`
+        id: 'precedentes_mtess',
+        label: 'Resoluciones & Criterios MTESS',
+        cluster: 'doctrina',
+        radius: 4.0,
+        sub: 'Homologaciones & Mediaciones',
+        role: 'Criterios administrativos de la Dirección del Trabajo para audiencias de mediación y homologación de finiquitos.',
+        legal: 'Resoluciones administrativas y actas de conciliación oficial del MTESS.',
+        practical: 'Asegura que los acuerdos y liquidaciones se ajusten a los requisitos de mesa de entrada del ministerio.'
       },
 
-      // --- CAPA 4: PIPELINE RAG HÍBRIDO (<900ms) ---
+      // 4. Peritaje Documental Forense
       {
-        id: 'input_sensorial',
-        label: 'Entrada Sensorial (Usuario)',
-        layer: 'rag',
-        size: 22,
-        x: -180, y: -160,
-        sub: 'Preguntas, Telegramas o Recibos',
-        desc: 'Recepción de mensajes de texto, audios en jopara o adjuntos fotográficos y PDFs escaneados desde la interfaz web o móvil.',
-        legal: 'Sanitización estricta de adjuntos en memoria volátil (máximo 15 páginas / 4MB). Prohibido almacenamiento persistente sin consentimiento.',
-        code: `const sanitized = sanitizeAttachment(rawInput);\n// Buffer en memoria volátil de Edge Function`
+        id: 'peritaje_telegramas',
+        label: 'Peritaje de Telegramas Copaco',
+        cluster: 'forense',
+        radius: 4.6,
+        sub: 'Análisis de Comunicaciones Oficiales',
+        role: 'Extracción e interpretación pericial de telegramas colacionados, cartas de preaviso y notas de despido.',
+        legal: 'Valor probatorio de las notificaciones fehacientes según el Código Procesal Laboral.',
+        practical: 'Verifica la fecha exacta de recepción, el texto de la causal y la validez legal del colacionado.'
       },
       {
-        id: 'ocr_multimodal',
-        label: 'OCR Multimodal Gemini Vision',
-        layer: 'rag',
-        size: 20,
-        x: -270, y: -140,
-        sub: 'Lectura de Telegramas Copaco & PDFs',
-        desc: 'Motor visual que extrae fechas, causales y firmas de telegramas colacionados, recibos arrugados y planillas del IPS.',
-        legal: 'Extracción sin pérdida de datos. Diseñado especialmente para lidiar con sellos borrosos de mesa de entrada del MTESS.',
-        code: `const visionPayload = {\n  inlineData: { mimeType: 'image/jpeg', data: cleanBase64 }\n};`
+        id: 'auditoria_recibos',
+        label: 'Auditoría de Recibos de Salario',
+        cluster: 'forense',
+        radius: 4.4,
+        sub: 'Verificación de Haberes & Descuentos',
+        role: 'Inspección de planillas y recibos mensuales para constatar el pago de salario mínimo, recargos y aportes al IPS.',
+        legal: 'Art. 235 y concordantes del Código del Trabajo (Recibos y libros laborales).',
+        practical: 'Detecta descuentos indebidos, retenciones ilegales o pago de sueldos por debajo del mínimo legal.'
       },
       {
-        id: 'text_embedding_004',
-        label: 'text-embedding-004 (768d)',
-        layer: 'rag',
-        size: 20,
-        x: -250, y: -70,
-        sub: 'Vectorización Semántica en 120ms',
-        desc: 'Convierte la duda del usuario en un vector denso de 768 dimensiones para capturar la intención jurídica subyacente.',
-        legal: 'Modelo semántico calibrado para capturar la terminología del derecho hispanoamericano y paraguayo.',
-        code: `const vector = await generateEmbedding(cleanPrompt, { model: 'text-embedding-004' });`
+        id: 'analisis_contratos',
+        label: 'Detección de Cláusulas Nulas',
+        cluster: 'forense',
+        radius: 4.2,
+        sub: 'Auditoría de Contratos de Trabajo',
+        role: 'Revisión preventiva de contratos para identificar cláusulas de renuncia de derechos o jornadas abusivas.',
+        legal: 'Art. 3 del C.T.: Las estipulaciones que impliquen renuncia o disminución de derechos son nulas de pleno derecho.',
+        practical: 'Protege a la empresa de contingencias judiciales redactando contratos equilibrados y legales.'
       },
       {
-        id: 'rpc_criterios',
-        label: 'RPC: buscar_criterios',
-        layer: 'rag',
-        size: 18,
-        x: -290, y: 0,
-        sub: 'Búsqueda de Similitud Coseno',
-        desc: 'Función Postgres invocada vía RPC que computa la distancia coseno entre la consulta y los criterios doctrinales.',
-        legal: 'Umbral de similitud mínimo 0.72 para garantizar pertinencia forense absoluta.',
-        code: `SELECT * FROM buscar_criterios_laborales(\n  query_embedding := vector,\n  match_threshold := 0.72,\n  match_count := 3\n);`
-      },
-      {
-        id: 'rpc_csj',
-        label: 'RPC: buscar_csj',
-        layer: 'rag',
-        size: 18,
-        x: -210, y: 10,
-        sub: 'Búsqueda Judicial Ponderada',
-        desc: 'Función RPC que ejecuta búsqueda por texto completo con peso legal sobre las sentencias de la Corte Suprema.',
-        legal: 'Clasificación por relevancia procesal y año de resolución.',
-        code: `SELECT * FROM buscar_jurisprudencia_csj(\n  search_query := textQuery,\n  limit_rows := 3\n);`
-      },
-      {
-        id: 'context_augmentation',
-        label: 'Inyector de Contexto Dinámico',
-        layer: 'rag',
-        size: 21,
-        x: -120, y: -70,
-        sub: 'Aumento Dinámico [JURISPRUDENCIA]',
-        desc: 'Ensambla los fallos judiciales recuperados y la doctrina en las secciones canónicas del prompt antes de pasarlo al LLM.',
-        legal: 'Inyección transparente que respalda toda respuesta con precedentes legales reales y verificables.',
-        code: `prompt += '\\n[JURISPRUDENCIA CSJ]\\n' + formatFallos(csjRows);\nprompt += '\\n[Criterios Prácticos]\\n' + formatCriterios(critRows);`
+        id: 'cotejo_ips',
+        label: 'Cotejo de Extractos del IPS',
+        cluster: 'forense',
+        radius: 4.0,
+        sub: 'Semanas Cotizadas & Salario Real',
+        role: 'Verificación de aportes registrados en el sistema previsional frente a los recibos firmados por el empleado.',
+        legal: 'Obligación patronal de inscripción y aporte real (Dec-Ley 1860/50).',
+        practical: 'Previene contingencias por subdeclaración de salarios o falta de inscripción oportuna.'
       },
 
-      // --- CAPA 5: CASCADA DE INFERENCIA WATERFALL ---
+      // 5. Motor Matemático Exacto
       {
-        id: 'waterfall_router',
-        label: 'Router Cascada Streaming',
-        layer: 'cascade',
-        size: 23,
-        x: 0, y: -80,
-        sub: 'Cascada Multi-Proveedor SSE',
-        desc: 'Despacha el prompt enriquecido a través de una escalera con tolerancia a fallos y streaming en tiempo real.',
-        legal: 'Tiempo límite total: 32 segundos por consulta. Tolerancia automática si un proveedor se satura o arroja 429/503.',
-        code: `for (const provider of WATERFALL_PROVIDERS) {\n  try { return await streamFromProvider(provider); }\n  catch (e) { continue; }\n}`
+        id: 'motor_matematico',
+        label: 'Motor Numérico Determinista LaboraPy',
+        cluster: 'calculo',
+        radius: 5.4,
+        sub: 'Cálculo Exacto sin IA Generativa',
+        role: 'Módulo algorítmico independiente que ejecuta las fórmulas matemáticas exactas con redondeo a Guaraníes enteros.',
+        legal: 'Regla de Oro LaboraPy: Las IAs no calculan dinero. Los números se computan por fórmulas deterministas puras.',
+        practical: 'Garantiza finiquitos 100% exactos, reproducibles y válidos ante peritos contables judiciales.'
       },
       {
-        id: 'gemini_flash',
-        label: 'Google Gemini 3.8 Flash',
-        layer: 'cascade',
-        size: 19,
-        x: 60, y: -160,
-        sub: 'Inferencia Primaria Multimodal',
-        desc: 'Motor principal de alta capacidad contextual y respuesta en milisegundos. Procesa texto e imágenes.',
-        legal: 'Utilizado vía Vercel Serverless con pooling dinámico de credenciales.',
-        code: `// Capataz / Google Cloud Ingestion\nprovider = 'gemini-3.8-flash';`
-      },
-      {
-        id: 'groq_lpu',
-        label: 'Groq LPU (Llama 3.3 / Qwen)',
-        layer: 'cascade',
-        size: 20,
-        x: 120, y: -140,
-        sub: 'Velocidad Extrema (300 t/s)',
-        desc: 'Procesadores LPU de ultra baja latencia. Corre modelos abiertos masivos (Llama 3.3 70B y Qwen 2.5 72B) en tiempo récord.',
-        legal: 'El usuario percibe que Tobi piensa de inmediato; ideal para el diálogo fluido.',
-        code: `// Groq Hardware Inference\nconst groq = new Groq({ apiKey: getRotatedGroqKey() });`
-      },
-      {
-        id: 'cloudflare_workers',
-        label: 'Cloudflare Workers AI',
-        layer: 'cascade',
-        size: 16,
-        x: 30, y: -220,
-        sub: 'Edge In-Memory Fallback',
-        desc: 'Inferencia en el borde de la red global para minimizar cualquier salto de red transoceánico.',
-        legal: 'Garantiza disponibilidad en caso de contingencias de proveedores principales.',
-        code: `// Edge compute fallback`
-      },
-      {
-        id: 'openai_backup',
-        label: 'OpenAI gpt-4o-mini',
-        layer: 'cascade',
-        size: 16,
-        x: -20, y: -230,
-        sub: 'Respaldo de Alta Resiliencia',
-        desc: 'Proveedor de contingencia activado cuando el pool gratuito se encuentra temporalmente exhausto.',
-        legal: 'Configurado con zero data retention por contrato empresarial.',
-        code: `model: 'gpt-4o-mini'`
-      },
-      {
-        id: 'deepseek_flash',
-        label: 'DeepSeek V4.1 Flash',
-        layer: 'cascade',
-        size: 17,
-        x: 90, y: -210,
-        sub: 'Auditoría Pericial Profunda',
-        desc: 'Modelo de razonamiento analítico riguroso utilizado para auditar casos laborales de extrema complejidad y liquidaciones atípicas.',
-        legal: 'Auditoría cruzada de coherencia argumental y verificación de artículos.',
-        code: `provider = 'deepseek/deepseek-flash'`
-      },
-
-      // --- CAPA 6: HEMISFERIO DETERMINISTA (MOTOR DE CÁLCULO) ---
-      {
-        id: 'regla_oro_calculo',
-        label: 'Regla de Oro: IA NO Calcula',
-        layer: 'math',
-        size: 23,
-        x: 60, y: 20,
-        sub: 'Aislamiento Matemático Inviolable',
-        desc: 'Las IAs son pésimas calculadoras. Tobi JAMÁS calcula montos finales de dinero usando modelos de lenguaje.',
-        legal: 'Principio Rector: La IA extrae los hechos (antigüedad, causa, salarios) y los delega al backend en TypeScript.',
-        code: `// REGLA DE ORO\nif (isCalculationRequest) {\n  extractVariablesOnly();\n  delegateToDeterministicEngine();\n}`
-      },
-      {
-        id: 'engine_typescript',
-        label: 'Motor TypeScript en Vercel',
-        layer: 'math',
-        size: 22,
-        x: 140, y: 180,
-        sub: 'Lógica Algorítmica Pura',
-        desc: 'Módulo de código duro en TypeScript que ejecuta las fórmulas matemáticas exactas del Código del Trabajo.',
-        legal: 'Cálculos 100% reproducibles, sin margen de alucinación ni redondeos ilegales.',
-        code: `import { calculateSettlement } from './settlementCalculator';\nconst resultado = calculateSettlement(input);`
-      },
-      {
-        id: 'modulo_liquidacion',
-        label: 'Módulo Finiquito Exacto',
-        layer: 'math',
-        size: 19,
-        x: 220, y: 200,
+        id: 'modulo_finiquito',
+        label: 'Desglose Integral de Finiquito',
+        cluster: 'calculo',
+        radius: 4.5,
         sub: 'Preaviso + Indemnización + Aguinaldo',
-        desc: 'Computa el monto total de la liquidación desglosando rubros imponibles vs exentos, y calculando el aporte obrero IPS de forma separada.',
-        legal: 'Cumple milimétricamente los artículos 87, 91 y 243 de la Ley 213/93.',
-        code: `const totalFiniquito = preavisoDinero + indemnizacionDinero + aguinaldoProporcional + vacacionesCompensadas;`
+        role: 'Computa el monto total de la liquidación separando haberes imponibles (con 9% IPS) de indemnizaciones exentas.',
+        legal: 'Artículos 87, 91 y 243 de la Ley 213/93.',
+        practical: 'Genera el detalle rubro por rubro con el saldo neto a percibir por el trabajador.'
       },
       {
         id: 'modulo_horas_extras',
-        label: 'Módulo Horas Extras & Jornadas',
-        layer: 'math',
-        size: 18,
-        x: 220, y: 250,
+        label: 'Tarifador de Horas Extras & Feriados',
+        cluster: 'calculo',
+        radius: 4.0,
         sub: 'Base Horaria & Recargos 50%/100%',
-        desc: 'Calcula el salario hora base (Salario / 30 / horas_jornada) y aplica los recargos diurnos (1.5x) o nocturnos (2.0x).',
+        role: 'Calcula el salario hora ordinario y aplica los recargos diurnos (1.5x) y nocturnos o feriados (2.0x).',
         legal: 'Artículos 202 y 234 del Código del Trabajo.',
-        code: `const valorHora = salarioMensual / 30 / jornadaHoras;\nconst extraDiurna = valorHora * 1.5 * horasDiurnas;`
+        practical: 'Permite liquidar con precisión sobretiempos de guardias, turnos rotativos y logística.'
       },
       {
         id: 'modulo_vacaciones',
-        label: 'Módulo Vacaciones Causadas',
-        layer: 'math',
-        size: 17,
-        x: 140, y: 260,
-        sub: 'Liquidación de Días No Gozados',
-        desc: 'Liquida los días hábiles devengados y no disfrutados al término del contrato, utilizando el salario diario real.',
-        legal: 'Artículo 218 C.T.',
-        code: `const salarioDiario = salarioMensual / 30;\nconst montoVacaciones = diasVacaciones(antiguedad) * salarioDiario;`
+        label: 'Compensación de Vacaciones Causadas',
+        cluster: 'calculo',
+        radius: 4.0,
+        sub: 'Días Hábiles No Gozados',
+        role: 'Determina el monto a pagar por los días de descanso anual acumulados no disfrutados al cese del contrato.',
+        legal: 'Artículo 218 C.T. Días hábiles laborales remunerados.',
+        practical: 'Liquida exactamente la compensación dineraria de vacaciones al terminar la relación.'
       },
 
-      // --- CAPA 7: SISTEMA MOTOR (ACCIONES DE MÁQUINA) ---
+      // 6. Acciones & Documentos Oficiales
       {
-        id: 'liquidacion_action',
-        label: 'Bloque :::liquidacion_action',
-        layer: 'motor',
-        size: 20,
-        x: -40, y: -30,
-        sub: 'Acción de Finiquito en Pantalla',
-        desc: 'Emisión estructurada que la interfaz web detecta para desplegar una tarjeta interactiva con desglose de liquidación y botón de exportar.',
-        legal: 'Formato estándar de interoperabilidad máquina-usuario.',
-        code: `:::liquidacion_action\n{\n  "salarioMensual": 3044000,\n  "antiguedadAnios": 3,\n  "motivo": "despido_injustificado"\n}\n:::`
+        id: 'tarjeta_interactiva',
+        label: 'Tarjeta Interactiva de Liquidación',
+        cluster: 'ejecutivo',
+        radius: 4.6,
+        sub: 'Visualización y Simulación en Vivo',
+        role: 'Componente interactivo en pantalla que permite ajustar montos, fechas y motivos para simular escenarios.',
+        legal: 'Estandarización de rubros para conciliación amistosa o trámite ministerial.',
+        practical: 'Facilita la negociación y comprensión inmediata de los números entre las partes.'
       },
       {
-        id: 'documento_action',
-        label: 'Bloque :::documento_action',
-        layer: 'motor',
-        size: 20,
-        x: 20, y: -20,
-        sub: 'Generador de Notas Oficiales',
-        desc: 'Emite instrucciones para prellenar formularios y generar notas formales en PDF/DOCX (despidos, suspensiones, renuncias, certificados).',
-        legal: 'Modelos redactados conforme al rigor formal exigido ante el MTESS.',
-        code: `:::documento_action\n{\n  "tipo": "nota_despido_injustificado",\n  "trabajador": "Juan Pérez",\n  "antiguedad": "2 años"\n}\n:::`
+        id: 'generador_notas_despido',
+        label: 'Generador de Notas de Despido & Preaviso',
+        cluster: 'ejecutivo',
+        radius: 4.4,
+        sub: 'Formatos Formales PDF y Word',
+        role: 'Redacción inmediata de notas oficiales de preaviso o despido (con o sin causa) listas para imprimir y firmar.',
+        legal: 'Cumplimiento de las exigencias formales de notificación escrita del MTESS.',
+        practical: 'Ahorra horas de redacción legal con modelos verificados y blindados contra nulidades.'
       },
       {
-        id: 'opciones_continuar',
-        label: 'Bloque :::opciones_continuar',
-        layer: 'motor',
-        size: 18,
-        x: -20, y: 40,
-        sub: 'Navegación Pedagógica Guiada',
-        desc: 'Ofrece botones de opción rápida al usuario al final de cada respuesta para explorar escenarios sin tener que tipear.',
-        legal: 'Evita la parálisis por sobrecarga y guía paso a paso hacia la solución jurídica.',
-        code: `:::opciones_continuar\n[\n  "Calcular mi liquidación exacta",\n  "¿Qué pasa si tengo más de 10 años?",\n  "Redactar nota de preaviso"\n]\n:::`
+        id: 'generador_renuncias',
+        label: 'Redactor de Cartas de Renuncia',
+        cluster: 'ejecutivo',
+        radius: 4.0,
+        sub: 'Renuncia Voluntaria con/sin Preaviso',
+        role: 'Elaboración formal de notas de renuncia del trabajador conforme al plazo legal correspondiente.',
+        legal: 'Art. 87 y concordantes del Código del Trabajo.',
+        practical: 'Genera el documento oficial que documenta la voluntad expresa de desvinculación.'
       },
       {
-        id: 'ui_streaming_sse',
-        label: 'Streaming SSE en Tiempo Real',
-        layer: 'motor',
-        size: 18,
-        x: 40, y: 70,
-        sub: 'Renderizado Reactivo sin Bloqueos',
-        desc: 'Flujo de eventos Server-Sent Events que entrega texto token por token en el navegador con formateo instantáneo de Markdown.',
-        legal: 'Experiencia ultra responsiva de copiloto en vivo.',
-        code: `res.setHeader('Content-Type', 'text/event-stream');\nres.write('data: ' + JSON.stringify({ token }) + '\\n\\n');`
+        id: 'certificados_laborales',
+        label: 'Emisión de Certificados de Trabajo',
+        cluster: 'ejecutivo',
+        radius: 4.0,
+        sub: 'Obligación Patronal al Término',
+        role: 'Generación del certificado oficial que acredita el tiempo de servicio, cargo desempeñado y conducta.',
+        legal: 'Art. 93 del Código del Trabajo (Obligación de expedir certificado de trabajo).',
+        practical: 'Cumple en segundos con la obligación legal de entrega al colaborador desvinculado.'
       },
 
-      // --- CAPA 8: ESCUDO CISO ZERO-LEAK ---
+      // 7. Bóveda de Privacidad & Cumplimiento
       {
-        id: 'zero_credentials',
-        label: 'Aislamiento Cero Credenciales',
-        layer: 'shield',
-        size: 21,
-        x: -120, y: -220,
-        sub: 'Keys Confinadas al Servidor',
-        desc: 'Las claves de Google, Groq, Supabase y OpenAI viven exclusivamente en variables de entorno del servidor. Ningún token llega al cliente.',
-        legal: 'Cumplimiento de estándares de ciberseguridad bancaria y directivas CISO de LaboraPy.',
-        code: `// Prohibido NEXT_PUBLIC_ o VITE_ en API Keys\nconst key = process.env.GROQ_API_KEY;`
+        id: 'boveda_privacidad',
+        label: 'Bóveda de Privacidad & Confidencialidad',
+        cluster: 'seguridad',
+        radius: 5.0,
+        sub: 'Aislamiento Criptográfico Empresarial',
+        role: 'Garantía institucional de que los sueldos y legajos de cada empresa cliente son totalmente confidenciales.',
+        legal: 'Secreto profesional, confidencialidad comercial y protección de datos salariales en Paraguay.',
+        practical: 'Permite a bancos, multinacionales y PyMEs operar con total tranquilidad sobre la reserva de sus datos.'
       },
       {
-        id: 'rls_security',
-        label: 'Aislamiento RLS en Postgres',
-        layer: 'shield',
-        size: 19,
-        x: -330, y: 30,
-        sub: 'Segregación Criptográfica Multi-Tenant',
-        desc: 'Garantiza que una empresa jamás pueda leer las liquidaciones, nombres o sueldos de los empleados de otra firma.',
-        legal: 'Norma de protección de datos personales y secreto comercial en Paraguay.',
-        code: `ALTER TABLE hr_audit_records ENABLE ROW LEVEL SECURITY;`
+        id: 'anonimizacion_judicial',
+        label: 'Anonimización de Litigantes Particulares',
+        cluster: 'seguridad',
+        radius: 4.2,
+        sub: 'Protección de Reputación Personal',
+        role: 'Oculta automáticamente los nombres de personas físicas en citas de fallos judiciales para preservar su privacidad.',
+        legal: 'Protección del honor y privacidad de los trabajadores litigantes.',
+        practical: 'Permite citar la doctrina jurídica del fallo sin estigmatizar a los demandantes particulares.'
       },
       {
-        id: 'buffer_memory_ocr',
-        label: 'Buffer Volátil Sin Persistencia',
-        layer: 'shield',
-        size: 18,
-        x: -320, y: -190,
-        sub: 'Sanitización en Memoria RAM',
-        desc: 'Los recibos y documentos adjuntos se procesan en la memoria volátil de la Edge Function y se eliminan inmediatamente tras la inferencia.',
-        legal: 'Directiva Zero-Data-Retention: No se guardan fotos ni legajos en discos no autorizados.',
-        code: `let buffer = Buffer.from(cleanBase64, 'base64');\n// Procesa OCR en RAM y se libera con GC`
+        id: 'cero_persistencia',
+        label: 'Cero Almacenamiento Residual de Archivos',
+        cluster: 'seguridad',
+        radius: 4.2,
+        sub: 'Procesamiento Volátil sin Guardado',
+        role: 'Los documentos y fotos de telegramas analizados no quedan guardados en discos permanentes tras emitir el dictamen.',
+        legal: 'Directiva de Minimización y Retención Cero de Documentos Privados.',
+        practical: 'Elimina cualquier riesgo de filtración o robo de imágenes de contratos o legajos escaneados.'
       },
       {
-        id: 'anonimizacion_csj',
-        label: 'Anonimización Judicial Taxativa',
-        layer: 'shield',
-        size: 18,
-        x: -140, y: 220,
-        sub: 'Ocultamiento de Nombres Particulares',
-        desc: 'Tobi anonimiza automáticamente los nombres y apellidos de trabajadores particulares en sentencias de la CSJ ("el demandante", "la trabajadora").',
-        legal: 'Preserva la reputación y la privacidad de las personas frente a búsquedas públicas.',
-        code: `function anonymizePersonNames(text) {\n  return text.replace(REGEX_NOMBRES_PARTICULARES, 'el trabajador demandante');\n}`
-      },
-      {
-        id: 'guard_prebuild',
-        label: 'Guard check-no-sensitive-data',
-        layer: 'shield',
-        size: 18,
-        x: -50, y: -250,
-        sub: 'Pre-Build Check Inquebrantable',
-        desc: 'Script que corre antes de cada compilación en `npm run build` para bloquear cualquier commit o bundle que contenga secretos.',
-        legal: 'Barrera automatizada en el pipeline de CI/CD de LaboraPy.',
-        code: `// scripts/check-no-sensitive-data.mjs\nif (foundLeak) process.exit(1);`
+        id: 'anti_alucinacion',
+        label: 'Protocolo Anti-Alucinación Normativa',
+        cluster: 'seguridad',
+        radius: 4.4,
+        sub: 'Whitelist de Leyes Positivas Reales',
+        role: 'Filtro que impide citar artículos inexistentes o leyes falsas, exigiendo correlación exacta con el Código del Trabajo.',
+        legal: 'Verificabilidad absoluta de toda fuente legal invocada.',
+        practical: 'Garantiza que ningún dictamen de Tobi se base en normas inventadas o derogadas.'
       }
     ];
 
-    const SYNAPSES = [
-      // Identidad
-      { from: 'diego_nunez', to: 'tobi_core', label: 'Concepción & Arquitectura' },
-      { from: 'regla_cero', to: 'tobi_core', label: 'Blindaje Soberano' },
+    const SYNAPSES_DATA = [
+      // Identidad & Core
+      { from: 'diego_nunez', to: 'tobi_core', label: 'Concepción & Titularidad' },
       { from: 'regla_salario_minimo', to: 'tobi_core', label: 'Piso Legal Inviolable' },
-      { from: 'humanizer_pedagogia', to: 'tobi_core', label: 'Voz & Cadencia Humana' },
-      { from: 'anti_abrumacion', to: 'tobi_core', label: 'Estructura Orgánica' },
+      { from: 'humanizer_pedagogia', to: 'tobi_core', label: 'Voz & Empatía' },
+      { from: 'anti_abrumacion', to: 'tobi_core', label: 'Estructura Concisa' },
 
-      // Core a Leyes
-      { from: 'tobi_core', to: 'codigo_trabajo', label: 'Fundamento de Fondo' },
+      // Core hacia Normativa
+      { from: 'tobi_core', to: 'codigo_trabajo', label: 'Normativa de Fondo' },
       { from: 'tobi_core', to: 'regimen_ips', label: 'Seguridad Social' },
       { from: 'codigo_trabajo', to: 'art19_primacia', label: 'Principio Realidad' },
       { from: 'codigo_trabajo', to: 'art81_causales', label: 'Causales de Despido' },
-      { from: 'codigo_trabajo', to: 'art87_preaviso', label: 'Escala Legal' },
+      { from: 'codigo_trabajo', to: 'art87_preaviso', label: 'Escala de Preaviso' },
       { from: 'codigo_trabajo', to: 'art91_indemnizacion', label: 'Tarifa Resarcitoria' },
-      { from: 'codigo_trabajo', to: 'art94_estabilidad', label: 'Protección 10 Años' },
-      { from: 'codigo_trabajo', to: 'jornadas_laborales', label: 'Límites de Jornada' },
-      { from: 'codigo_trabajo', to: 'art218_vacaciones', label: 'Descanso Remunerado' },
-      { from: 'codigo_trabajo', to: 'art243_aguinaldo', label: '1/12 Exento' },
+      { from: 'codigo_trabajo', to: 'art94_estabilidad', label: 'Estabilidad 10 Años' },
+      { from: 'codigo_trabajo', to: 'jornadas_laborales', label: 'Jornadas & Recargos' },
+      { from: 'codigo_trabajo', to: 'art218_vacaciones', label: 'Días Hábiles' },
+      { from: 'codigo_trabajo', to: 'art243_aguinaldo', label: 'Aguinaldo 1/12' },
       { from: 'codigo_trabajo', to: 'art399_prescripcion', label: 'Caducidad 60 Días' },
-      { from: 'ley_maternidad', to: 'codigo_trabajo', label: 'Fuero Especial' },
+      { from: 'ley_maternidad', to: 'codigo_trabajo', label: 'Fuero Maternal' },
       { from: 'regimen_ips', to: 'art243_aguinaldo', label: 'Exención Aporte IPS' },
 
-      // Memoria Supabase
-      { from: 'supabase_cluster', to: 'jurisprudencia_csj', label: 'Índice FTS' },
-      { from: 'supabase_cluster', to: 'jurisprudencia_multimedia', label: 'pgvector 768d' },
-      { from: 'supabase_cluster', to: 'tobi_events', label: 'Auditoría Inmutable' },
-      { from: 'supabase_cluster', to: 'hr_audit_records', label: 'Registros Seguros' },
-      { from: 'doctrina_tratadistas', to: 'jurisprudencia_multimedia', label: 'Doctrina Bernis/Yampey' },
+      // Doctrina & Jurisprudencia
+      { from: 'tobi_core', to: 'acuerdos_csj', label: 'Precedentes Judiciales' },
+      { from: 'acuerdos_csj', to: 'doctrina_inmediatez', label: 'Criterio Temporal' },
+      { from: 'doctrina_inmediatez', to: 'art81_causales', label: 'Validez de Sanción' },
+      { from: 'acuerdos_csj', to: 'art19_primacia', label: 'Precedentes de Fraude' },
+      { from: 'tratadistas_nacionales', to: 'codigo_trabajo', label: 'Interpretación Científica' },
+      { from: 'precedentes_mtess', to: 'codigo_trabajo', label: 'Práctica Administrativa' },
 
-      // RAG Pipeline
-      { from: 'input_sensorial', to: 'ocr_multimodal', label: 'Extracción de Imagen/PDF' },
-      { from: 'input_sensorial', to: 'text_embedding_004', label: 'Vectorización 120ms' },
-      { from: 'ocr_multimodal', to: 'context_augmentation', label: 'Hechos Extraídos' },
-      { from: 'text_embedding_004', to: 'rpc_criterios', label: 'Búsqueda Coseno' },
-      { from: 'input_sensorial', to: 'rpc_csj', label: 'Búsqueda FTS' },
-      { from: 'rpc_criterios', to: 'jurisprudencia_multimedia', label: 'Consulta pgvector' },
-      { from: 'rpc_csj', to: 'jurisprudencia_csj', label: 'Consulta Sentencias' },
-      { from: 'rpc_criterios', to: 'context_augmentation', label: 'Top 3 Criterios' },
-      { from: 'rpc_csj', to: 'context_augmentation', label: 'Top 3 Fallos CSJ' },
+      // Peritaje Forense Documental
+      { from: 'tobi_core', to: 'peritaje_telegramas', label: 'Análisis de Notificación' },
+      { from: 'peritaje_telegramas', to: 'art81_causales', label: 'Causal Invocada' },
+      { from: 'peritaje_telegramas', to: 'art87_preaviso', label: 'Cómputo de Plazos' },
+      { from: 'tobi_core', to: 'auditoria_recibos', label: 'Inspección de Haberes' },
+      { from: 'auditoria_recibos', to: 'regla_salario_minimo', label: 'Control de Piso' },
+      { from: 'auditoria_recibos', to: 'jornadas_laborales', label: 'Control de Extras' },
+      { from: 'tobi_core', to: 'analisis_contratos', label: 'Auditoría de Cláusulas' },
+      { from: 'analisis_contratos', to: 'art19_primacia', label: 'Nulidad de Fraude' },
+      { from: 'cotejo_ips', to: 'regimen_ips', label: 'Control Previsional' },
+      { from: 'cotejo_ips', to: 'auditoria_recibos', label: 'Cruce de Salarios' },
 
-      // Cascada
-      { from: 'context_augmentation', to: 'waterfall_router', label: 'Prompt Enriquecido' },
-      { from: 'tobi_core', to: 'waterfall_router', label: 'Identidad & Reglas' },
-      { from: 'waterfall_router', to: 'gemini_flash', label: 'Primario Multimodal' },
-      { from: 'waterfall_router', to: 'groq_lpu', label: 'Inferencia 300 t/s' },
-      { from: 'waterfall_router', to: 'cloudflare_workers', label: 'Edge Fallback' },
-      { from: 'waterfall_router', to: 'openai_backup', label: 'Respaldo Premium' },
-      { from: 'waterfall_router', to: 'deepseek_flash', label: 'Auditoría Forense' },
+      // Motor Matemático Exacto
+      { from: 'tobi_core', to: 'motor_matematico', label: 'Delegación Exacta' },
+      { from: 'motor_matematico', to: 'modulo_finiquito', label: 'Liquidación Integral' },
+      { from: 'motor_matematico', to: 'modulo_horas_extras', label: 'Cálculo de Extras' },
+      { from: 'motor_matematico', to: 'modulo_vacaciones', label: 'Cálculo Vacaciones' },
+      { from: 'art87_preaviso', to: 'modulo_finiquito', label: 'Importe Preaviso' },
+      { from: 'art91_indemnizacion', to: 'modulo_finiquito', label: 'Importe Indemnización' },
+      { from: 'art94_estabilidad', to: 'modulo_finiquito', label: 'Doble Tarifa' },
+      { from: 'art243_aguinaldo', to: 'modulo_finiquito', label: 'Aguinaldo sin IPS' },
+      { from: 'jornadas_laborales', to: 'modulo_horas_extras', label: 'Recargos 50%/100%' },
+      { from: 'art218_vacaciones', to: 'modulo_vacaciones', label: 'Compensación Días' },
+      { from: 'regla_salario_minimo', to: 'motor_matematico', label: 'Piso de Cálculo' },
 
-      // Motor Numérico
-      { from: 'waterfall_router', to: 'regla_oro_calculo', label: 'Orden de Cálculo' },
-      { from: 'regla_oro_calculo', to: 'engine_typescript', label: 'Delegación Determinista' },
-      { from: 'engine_typescript', to: 'modulo_liquidacion', label: 'Fórmulas Finiquito' },
-      { from: 'engine_typescript', to: 'modulo_horas_extras', label: 'Cálculo Horas Extras' },
-      { from: 'engine_typescript', to: 'modulo_vacaciones', label: 'Cálculo Vacaciones' },
+      // Acciones & Documentos Oficiales
+      { from: 'modulo_finiquito', to: 'tarjeta_interactiva', label: 'Visualización Interactiva' },
+      { from: 'tarjeta_interactiva', to: 'generador_notas_despido', label: 'Generación Nota' },
+      { from: 'art87_preaviso', to: 'generador_notas_despido', label: 'Plazo en Nota' },
+      { from: 'tobi_core', to: 'generador_renuncias', label: 'Redacción Renuncia' },
+      { from: 'tobi_core', to: 'certificados_laborales', label: 'Certificado de Trabajo' },
 
-      // Conexiones de leyes al motor determinista
-      { from: 'art87_preaviso', to: 'modulo_liquidacion', label: 'Monto Preaviso' },
-      { from: 'art91_indemnizacion', to: 'modulo_liquidacion', label: 'Monto Indemnización' },
-      { from: 'art94_estabilidad', to: 'modulo_liquidacion', label: 'Doble Tarifa' },
-      { from: 'art243_aguinaldo', to: 'modulo_liquidacion', label: 'Aguinaldo sin IPS' },
-      { from: 'jornadas_laborales', to: 'modulo_horas_extras', label: 'Tasas 50%/100%' },
-      { from: 'art218_vacaciones', to: 'modulo_vacaciones', label: 'Días Hábiles' },
-      { from: 'regla_salario_minimo', to: 'engine_typescript', label: 'Piso 3.044.000' },
-
-      // Acciones de Máquina
-      { from: 'modulo_liquidacion', to: 'liquidacion_action', label: 'Payload JSON' },
-      { from: 'engine_typescript', to: 'documento_action', label: 'Prellenado Legal' },
-      { from: 'waterfall_router', to: 'opciones_continuar', label: 'Bifurcaciones' },
-      { from: 'liquidacion_action', to: 'ui_streaming_sse', label: 'Render Component' },
-      { from: 'documento_action', to: 'ui_streaming_sse', label: 'Descarga DOCX/PDF' },
-      { from: 'opciones_continuar', to: 'ui_streaming_sse', label: 'Botones UI' },
-
-      // Escudo CISO
-      { from: 'zero_credentials', to: 'waterfall_router', label: 'Secretos Seguros' },
-      { from: 'rls_security', to: 'supabase_cluster', label: 'Aislamiento Tenant' },
-      { from: 'buffer_memory_ocr', to: 'ocr_multimodal', label: 'RAM Volátil' },
-      { from: 'anonimizacion_csj', to: 'jurisprudencia_csj', label: 'Protección Datos' },
-      { from: 'guard_prebuild', to: 'zero_credentials', label: 'Validación CI/CD' }
+      // Bóveda de Privacidad & Cumplimiento
+      { from: 'tobi_core', to: 'boveda_privacidad', label: 'Aislamiento Institucional' },
+      { from: 'boveda_privacidad', to: 'anonimizacion_judicial', label: 'Protección de Personas' },
+      { from: 'acuerdos_csj', to: 'anonimizacion_judicial', label: 'Filtro de Nombres' },
+      { from: 'boveda_privacidad', to: 'cero_persistencia', label: 'RAM Volátil' },
+      { from: 'peritaje_telegramas', to: 'cero_persistencia', label: 'Destrucción Post-Análisis' },
+      { from: 'boveda_privacidad', to: 'anti_alucinacion', label: 'Blindaje Legal' },
+      { from: 'anti_alucinacion', to: 'codigo_trabajo', label: 'Verificación Positiva' }
     ];
 
-    // Compute layer counts
-    NODES.forEach(n => {
-      if (LAYERS[n.layer]) LAYERS[n.layer].count++;
+    NODES_DATA.forEach(n => {
+      if (CLUSTERS[n.cluster]) CLUSTERS[n.cluster].count++;
     });
 
     /* ==========================================================================
-       CANVAS, PARTICLES & FORCE GRAPH ENGINE
+       THREE.JS ENGINE & POST-PROCESSING
        ========================================================================== */
-    const canvas = document.getElementById('synapseCanvas');
-    const ctx = canvas.getContext('2d');
-
+    const container = document.getElementById('webgl-canvas');
+    let scene, camera, renderer, composer, bloomPass, controls;
     let width = window.innerWidth;
     let height = window.innerHeight;
 
-    function resizeCanvas() {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width * window.devicePixelRatio;
-      canvas.height = height * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    // Camera & Transform
-    let camX = width / 2;
-    let camY = height / 2;
-    let camZoom = 1.0;
-    let isDraggingCam = false;
-    let dragStartX = 0;
-    let dragStartY = 0;
-
-    // Node Interaction
-    let draggedNode = null;
-    let hoveredNode = null;
-    let selectedNode = null;
-    let activeFilterLayer = null;
-    let isPaused = false;
+    let repulsionForce = 1800;
+    let linkLength = 38;
+    let simSpeed = 1.0;
+    let isPhysicsPaused = false;
+    let activeClusterFilter = null;
     let soundEnabled = true;
 
-    // Node lookup map
+    const nodes3D = [];
     const nodeMap = new Map();
-    NODES.forEach(n => {
-      n.vx = 0;
-      n.vy = 0;
-      n.pinned = false;
-      nodeMap.set(n.id, n);
-    });
+    const neighborMap = new Map();
+    const synapseLines = [];
+    const energyParticles = [];
+    const hitMeshes = []; // Mallas para raycasting infalible
 
-    // Synapses lookup
-    const connectedPairs = new Set();
-    SYNAPSES.forEach(s => {
-      connectedPairs.add(`${s.from}->${s.to}`);
-      connectedPairs.add(`${s.to}->${s.from}`);
-    });
+    // Anillo de selección 3D
+    let selectionHaloMesh = null;
 
-    // Synaptic Particles
-    const particles = [];
-    const MAX_PARTICLES = 160;
+    function initThreeScene() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x05070f);
+      scene.fog = new THREE.FogExp2(0x05070f, 0.0035);
 
-    class SynapticParticle {
-      constructor(synapse = null, customColor = null, speedMultiplier = 1) {
-        this.reset(synapse, customColor, speedMultiplier);
+      camera = new THREE.PerspectiveCamera(50, width / height, 1, 1000);
+      camera.position.set(0, 30, 160);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.0;
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.rotateSpeed = 0.8;
+      controls.zoomSpeed = 1.2;
+      controls.minDistance = 20;
+      controls.maxDistance = 450;
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.4;
+
+      const ambLight = new THREE.AmbientLight(0xffffff, 0.65);
+      scene.add(ambLight);
+
+      const dirLight1 = new THREE.DirectionalLight(0x00f0ff, 1.2);
+      dirLight1.position.set(100, 150, 100);
+      scene.add(dirLight1);
+
+      const dirLight2 = new THREE.DirectionalLight(0xec4899, 0.8);
+      dirLight2.position.set(-100, -100, -80);
+      scene.add(dirLight2);
+
+      const renderScene = new THREE.RenderPass(scene, camera);
+      bloomPass = new THREE.UnrealBloomPass(
+        new THREE.Vector2(width, height),
+        1.4,
+        0.65,
+        0.18
+      );
+
+      composer = new THREE.EffectComposer(renderer);
+      composer.addPass(renderScene);
+      composer.addPass(bloomPass);
+
+      // Anillo de Selección 3D
+      const haloGeo = new THREE.RingGeometry(8, 9.2, 32);
+      const haloMat = new THREE.MeshBasicMaterial({
+        color: 0x00f0ff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending
+      });
+      selectionHaloMesh = new THREE.Mesh(haloGeo, haloMat);
+      selectionHaloMesh.visible = false;
+      scene.add(selectionHaloMesh);
+
+      createStarfield();
+      buildGraph3D();
+
+      window.addEventListener('resize', onWindowResize);
+    }
+
+    function createStarfield() {
+      const starCount = 2500;
+      const starGeo = new THREE.BufferGeometry();
+      const positions = new Float32Array(starCount * 3);
+      const colors = new Float32Array(starCount * 3);
+
+      for (let i = 0; i < starCount; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 800;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 800;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 800;
+
+        const c = new THREE.Color().setHSL(0.55 + Math.random() * 0.3, 0.7, 0.75);
+        colors[i * 3] = c.r;
+        colors[i * 3 + 1] = c.g;
+        colors[i * 3 + 2] = c.b;
       }
 
-      reset(synapse = null, customColor = null, speedMultiplier = 1) {
-        this.synapse = synapse || SYNAPSES[Math.floor(Math.random() * SYNAPSES.length)];
+      starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      starGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+      const starMat = new THREE.PointsMaterial({
+        size: 1.8,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.7,
+        blending: THREE.AdditiveBlending
+      });
+
+      const stars = new THREE.Points(starGeo, starMat);
+      scene.add(stars);
+    }
+
+    /* Generador de etiquetas 3D en sprite */
+    function createTextSprite(text, colorHex) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+
+      ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = colorHex;
+      ctx.shadowBlur = 10;
+      ctx.fillText(text, 128, 32);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.minFilter = THREE.LinearFilter;
+      const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.85 });
+      const sprite = new THREE.Sprite(spriteMat);
+      sprite.scale.set(16, 4, 1);
+      return sprite;
+    }
+
+    /* ==========================================================================
+       CONSTRUCCIÓN DEL GRAFO 3D
+       ========================================================================== */
+    function buildGraph3D() {
+      const nodeCount = NODES_DATA.length;
+
+      NODES_DATA.forEach((data, index) => {
+        const phi = Math.acos(-1 + (2 * index) / nodeCount);
+        const theta = Math.sqrt(nodeCount * Math.PI) * phi;
+        const radius = 55 + (index % 3) * 15;
+
+        const isCore = data.id === 'tobi_core';
+        const finalX = isCore ? 0 : radius * Math.cos(theta) * Math.sin(phi);
+        const finalY = isCore ? 0 : radius * Math.sin(theta) * Math.sin(phi);
+        const finalZ = isCore ? 0 : radius * Math.cos(phi);
+
+        const clusterInfo = CLUSTERS[data.cluster];
+
+        // 1. Núcleo Emisivo
+        const innerGeo = new THREE.SphereGeometry(data.radius * 0.85, 24, 24);
+        const innerMat = new THREE.MeshStandardMaterial({
+          color: clusterInfo.hex,
+          emissive: clusterInfo.hex,
+          emissiveIntensity: 0.85,
+          roughness: 0.2,
+          metalness: 0.7
+        });
+        const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+
+        // 2. Halo Exterior Translúcido
+        const outerGeo = new THREE.SphereGeometry(data.radius * 1.3, 16, 16);
+        const outerMat = new THREE.MeshBasicMaterial({
+          color: clusterInfo.hex,
+          transparent: true,
+          opacity: 0.22,
+          blending: THREE.AdditiveBlending
+        });
+        const outerMesh = new THREE.Mesh(outerGeo, outerMat);
+
+        // 3. Malla Invisible de Detección de Clics (HIT-SPHERE GENEROSA)
+        // Garantiza que hacer clic en el planeta sea instantáneo y 100% certero
+        const hitRadius = Math.max(data.radius * 2.4, 9.5);
+        const hitGeo = new THREE.SphereGeometry(hitRadius, 12, 12);
+        const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+        const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+
+        // 4. Etiqueta de texto flotante en 3D
+        const textSprite = createTextSprite(data.label, clusterInfo.color);
+        textSprite.position.set(0, -data.radius * 1.6, 0);
+
+        const nodeGroup = new THREE.Group();
+        nodeGroup.add(innerMesh);
+        nodeGroup.add(outerMesh);
+        nodeGroup.add(hitMesh);
+        nodeGroup.add(textSprite);
+        nodeGroup.position.set(finalX, finalY, finalZ);
+
+        if (isCore) {
+          const ringGeo = new THREE.TorusGeometry(data.radius * 1.9, 0.4, 16, 64);
+          const ringMat = new THREE.MeshBasicMaterial({
+            color: 0x00f0ff,
+            transparent: true,
+            opacity: 0.65,
+            blending: THREE.AdditiveBlending
+          });
+          const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+          ringMesh.rotation.x = Math.PI / 3;
+          nodeGroup.add(ringMesh);
+          nodeGroup.ringMesh = ringMesh;
+        }
+
+        scene.add(nodeGroup);
+
+        const nodeObj = {
+          data,
+          mesh: nodeGroup,
+          innerMesh,
+          outerMesh,
+          hitMesh,
+          textSprite,
+          pos: nodeGroup.position,
+          vel: new THREE.Vector3(0, 0, 0),
+          pinned: false,
+          baseScale: 1.0,
+          targetScale: 1.0
+        };
+
+        // Vinculación bidireccional en userData para raycast inmediato
+        innerMesh.userData = { node: nodeObj };
+        outerMesh.userData = { node: nodeObj };
+        hitMesh.userData = { node: nodeObj };
+        textSprite.userData = { node: nodeObj };
+
+        hitMeshes.push(hitMesh);
+        nodes3D.push(nodeObj);
+        nodeMap.set(data.id, nodeObj);
+        neighborMap.set(data.id, new Set());
+      });
+
+      SYNAPSES_DATA.forEach(syn => {
+        if (neighborMap.has(syn.from)) neighborMap.get(syn.from).add(syn.to);
+        if (neighborMap.has(syn.to)) neighborMap.get(syn.to).add(syn.from);
+      });
+
+      const lineMaterial = new THREE.LineBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.35,
+        blending: THREE.AdditiveBlending,
+        linewidth: 1.5
+      });
+
+      SYNAPSES_DATA.forEach(syn => {
+        const fromNode = nodeMap.get(syn.from);
+        const toNode = nodeMap.get(syn.to);
+        if (!fromNode || !toNode) return;
+
+        const geo = new THREE.BufferGeometry();
+        const positions = new Float32Array(6);
+        const colors = new Float32Array(6);
+
+        const c1 = new THREE.Color(CLUSTERS[fromNode.data.cluster].hex);
+        const c2 = new THREE.Color(CLUSTERS[toNode.data.cluster].hex);
+
+        colors[0] = c1.r; colors[1] = c1.g; colors[2] = c1.b;
+        colors[3] = c2.r; colors[4] = c2.g; colors[5] = c2.b;
+
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const line = new THREE.Line(geo, lineMaterial.clone());
+        scene.add(line);
+
+        synapseLines.push({
+          line,
+          from: fromNode,
+          to: toNode,
+          data: syn,
+          baseColor: c1
+        });
+      });
+
+      createEnergyPackets();
+    }
+
+    /* ==========================================================================
+       PAQUETES DE ENERGÍA
+       ========================================================================== */
+    class EnergyPacket {
+      constructor(synapse = null, customColor = null, speed = null) {
+        this.reset(synapse, customColor, speed);
+
+        const spriteGeo = new THREE.SphereGeometry(0.75, 8, 8);
+        this.mat = new THREE.MeshBasicMaterial({
+          color: this.color,
+          transparent: true,
+          opacity: 0.9,
+          blending: THREE.AdditiveBlending
+        });
+        this.mesh = new THREE.Mesh(spriteGeo, this.mat);
+        scene.add(this.mesh);
+      }
+
+      reset(synapse = null, customColor = null, speed = null) {
+        this.synapse = synapse || synapseLines[Math.floor(Math.random() * synapseLines.length)];
         this.progress = Math.random();
-        this.speed = (0.003 + Math.random() * 0.006) * speedMultiplier;
-        this.size = 2.0 + Math.random() * 2.5;
-        this.color = customColor || LAYERS[nodeMap.get(this.synapse.from)?.layer]?.color || '#00f0ff';
+        this.speed = speed || (0.005 + Math.random() * 0.007);
+        this.color = customColor || CLUSTERS[this.synapse.from.data.cluster].hex;
+        if (this.mat) this.mat.color.setHex(this.color);
       }
 
       update() {
-        this.progress += this.speed;
+        this.progress += this.speed * simSpeed;
         if (this.progress >= 1.0) {
           this.reset();
         }
-      }
 
-      draw() {
-        const fromNode = nodeMap.get(this.synapse.from);
-        const toNode = nodeMap.get(this.synapse.to);
-        if (!fromNode || !toNode) return;
+        const p1 = this.synapse.from.pos;
+        const p2 = this.synapse.to.pos;
 
-        // Check if layer filtered
-        if (activeFilterLayer) {
-          if (fromNode.layer !== activeFilterLayer && toNode.layer !== activeFilterLayer) return;
-        }
-
-        const px = fromNode.x + (toNode.x - fromNode.x) * this.progress;
-        const py = fromNode.y + (toNode.y - fromNode.y) * this.progress;
-
-        ctx.save();
-        ctx.shadowColor = this.color;
-        ctx.shadowBlur = 10;
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(px, py, this.size, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Glow trail
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(px, py, this.size * 1.8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        this.mesh.position.lerpVectors(p1, p2, this.progress);
       }
     }
 
-    for (let i = 0; i < MAX_PARTICLES; i++) {
-      particles.push(new SynapticParticle());
+    function createEnergyPackets() {
+      const TOTAL_PACKETS = 110;
+      for (let i = 0; i < TOTAL_PACKETS; i++) {
+        energyParticles.push(new EnergyPacket());
+      }
     }
 
     /* ==========================================================================
-       PHYSICS SIMULATION (SPRING EMBEDDER + CLUSTER GRAVITY)
+       FÍSICA 3D
        ========================================================================== */
-    const LAYER_CENTERS = {
-      core: { x: -80, y: 0 },
-      legal: { x: 200, y: 0 },
-      memory: { x: -280, y: 150 },
-      rag: { x: -220, y: -100 },
-      cascade: { x: 50, y: -180 },
-      math: { x: 180, y: 220 },
-      motor: { x: 0, y: 50 },
-      shield: { x: -220, y: -220 }
-    };
+    let levitationClock = 0;
 
-    function updatePhysics() {
-      if (isPaused) return;
+    function updatePhysics3D() {
+      if (isPhysicsPaused) return;
 
-      const DAMPING = 0.88;
-      const REPULSION = 1400;
-      const SPRING_K = 0.0022;
-      const GRAVITY_TO_CLUSTER = 0.0018;
+      levitationClock += 0.015 * simSpeed;
+      const damping = 0.86;
+      const springK = 0.0042;
+      const centerGravity = 0.0018;
 
-      // 1. Repulsion between all nodes
-      for (let i = 0; i < NODES.length; i++) {
-        const n1 = NODES[i];
-        for (let j = i + 1; j < NODES.length; j++) {
-          const n2 = NODES[j];
-          let dx = n2.x - n1.x;
-          let dy = n2.y - n1.y;
-          let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      for (let i = 0; i < nodes3D.length; i++) {
+        const n1 = nodes3D[i];
+        for (let j = i + 1; j < nodes3D.length; j++) {
+          const n2 = nodes3D[j];
 
-          if (dist < 320) {
-            let force = (REPULSION / (dist * dist));
-            let fx = (dx / dist) * force;
-            let fy = (dy / dist) * force;
+          const dx = n2.pos.x - n1.pos.x;
+          const dy = n2.pos.y - n1.pos.y;
+          const dz = n2.pos.z - n1.pos.z;
+          let distSq = dx * dx + dy * dy + dz * dz;
+          if (distSq < 1) distSq = 1;
 
-            if (!n1.pinned) { n1.vx -= fx; n1.vy -= fy; }
-            if (!n2.pinned) { n2.vx += fx; n2.vy += fy; }
+          if (distSq < 25000) {
+            const dist = Math.sqrt(distSq);
+            const force = (repulsionForce / distSq) * simSpeed;
+            const fx = (dx / dist) * force;
+            const fy = (dy / dist) * force;
+            const fz = (dz / dist) * force;
+
+            if (!n1.pinned && n1.data.id !== 'tobi_core') {
+              n1.vel.x -= fx; n1.vel.y -= fy; n1.vel.z -= fz;
+            }
+            if (!n2.pinned && n2.data.id !== 'tobi_core') {
+              n2.vel.x += fx; n2.vel.y += fy; n2.vel.z += fz;
+            }
           }
         }
       }
 
-      // 2. Spring attraction along synapses
-      SYNAPSES.forEach(s => {
-        const from = nodeMap.get(s.from);
-        const to = nodeMap.get(s.to);
-        if (!from || !to) return;
+      synapseLines.forEach(syn => {
+        const n1 = syn.from;
+        const n2 = syn.to;
 
-        let dx = to.x - from.x;
-        let dy = to.y - from.y;
-        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        let targetDist = (from.size + to.size) * 3.5;
-        let force = (dist - targetDist) * SPRING_K;
+        const dx = n2.pos.x - n1.pos.x;
+        const dy = n2.pos.y - n1.pos.y;
+        const dz = n2.pos.z - n1.pos.z;
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
+        const delta = dist - linkLength;
+        const force = delta * springK * simSpeed;
 
-        let fx = (dx / dist) * force;
-        let fy = (dy / dist) * force;
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
+        const fz = (dz / dist) * force;
 
-        if (!from.pinned) { from.vx += fx; from.vy += fy; }
-        if (!to.pinned) { to.vx -= fx; to.vy -= fy; }
-      });
-
-      // 3. Cluster Gravity
-      NODES.forEach(n => {
-        const center = LAYER_CENTERS[n.layer] || { x: 0, y: 0 };
-        let dx = center.x - n.x;
-        let dy = center.y - n.y;
-
-        if (!n.pinned) {
-          n.vx += dx * GRAVITY_TO_CLUSTER;
-          n.vy += dy * GRAVITY_TO_CLUSTER;
-
-          n.vx *= DAMPING;
-          n.vy *= DAMPING;
-          n.x += n.vx;
-          n.y += n.vy;
+        if (!n1.pinned && n1.data.id !== 'tobi_core') {
+          n1.vel.x += fx; n1.vel.y += fy; n1.vel.z += fz;
+        }
+        if (!n2.pinned && n2.data.id !== 'tobi_core') {
+          n2.vel.x += fx; n2.vel.y += fy; n2.vel.z += fz;
         }
       });
 
-      // 4. Update particles
-      particles.forEach(p => p.update());
-    }
+      nodes3D.forEach((n, idx) => {
+        if (!n.pinned && n.data.id !== 'tobi_core') {
+          n.vel.x -= n.pos.x * centerGravity * simSpeed;
+          n.vel.y -= n.pos.y * centerGravity * simSpeed;
+          n.vel.z -= n.pos.z * centerGravity * simSpeed;
 
-    /* ==========================================================================
-       RENDER LOOP
-       ========================================================================== */
-    let animationTime = 0;
+          const levOffset = Math.sin(levitationClock + idx * 0.4) * 0.08 * simSpeed;
+          n.vel.y += levOffset;
 
-    function render() {
-      animationTime += 0.02;
-      updatePhysics();
+          n.vel.multiplyScalar(damping);
+          n.pos.add(n.vel);
+        }
 
-      ctx.clearRect(0, 0, width, height);
+        n.mesh.scale.lerp(new THREE.Vector3(n.targetScale, n.targetScale, n.targetScale), 0.12);
 
-      ctx.save();
-      // Apply Camera Transform
-      ctx.translate(camX, camY);
-      ctx.scale(camZoom, camZoom);
+        const pulse = 1.0 + Math.sin(levitationClock * 2.0 + idx) * 0.12;
+        n.outerMesh.scale.set(pulse, pulse, pulse);
 
-      // 1. Draw subtle background radial grid
-      drawBackgroundGrid();
+        if (n.mesh.ringMesh) {
+          n.mesh.ringMesh.rotation.z += 0.015;
+          n.mesh.ringMesh.rotation.y += 0.008;
+        }
+      });
 
-      // 2. Draw Synapse Lines
-      drawSynapses();
-
-      // 3. Draw Synaptic Particles
-      particles.forEach(p => p.draw());
-
-      // 4. Draw Nodes
-      drawNodes();
-
-      ctx.restore();
-
-      requestAnimationFrame(render);
-    }
-
-    function drawBackgroundGrid() {
-      ctx.save();
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.04)';
-      ctx.lineWidth = 1;
-
-      // Concentric brain lobes
-      for (let r = 120; r <= 600; r += 120) {
-        ctx.beginPath();
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
-        ctx.stroke();
+      // Actualizar halo de selección 3D si hay nodo seleccionado
+      if (selectedNode && selectionHaloMesh) {
+        selectionHaloMesh.position.copy(selectedNode.pos);
+        selectionHaloMesh.quaternion.copy(camera.quaternion); // Siempre mirando a la cámara
+        const haloScale = (selectedNode.data.radius * 0.22) * (1.0 + Math.sin(levitationClock * 4.0) * 0.08);
+        selectionHaloMesh.scale.set(haloScale, haloScale, haloScale);
       }
-      ctx.restore();
-    }
 
-    function drawSynapses() {
-      SYNAPSES.forEach(s => {
-        const from = nodeMap.get(s.from);
-        const to = nodeMap.get(s.to);
-        if (!from || !to) return;
+      synapseLines.forEach(syn => {
+        const p1 = syn.from.pos;
+        const p2 = syn.to.pos;
+        const posAttr = syn.line.geometry.attributes.position;
 
-        const isHighlighted = (hoveredNode && (hoveredNode.id === from.id || hoveredNode.id === to.id)) ||
-                              (selectedNode && (selectedNode.id === from.id || selectedNode.id === to.id));
-
-        let alpha = 0.22;
-        let strokeColor = 'rgba(255, 255, 255, 0.15)';
-        let lineWidth = 1.0;
-
-        if (activeFilterLayer) {
-          if (from.layer !== activeFilterLayer && to.layer !== activeFilterLayer) {
-            alpha = 0.04;
-          }
-        }
-
-        if (isHighlighted) {
-          alpha = 0.85;
-          strokeColor = LAYERS[from.layer]?.color || '#00f0ff';
-          lineWidth = 2.4;
-        }
-
-        ctx.save();
-        ctx.strokeStyle = strokeColor;
-        ctx.globalAlpha = alpha;
-        ctx.lineWidth = lineWidth;
-
-        ctx.beginPath();
-        ctx.moveTo(from.x, from.y);
-        ctx.lineTo(to.x, to.y);
-        ctx.stroke();
-
-        ctx.restore();
+        posAttr.setXYZ(0, p1.x, p1.y, p1.z);
+        posAttr.setXYZ(1, p2.x, p2.y, p2.z);
+        posAttr.needsUpdate = true;
       });
-    }
 
-    function drawNodes() {
-      NODES.forEach(n => {
-        const isHovered = hoveredNode && hoveredNode.id === n.id;
-        const isSelected = selectedNode && selectedNode.id === n.id;
-        const isNeighbor = (hoveredNode && connectedPairs.has(`${hoveredNode.id}->${n.id}`)) ||
-                           (selectedNode && connectedPairs.has(`${selectedNode.id}->${n.id}`));
-
-        let layerColor = LAYERS[n.layer]?.color || '#00f0ff';
-        let alpha = 1.0;
-
-        if (activeFilterLayer && n.layer !== activeFilterLayer) {
-          alpha = 0.2;
-        }
-
-        ctx.save();
-        ctx.globalAlpha = alpha;
-
-        // Pulsing halo for Tobi Core
-        if (n.id === 'tobi_core') {
-          const pulseR = n.size + Math.sin(animationTime * 2.5) * 8 + 8;
-          ctx.beginPath();
-          ctx.arc(n.x, n.y, pulseR, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(0, 240, 255, 0.15)';
-          ctx.fill();
-        }
-
-        // Outer glow
-        if (isHovered || isSelected || isNeighbor) {
-          ctx.shadowColor = layerColor;
-          ctx.shadowBlur = isSelected ? 28 : 18;
-        } else {
-          ctx.shadowColor = layerColor;
-          ctx.shadowBlur = 8;
-        }
-
-        // Main circle
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.size, 0, Math.PI * 2);
-        ctx.fillStyle = '#0a1020';
-        ctx.fill();
-
-        // Colored ring border
-        ctx.lineWidth = isSelected ? 3.5 : (isHovered ? 2.5 : 1.8);
-        ctx.strokeStyle = isSelected ? '#ffffff' : layerColor;
-        ctx.stroke();
-
-        // Inner glowing core
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.size * 0.45, 0, Math.PI * 2);
-        ctx.fillStyle = layerColor;
-        ctx.fill();
-
-        // Text label
-        ctx.shadowBlur = 4;
-        ctx.shadowColor = '#000';
-        ctx.fillStyle = (isSelected || isHovered) ? '#ffffff' : '#cbd5e1';
-        ctx.font = `${isHovered || isSelected ? 'bold 12px' : '10.5px'} -apple-system, sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.fillText(n.label, n.x, n.y + n.size + 14);
-
-        // Subtitle on hover
-        if (isHovered || isSelected) {
-          ctx.fillStyle = layerColor;
-          ctx.font = '9px monospace';
-          ctx.fillText(n.sub || '', n.x, n.y + n.size + 26);
-        }
-
-        ctx.restore();
-      });
+      energyParticles.forEach(p => p.update());
     }
 
     /* ==========================================================================
-       MOUSE & TOUCH INTERACTION
+       SISTEMA DE CLIC & RAYCASTING INFALIBLE
        ========================================================================== */
-    function getMouseWorldPos(e) {
-      const rect = canvas.getBoundingClientRect();
-      const screenX = e.clientX - rect.left;
-      const screenY = e.clientY - rect.top;
-      return {
-        x: (screenX - camX) / camZoom,
-        y: (screenY - camY) / camZoom
-      };
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    let hoveredNode = null;
+    let selectedNode = null;
+    let draggedNode = null;
+    let dragPlane = new THREE.Plane();
+    let planeIntersect = new THREE.Vector3();
+
+    // Rastro de clic vs arrastre
+    let pointerDownPos = { x: 0, y: 0 };
+    let pointerDownTime = 0;
+
+    const tooltip = document.getElementById('nodeTooltip');
+    const tooltipTitle = document.getElementById('tooltipTitle');
+    const tooltipSub = document.getElementById('tooltipSub');
+
+    function updateMouseNormalized(clientX, clientY) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
     }
 
-    function findNodeAt(worldX, worldY) {
-      for (let i = NODES.length - 1; i >= 0; i--) {
-        const n = NODES[i];
-        let dx = worldX - n.x;
-        let dy = worldY - n.y;
-        if (dx * dx + dy * dy <= (n.size + 6) * (n.size + 6)) {
-          return n;
-        }
+    function checkRaycastHit(clientX, clientY) {
+      updateMouseNormalized(clientX, clientY);
+      raycaster.setFromCamera(mouse, camera);
+
+      // Raycast contra las mallas de impacto (hitMeshes tienen radio generoso)
+      const intersects = raycaster.intersectObjects(hitMeshes, false);
+      if (intersects.length > 0) {
+        return intersects[0].object.userData.node || null;
       }
       return null;
     }
 
-    canvas.addEventListener('mousedown', (e) => {
-      const mouse = getMouseWorldPos(e);
-      const clicked = findNodeAt(mouse.x, mouse.y);
-
-      if (clicked) {
-        draggedNode = clicked;
-        draggedNode.pinned = true;
-        selectNode(clicked);
-        playNodeChime(clicked.layer);
-      } else {
-        isDraggingCam = true;
-        dragStartX = e.clientX - camX;
-        dragStartY = e.clientY - camY;
-      }
-    });
-
-    window.addEventListener('mousemove', (e) => {
-      const mouse = getMouseWorldPos(e);
+    function onPointerMove(e) {
+      updateMouseNormalized(e.clientX, e.clientY);
 
       if (draggedNode) {
-        draggedNode.x = mouse.x;
-        draggedNode.y = mouse.y;
-      } else if (isDraggingCam) {
-        camX = e.clientX - dragStartX;
-        camY = e.clientY - dragStartY;
+        raycaster.setFromCamera(mouse, camera);
+        if (raycaster.ray.intersectPlane(dragPlane, planeIntersect)) {
+          draggedNode.pos.copy(planeIntersect);
+        }
+        return;
+      }
+
+      const hitNode = checkRaycastHit(e.clientX, e.clientY);
+
+      if (hitNode) {
+        if (hitNode !== hoveredNode) {
+          hoveredNode = hitNode;
+          applyFocusState(hitNode);
+          container.style.cursor = 'pointer';
+
+          tooltipTitle.textContent = hitNode.data.label;
+          tooltipSub.textContent = hitNode.data.sub;
+          tooltip.style.display = 'block';
+        }
+
+        tooltip.style.left = e.clientX + 'px';
+        tooltip.style.top = e.clientY + 'px';
       } else {
-        const hit = findNodeAt(mouse.x, mouse.y);
-        if (hit !== hoveredNode) {
-          hoveredNode = hit;
-          canvas.style.cursor = hit ? 'pointer' : 'default';
+        if (hoveredNode) {
+          hoveredNode = null;
+          container.style.cursor = 'default';
+          tooltip.style.display = 'none';
+          if (!selectedNode) {
+            clearFocusState();
+          } else {
+            applyFocusState(selectedNode);
+          }
         }
       }
-    });
+    }
 
-    window.addEventListener('mouseup', () => {
+    function onPointerDown(e) {
+      if (e.button !== 0) return; // Solo clic primario
+
+      pointerDownPos.x = e.clientX;
+      pointerDownPos.y = e.clientY;
+      pointerDownTime = performance.now();
+
+      const hitNode = checkRaycastHit(e.clientX, e.clientY);
+
+      if (hitNode) {
+        draggedNode = hitNode;
+        draggedNode.pinned = true;
+        controls.enabled = false;
+
+        const cameraDir = new THREE.Vector3();
+        camera.getWorldDirection(cameraDir);
+        dragPlane.setFromNormalAndCoplanarPoint(cameraDir.negate(), hitNode.pos);
+      }
+    }
+
+    function onPointerUp(e) {
+      if (e.button !== 0) return;
+
+      const deltaDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+      const deltaTime = performance.now() - pointerDownTime;
+
+      // SI SE MOVIÓ MENOS DE 8PX Y DURÓ MENOS DE 600MS: ES UN CLIC ROTUNDO
+      if (deltaDist < 8 && deltaTime < 600) {
+        const hitNode = checkRaycastHit(e.clientX, e.clientY);
+        if (hitNode) {
+          // ABRIR INMEDIATAMENTE EL MENÚ LATERAL DERECHO
+          selectNode(hitNode);
+          playAudioTone(hitNode.data.cluster);
+        }
+      }
+
       if (draggedNode) {
         draggedNode.pinned = false;
         draggedNode = null;
+        controls.enabled = true;
       }
-      isDraggingCam = false;
-    });
+    }
 
-    // Zoom with wheel
-    canvas.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
-      const newZoom = Math.max(0.35, Math.min(3.2, camZoom * zoomFactor));
-
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-
-      camX = mouseX - (mouseX - camX) * (newZoom / camZoom);
-      camY = mouseY - (mouseY - camY) * (newZoom / camZoom);
-      camZoom = newZoom;
-    });
+    // Escuchas de eventos tanto en el canvas como en window
+    renderer.domElement.addEventListener('pointermove', onPointerMove);
+    renderer.domElement.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointerup', onPointerUp);
 
     /* ==========================================================================
-       AUDIO SYNTHESIZER (WEB AUDIO API)
+       ENFOQUE EN SUBRED Y RESALTE
+       ========================================================================== */
+    function applyFocusState(focusNode) {
+      const neighbors = neighborMap.get(focusNode.data.id) || new Set();
+
+      nodes3D.forEach(n => {
+        const isFocus = n.data.id === focusNode.data.id;
+        const isNeighbor = neighbors.has(n.data.id);
+
+        if (isFocus) {
+          n.targetScale = 1.45;
+          n.innerMesh.material.emissiveIntensity = 1.8;
+          n.outerMesh.material.opacity = 0.6;
+          n.textSprite.material.opacity = 1.0;
+        } else if (isNeighbor) {
+          n.targetScale = 1.15;
+          n.innerMesh.material.emissiveIntensity = 1.1;
+          n.outerMesh.material.opacity = 0.35;
+          n.textSprite.material.opacity = 0.85;
+        } else {
+          n.targetScale = 0.75;
+          n.innerMesh.material.emissiveIntensity = 0.2;
+          n.outerMesh.material.opacity = 0.05;
+          n.textSprite.material.opacity = 0.2;
+        }
+      });
+
+      synapseLines.forEach(syn => {
+        const isConnected = syn.from.data.id === focusNode.data.id || syn.to.data.id === focusNode.data.id;
+        if (isConnected) {
+          syn.line.material.opacity = 0.95;
+          syn.line.material.linewidth = 2.5;
+        } else {
+          syn.line.material.opacity = 0.04;
+        }
+      });
+    }
+
+    function clearFocusState() {
+      nodes3D.forEach(n => {
+        n.targetScale = 1.0;
+        n.innerMesh.material.emissiveIntensity = 0.85;
+        n.outerMesh.material.opacity = 0.22;
+        n.textSprite.material.opacity = 0.85;
+      });
+
+      synapseLines.forEach(syn => {
+        syn.line.material.opacity = 0.35;
+        syn.line.material.linewidth = 1.5;
+      });
+    }
+
+    /* ==========================================================================
+       INSPECTOR DRAWER Y SELECCIÓN DE PLANETA (ABRE SIEMPRE AL CLIC)
+       ========================================================================== */
+    const drawer = document.getElementById('inspectorDrawer');
+
+    function selectNode(node) {
+      if (!node) return;
+      selectedNode = node;
+
+      // 1. Cargar datos en el menú lateral derecho
+      updateDrawerInfo(node);
+
+      // 2. ABRIR EL MENÚ DERECHO INTERACTIVO CON MÁXIMA PRIORIDAD
+      if (drawer) {
+        drawer.classList.add('open');
+        drawer.style.transform = 'translateX(0)';
+      }
+
+      // 3. Activar halo 3D de selección
+      if (selectionHaloMesh) {
+        const cl = CLUSTERS[node.data.cluster];
+        selectionHaloMesh.material.color.setHex(cl.hex);
+        selectionHaloMesh.material.opacity = 0.85;
+        selectionHaloMesh.visible = true;
+      }
+
+      // 4. Enfocar nodos conectados y atenuar el resto
+      applyFocusState(node);
+
+      // 5. Vuelo suave de cámara
+      flyCameraToNode(node);
+
+      // 6. Mensaje Toast de retroalimentación
+      showToast(`🪐 Planeta seleccionado: ${node.data.label}`, '📌');
+    }
+
+    function closeInspector() {
+      selectedNode = null;
+      if (drawer) {
+        drawer.classList.remove('open');
+        drawer.style.transform = '';
+      }
+      if (selectionHaloMesh) {
+        selectionHaloMesh.visible = false;
+      }
+      clearFocusState();
+    }
+
+    function toggleDrawerManual() {
+      if (drawer.classList.contains('open')) {
+        closeInspector();
+      } else {
+        const target = selectedNode || nodeMap.get('tobi_core');
+        if (target) selectNode(target);
+      }
+    }
+
+    function updateDrawerInfo(node) {
+      const badge = document.getElementById('drawerBadge');
+      const title = document.getElementById('drawerTitle');
+      const sub = document.getElementById('drawerSub');
+      const role = document.getElementById('drawerRole');
+      const legal = document.getElementById('drawerLegal');
+      const practical = document.getElementById('drawerPractical');
+      const connList = document.getElementById('drawerSynapses');
+      const connCount = document.getElementById('drawerConnCount');
+
+      const cl = CLUSTERS[node.data.cluster];
+      badge.textContent = cl.name;
+      badge.style.backgroundColor = `${cl.color}25`;
+      badge.style.border = `1px solid ${cl.color}`;
+      badge.style.color = cl.color;
+
+      title.textContent = node.data.label;
+      sub.textContent = node.data.sub;
+      role.textContent = node.data.role;
+      legal.textContent = node.data.legal;
+      practical.textContent = node.data.practical;
+
+      const conns = [];
+      SYNAPSES_DATA.forEach(s => {
+        if (s.from === node.data.id) conns.push({ target: nodeMap.get(s.to), rel: s.label, dir: 'Hacia' });
+        else if (s.to === node.data.id) conns.push({ target: nodeMap.get(s.from), rel: s.label, dir: 'Desde' });
+      });
+
+      connCount.textContent = conns.length;
+      connList.innerHTML = '';
+      conns.forEach(c => {
+        if (!c.target) return;
+        const item = document.createElement('div');
+        item.className = 'synapse-item';
+        item.innerHTML = `
+          <div>
+            <b>${c.target.data.label}</b>
+            <div class="synapse-role">${c.dir}: ${c.rel}</div>
+          </div>
+          <span style="color: ${CLUSTERS[c.target.data.cluster].color}">➔</span>
+        `;
+        item.onclick = (event) => {
+          event.stopPropagation();
+          selectNode(c.target);
+          playAudioTone(c.target.data.cluster);
+        };
+        connList.appendChild(item);
+      });
+    }
+
+    function flyCameraToNode(node) {
+      const targetPos = node.pos.clone();
+      const offset = new THREE.Vector3(0, 15, 60);
+      const camTargetPos = targetPos.clone().add(offset);
+
+      new TWEEN.Tween(camera.position)
+        .to(camTargetPos, 1100)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+
+      new TWEEN.Tween(controls.target)
+        .to(targetPos, 1100)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+    }
+
+    function resetCamera3D() {
+      new TWEEN.Tween(camera.position)
+        .to({ x: 0, y: 30, z: 160 }, 1000)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+
+      new TWEEN.Tween(controls.target)
+        .to({ x: 0, y: 0, z: 0 }, 1000)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+
+      showToast('Cámara 3D recentrada al núcleo', '🎯');
+    }
+
+    /* ==========================================================================
+       CLUSTERS UI & SLIDERS INTERACTIVOS
+       ========================================================================== */
+    const clusterChipsContainer = document.getElementById('clusterChips');
+
+    function renderClusterChips() {
+      clusterChipsContainer.innerHTML = '';
+      Object.values(CLUSTERS).forEach(cl => {
+        const chip = document.createElement('div');
+        chip.className = 'cluster-chip';
+        chip.id = `chip-${cl.id}`;
+        chip.innerHTML = `
+          <div class="chip-left">
+            <span class="chip-dot" style="background:${cl.color}; color:${cl.color};"></span>
+            <span>${cl.name}</span>
+          </div>
+          <span class="chip-count">${cl.count}</span>
+        `;
+        chip.onclick = () => filterCluster(cl.id);
+        clusterChipsContainer.appendChild(chip);
+      });
+    }
+    renderClusterChips();
+
+    function filterCluster(clusterId) {
+      if (activeClusterFilter === clusterId) {
+        resetClusterFilter();
+        return;
+      }
+      activeClusterFilter = clusterId;
+
+      document.querySelectorAll('.cluster-chip').forEach(el => {
+        el.classList.toggle('active', el.id === `chip-${clusterId}`);
+      });
+
+      nodes3D.forEach(n => {
+        if (n.data.cluster === clusterId) {
+          n.targetScale = 1.35;
+          n.innerMesh.material.emissiveIntensity = 1.5;
+        } else {
+          n.targetScale = 0.5;
+          n.innerMesh.material.emissiveIntensity = 0.1;
+        }
+      });
+
+      showToast(`Dimensión activa: ${CLUSTERS[clusterId].name}`, '🔍');
+    }
+
+    function resetClusterFilter() {
+      activeClusterFilter = null;
+      document.querySelectorAll('.cluster-chip').forEach(el => el.classList.remove('active'));
+      clearFocusState();
+      showToast('Visualizando todas las dimensiones', '🌐');
+    }
+
+    const sBloom = document.getElementById('sliderBloom');
+    const sSpeed = document.getElementById('sliderSpeed');
+    const sRep = document.getElementById('sliderRepulsion');
+
+    sBloom.oninput = (e) => {
+      const val = parseFloat(e.target.value);
+      bloomPass.strength = val;
+      document.getElementById('valBloom').textContent = val.toFixed(1);
+    };
+
+    sSpeed.oninput = (e) => {
+      simSpeed = parseFloat(e.target.value);
+      document.getElementById('valSpeed').textContent = simSpeed.toFixed(1) + 'x';
+    };
+
+    sRep.oninput = (e) => {
+      repulsionForce = parseFloat(e.target.value);
+      document.getElementById('valRepulsion').textContent = repulsionForce;
+    };
+
+    const searchInput = document.getElementById('nodeSearch');
+    searchInput.oninput = (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      if (!q) {
+        if (!selectedNode) clearFocusState();
+        return;
+      }
+      const found = nodes3D.find(n =>
+        n.data.label.toLowerCase().includes(q) ||
+        n.data.sub.toLowerCase().includes(q) ||
+        n.data.legal.toLowerCase().includes(q)
+      );
+      if (found) {
+        applyFocusState(found);
+      }
+    };
+
+    searchInput.onkeydown = (e) => {
+      if (e.key === 'Enter') {
+        const q = e.target.value.toLowerCase().trim();
+        const found = nodes3D.find(n =>
+          n.data.label.toLowerCase().includes(q) ||
+          n.data.sub.toLowerCase().includes(q)
+        );
+        if (found) {
+          selectNode(found);
+          playAudioTone(found.data.cluster);
+        }
+      }
+    };
+
+    /* ==========================================================================
+       SIMULACIONES DE IMPULSOS SINÁPTICOS 3D
+       ========================================================================== */
+    function showToast(text, icon = '⚡') {
+      const toast = document.getElementById('sciToast');
+      document.getElementById('toastIcon').textContent = icon;
+      document.getElementById('toastText').textContent = text;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    function spawnPhotonicBursts(nodeIds, colorHex) {
+      for (let i = 0; i < nodeIds.length - 1; i++) {
+        const fromId = nodeIds[i];
+        const toId = nodeIds[i + 1];
+        const syn = synapseLines.find(s =>
+          (s.from.data.id === fromId && s.to.data.id === toId) ||
+          (s.from.data.id === toId && s.to.data.id === fromId)
+        );
+        if (syn) {
+          for (let k = 0; k < 6; k++) {
+            const p = new EnergyPacket(syn, colorHex, 0.022);
+            p.progress = k / 6;
+            energyParticles.push(p);
+          }
+        }
+      }
+    }
+
+    function triggerSimulation(type) {
+      initAudio();
+
+      if (type === 'rag') {
+        showToast('Simulando Dictamen: Consulta ➔ Precedentes CSJ ➔ Doctrina Laboral', '⚡');
+        const path = ['tobi_core', 'acuerdos_csj', 'doctrina_inmediatez', 'art81_causales', 'tarjeta_interactiva'];
+        spawnPhotonicBursts(path, 0x10b981);
+        selectNode(nodeMap.get('acuerdos_csj'));
+        playChordSequence(['core', 'doctrina', 'legal', 'ejecutivo']);
+      }
+      else if (type === 'math') {
+        showToast('Simulando Finiquito: Regla de Oro ➔ Motor Matemático ➔ Desglose Exacto', '🧮');
+        const path = ['tobi_core', 'motor_matematico', 'modulo_finiquito', 'tarjeta_interactiva', 'generador_notas_despido'];
+        spawnPhotonicBursts(path, 0xec4899);
+        selectNode(nodeMap.get('modulo_finiquito'));
+        playChordSequence(['core', 'calculo', 'ejecutivo']);
+      }
+      else if (type === 'ocr') {
+        showToast('Simulando Peritaje: Telegrama Copaco ➔ Causal Art. 81 ➔ Plazos de Preaviso', '📄');
+        const path = ['tobi_core', 'peritaje_telegramas', 'art81_causales', 'art87_preaviso', 'generador_notas_despido'];
+        spawnPhotonicBursts(path, 0xc084fc);
+        selectNode(nodeMap.get('peritaje_telegramas'));
+        playChordSequence(['forense', 'legal', 'ejecutivo']);
+      }
+      else if (type === 'shield') {
+        showToast('Simulando Bóveda: Privacidad Salarial ➔ Anonimización ➔ Cero Persistencia', '🛡️');
+        const path = ['tobi_core', 'boveda_privacidad', 'anonimizacion_judicial', 'cero_persistencia', 'anti_alucinacion'];
+        spawnPhotonicBursts(path, 0xf43f5e);
+        selectNode(nodeMap.get('boveda_privacidad'));
+        playChordSequence(['core', 'seguridad', 'legal']);
+      }
+    }
+
+    function toggleAutoRotate() {
+      controls.autoRotate = !controls.autoRotate;
+      document.getElementById('btnAutoRotate').classList.toggle('active', controls.autoRotate);
+      showToast(controls.autoRotate ? 'Rotación orbital activada' : 'Rotación orbital pausada', '🔄');
+    }
+
+    function togglePausePhysics() {
+      isPhysicsPaused = !isPhysicsPaused;
+      document.getElementById('btnPlay').innerHTML = isPhysicsPaused ? '<span>▶️</span>' : '<span>⏸️</span>';
+      showToast(isPhysicsPaused ? 'Física 3D pausada' : 'Física 3D reanudada', '⚡');
+    }
+
+    /* ==========================================================================
+       WEB AUDIO API
        ========================================================================== */
     let audioCtx = null;
 
@@ -1792,304 +2206,82 @@
       }
     }
 
-    const LAYER_FREQUENCIES = {
-      core: [523.25, 659.25, 783.99],   // C Major chord
-      legal: [440.00, 554.37, 659.25],  // A Major
-      memory: [392.00, 493.88, 587.33], // G Major
-      rag: [349.23, 440.00, 523.25],    // F Major
-      cascade: [293.66, 369.99, 440.00],// D Major
-      math: [587.33, 739.99, 880.00],   // D High
-      motor: [659.25, 830.61, 987.77],  // E High
-      shield: [220.00, 277.18, 329.63]  // A Low
+    const CLUSTER_PITCHES = {
+      core: 523.25,      // C5
+      legal: 587.33,     // D5
+      doctrina: 659.25,  // E5
+      forense: 698.46,   // F5
+      calculo: 880.00,   // A5
+      ejecutivo: 987.77, // B5
+      seguridad: 440.00  // A4
     };
 
-    function playNodeChime(layer = 'core') {
+    function playAudioTone(clusterKey) {
       if (!soundEnabled) return;
       initAudio();
       if (!audioCtx) return;
 
-      const freqs = LAYER_FREQUENCIES[layer] || [440, 550];
-      const now = audioCtx.currentTime;
+      const freq = CLUSTER_PITCHES[clusterKey] || 523.25;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
 
-      freqs.forEach((freq, idx) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now + idx * 0.04);
+      gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.08, audioCtx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.45);
 
-        gain.gain.setValueAtTime(0.001, now + idx * 0.04);
-        gain.gain.exponentialRampToValueAtTime(0.08, now + idx * 0.04 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.04 + 0.45);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
 
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.48);
+    }
 
-        osc.start(now + idx * 0.04);
-        osc.stop(now + idx * 0.04 + 0.48);
+    function playChordSequence(clusters) {
+      if (!soundEnabled) return;
+      clusters.forEach((cl, i) => {
+        setTimeout(() => playAudioTone(cl), i * 170);
       });
     }
 
     function toggleAudio() {
       soundEnabled = !soundEnabled;
-      const btn = document.getElementById('btnSound');
-      btn.innerHTML = soundEnabled ? '<span>🔊</span>' : '<span>🔇</span>';
-      showToast(soundEnabled ? 'Sonido sináptico activado' : 'Sonido sináptico silenciado', '🔊');
+      document.getElementById('btnAudio').innerHTML = soundEnabled ? '<span>🔊</span>' : '<span>🔇</span>';
+      showToast(soundEnabled ? 'Sonido activado' : 'Sonido silenciado', '🔊');
+    }
+
+    function onWindowResize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+      composer.setSize(width, height);
     }
 
     /* ==========================================================================
-       INSPECTOR DRAWER & SELECTION
+       LOOP PRINCIPAL (60 FPS)
        ========================================================================== */
-    const drawer = document.getElementById('inspectorDrawer');
+    function animate() {
+      requestAnimationFrame(animate);
 
-    function selectNode(node) {
-      selectedNode = node;
-      updateDrawer(node);
-      drawer.classList.add('open');
+      TWEEN.update();
+      controls.update();
+      updatePhysics3D();
+
+      composer.render();
     }
 
-    function closeInspector() {
-      selectedNode = null;
-      drawer.classList.remove('open');
-    }
+    initThreeScene();
+    animate();
 
-    function updateDrawer(node) {
-      const badge = document.getElementById('drawerBadge');
-      const title = document.getElementById('drawerTitle');
-      const subtitle = document.getElementById('drawerSubtitle');
-      const desc = document.getElementById('drawerDesc');
-      const legal = document.getElementById('drawerLegal');
-      const code = document.getElementById('drawerCode');
-      const connList = document.getElementById('drawerConnections');
-      const connCount = document.getElementById('connCount');
-
-      const layerData = LAYERS[node.layer];
-      badge.textContent = layerData.name;
-      badge.style.backgroundColor = `${layerData.color}25`;
-      badge.style.border = `1px solid ${layerData.color}`;
-      badge.style.color = layerData.color;
-
-      title.textContent = node.label;
-      subtitle.textContent = node.sub || '';
-      desc.textContent = node.desc || '';
-      legal.textContent = node.legal || 'N/A';
-      code.textContent = node.code || '// Sin código canónico asociado';
-
-      // Find connections
-      const connected = [];
-      SYNAPSES.forEach(s => {
-        if (s.from === node.id) {
-          connected.push({ target: nodeMap.get(s.to), dir: 'Hacia', label: s.label });
-        } else if (s.to === node.id) {
-          connected.push({ target: nodeMap.get(s.from), dir: 'Desde', label: s.label });
-        }
-      });
-
-      connCount.textContent = connected.length;
-      connList.innerHTML = '';
-      connected.forEach(c => {
-        if (!c.target) return;
-        const tag = document.createElement('div');
-        tag.className = 'connection-tag';
-        tag.innerHTML = `
-          <div>
-            <b>${c.target.label}</b>
-            <div class="conn-label">${c.dir}: ${c.label}</div>
-          </div>
-          <span style="color: ${LAYERS[c.target.layer]?.color}">➔</span>
-        `;
-        tag.onclick = () => {
-          flyToNode(c.target);
-          selectNode(c.target);
-          playNodeChime(c.target.layer);
-        };
-        connList.appendChild(tag);
-      });
-    }
-
-    function flyToNode(node) {
-      const targetCamX = width / 2 - node.x * camZoom;
-      const targetCamY = height / 2 - node.y * camZoom;
-
-      const startX = camX;
-      const startY = camY;
-      const duration = 500;
-      const startTime = performance.now();
-
-      function animateCam(t) {
-        const elapsed = t - startTime;
-        const p = Math.min(1, elapsed / duration);
-        const ease = 1 - Math.pow(1 - p, 3); // ease-out cubic
-
-        camX = startX + (targetCamX - startX) * ease;
-        camY = startY + (targetCamY - startY) * ease;
-
-        if (p < 1) requestAnimationFrame(animateCam);
-      }
-      requestAnimationFrame(animateCam);
-    }
-
-    function resetCamera() {
-      camX = width / 2;
-      camY = height / 2;
-      camZoom = 1.0;
-      showToast('Cámara recentrada al núcleo', '🎯');
-    }
-
-    function togglePlayPause() {
-      isPaused = !isPaused;
-      document.getElementById('btnPlay').innerHTML = isPaused ? '<span>▶️</span>' : '<span>⏸️</span>';
-      showToast(isPaused ? 'Física pausada' : 'Física reanudada', '⚡');
-    }
-
-    /* ==========================================================================
-       LAYER FILTERS & SEARCH
-       ========================================================================== */
-    const layersListContainer = document.getElementById('layersList');
-
-    function renderLayersList() {
-      layersListContainer.innerHTML = '';
-      Object.values(LAYERS).forEach(layer => {
-        const item = document.createElement('div');
-        item.className = 'layer-item';
-        item.id = `layer-item-${layer.id}`;
-        item.innerHTML = `
-          <div class="layer-left">
-            <span class="layer-indicator" style="background-color: ${layer.color}; color: ${layer.color};"></span>
-            <span>${layer.name}</span>
-          </div>
-          <span class="layer-count">${layer.count}</span>
-        `;
-        item.onclick = () => filterByLayer(layer.id);
-        layersListContainer.appendChild(item);
-      });
-    }
-    renderLayersList();
-
-    function filterByLayer(layerId) {
-      if (activeFilterLayer === layerId) {
-        resetLayerFilters();
-        return;
-      }
-      activeFilterLayer = layerId;
-      document.querySelectorAll('.layer-item').forEach(el => {
-        el.classList.toggle('dimmed', el.id !== `layer-item-${layerId}`);
-      });
-      showToast(`Capa activa: ${LAYERS[layerId].name}`, '🔍');
-    }
-
-    function resetLayerFilters() {
-      activeFilterLayer = null;
-      document.querySelectorAll('.layer-item').forEach(el => el.classList.remove('dimmed'));
-      showToast('Visualizando todas las capas', '🌐');
-    }
-
-    // Search bar
-    const searchInput = document.getElementById('nodeSearch');
-    searchInput.addEventListener('input', (e) => {
-      const q = e.target.value.toLowerCase().trim();
-      if (!q) {
-        hoveredNode = null;
-        return;
-      }
-      const match = NODES.find(n =>
-        n.label.toLowerCase().includes(q) ||
-        n.sub.toLowerCase().includes(q) ||
-        (n.legal && n.legal.toLowerCase().includes(q))
-      );
-      if (match) {
-        hoveredNode = match;
-        flyToNode(match);
-      }
-    });
-
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && hoveredNode) {
-        selectNode(hoveredNode);
-        playNodeChime(hoveredNode.layer);
-      }
-    });
-
-    /* ==========================================================================
-       SIMULATION MODES (INTERACTIVE COGNITIVE PATHWAYS)
-       ========================================================================== */
-    function showToast(text, icon = '⚡') {
-      const toast = document.getElementById('simToast');
-      document.getElementById('simToastIcon').textContent = icon;
-      document.getElementById('simToastText').textContent = text;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 3500);
-    }
-
-    function spawnCustomPulses(pathNodeIds, color, speedMultiplier = 2.5) {
-      for (let i = 0; i < pathNodeIds.length - 1; i++) {
-        const fromId = pathNodeIds[i];
-        const toId = pathNodeIds[i + 1];
-        const syn = SYNAPSES.find(s =>
-          (s.from === fromId && s.to === toId) ||
-          (s.from === toId && s.to === fromId)
-        );
-        if (syn) {
-          for (let p = 0; p < 8; p++) {
-            const particle = new SynapticParticle(syn, color, speedMultiplier);
-            particle.progress = (p / 8);
-            particles.push(particle);
-          }
-        }
-      }
-      // Trim particle array if too large
-      if (particles.length > 350) {
-        particles.splice(0, particles.length - 350);
-      }
-    }
-
-    function triggerSimulation(mode) {
-      initAudio();
-
-      if (mode === 'rag') {
-        showToast('Simulando Consulta RAG: Vectorización ➔ pgvector ➔ CSJ ➔ LLM', '⚡');
-        const pathway = ['input_sensorial', 'text_embedding_004', 'rpc_criterios', 'jurisprudencia_multimedia', 'context_augmentation', 'waterfall_router', 'groq_lpu', 'opciones_continuar', 'ui_streaming_sse'];
-        spawnCustomPulses(pathway, '#c084fc', 3.0);
-        playSequenceChimes(['rag', 'memory', 'cascade', 'motor']);
-        flyToNode(nodeMap.get('context_augmentation'));
-      }
-      else if (mode === 'settlement') {
-        showToast('Simulando Finiquito: Aislamiento IA ➔ Motor TypeScript ➔ :::liquidacion_action', '🧮');
-        const pathway = ['tobi_core', 'waterfall_router', 'regla_oro_calculo', 'engine_typescript', 'modulo_liquidacion', 'liquidacion_action', 'ui_streaming_sse'];
-        spawnCustomPulses(pathway, '#ec4899', 3.2);
-        playSequenceChimes(['core', 'math', 'motor']);
-        flyToNode(nodeMap.get('modulo_liquidacion'));
-      }
-      else if (mode === 'ocr') {
-        showToast('Simulando OCR: Telegrama Copaco ➔ Buffer RAM ➔ Gemini Vision ➔ Art. 81', '📄');
-        const pathway = ['input_sensorial', 'ocr_multimodal', 'buffer_memory_ocr', 'context_augmentation', 'art81_causales', 'documento_action', 'ui_streaming_sse'];
-        spawnCustomPulses(pathway, '#f59e0b', 2.8);
-        playSequenceChimes(['rag', 'shield', 'legal', 'motor']);
-        flyToNode(nodeMap.get('ocr_multimodal'));
-      }
-      else if (mode === 'ciso') {
-        showToast('Simulando Escudo CISO: Bloqueo de fuga de API Keys & Salario Vencido', '🛡️');
-        const pathway = ['guard_prebuild', 'zero_credentials', 'regla_cero', 'tobi_core', 'regla_salario_minimo', 'rls_security'];
-        spawnCustomPulses(pathway, '#f43f5e', 3.5);
-        playSequenceChimes(['shield', 'core', 'shield']);
-        flyToNode(nodeMap.get('zero_credentials'));
-      }
-    }
-
-    function playSequenceChimes(layers) {
-      if (!soundEnabled) return;
-      layers.forEach((l, i) => {
-        setTimeout(() => playNodeChime(l), i * 180);
-      });
-    }
-
-    // Auto-select Tobi Core on launch
+    // Auto-seleccionar y abrir el planeta central de Tobi al inicio
     setTimeout(() => {
       const core = nodeMap.get('tobi_core');
-      if (core) {
-        selectNode(core);
-      }
-    }, 600);
+      if (core) selectNode(core);
+    }, 500);
 
   </script>
 </body>
