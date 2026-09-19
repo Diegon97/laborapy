@@ -69,7 +69,26 @@ OBJETIVOS_PARAGUAY = [
     }
 ]
 
-APIFY_TOKEN = os.environ.get('APIFY_API_TOKEN') or os.environ.get('APIFY_TOKEN')
+def get_apify_token() -> Optional[str]:
+    token = os.environ.get('APIFY_API_TOKEN') or os.environ.get('APIFY_TOKEN')
+    if token:
+        return token
+    # Intentar leer desde .env en la raíz del proyecto
+    for env_path in [
+        Path(__file__).resolve().parent.parent.parent / '.env',
+        Path(__file__).resolve().parent.parent.parent / '.env.local',
+    ]:
+        if env_path.exists():
+            try:
+                for line in env_path.read_text(encoding='utf-8').splitlines():
+                    line = line.strip()
+                    if line.startswith('APIFY_API_TOKEN=') or line.startswith('APIFY_TOKEN='):
+                        return line.split('=', 1)[1].strip().strip('"').strip("'")
+            except Exception:
+                pass
+    return None
+
+APIFY_TOKEN = get_apify_token()
 
 # ---------------------------------------------------------------------------
 # MÉTODO 1: COSECHA CLOUD VÍA APIFY (100% Manos Libres, Sin Captchas ni Bloqueos)
@@ -100,22 +119,42 @@ def cosechar_con_apify(
     print(f"\n☁️ [Apify Cloud] Iniciando extracción de comentarios para {plataforma.upper()}...")
 
     if plataforma == 'tiktok':
-        # Actor especializado de TikTok comments
+        # Actor especializado clockworks/tiktok-scraper
+        profile_names = []
+        for u in target_urls:
+            if '@' in u:
+                profile_names.append(u.split('@')[-1].split('/')[0])
+            else:
+                profile_names.append(u)
+
         run_input = {
-            "postURLs": target_urls,
+            "profiles": profile_names,
+            "resultsPerPage": 5,
             "commentsPerPost": max_comments,
-            "maxRepliesPerComment": 0
+            "profileScrapeSections": ["videos"],
+            "profileSorting": "latest",
+            "shouldDownloadVideos": False,
+            "shouldDownloadCovers": False
         }
         try:
-            run = client.actor("clockworks/tiktok-comments-scraper").call(run_input=run_input)
-            for item in client.dataset(run["defaultDatasetId"]).iterate_items():
-                text = item.get("text") or item.get("comment")
-                if text:
-                    comentarios_extraidos.append({
-                        "texto": text,
-                        "plataforma": "tiktok",
-                        "post_url": item.get("postUrl", "")
-                    })
+            run = client.actor("clockworks/tiktok-scraper").call(run_input=run_input)
+            dataset = client.dataset(run.default_dataset_id)
+            for item in dataset.iterate_items():
+                comments_url = item.get("commentsDatasetUrl")
+                if comments_url:
+                    try:
+                        resp = requests.get(comments_url, timeout=20)
+                        if resp.status_code == 200:
+                            for c in resp.json():
+                                text = c.get("text")
+                                if text:
+                                    comentarios_extraidos.append({
+                                        "texto": text,
+                                        "plataforma": "tiktok",
+                                        "post_url": item.get("webVideoUrl", "")
+                                    })
+                    except Exception as ce:
+                        print(f"    ⚠️ Error descargando comentarios del dataset: {ce}")
         except Exception as e:
             print(f"  ❌ Error ejecutando actor de TikTok en Apify: {e}")
 
