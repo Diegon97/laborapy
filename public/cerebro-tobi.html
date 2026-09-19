@@ -1,0 +1,2096 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cerebro de Tobi — Grafo Sináptico Interactivo | LaboraPy</title>
+  <style>
+    :root {
+      --bg-dark: #070a13;
+      --bg-panel: rgba(13, 21, 38, 0.85);
+      --bg-panel-solid: #0d1526;
+      --border-panel: rgba(56, 189, 248, 0.2);
+      --border-highlight: rgba(56, 189, 248, 0.6);
+      --text-main: #f1f5f9;
+      --text-dim: #94a3b8;
+      --accent-cyan: #00f0ff;
+      --accent-gold: #f59e0b;
+      --accent-green: #10b981;
+      --accent-purple: #c084fc;
+      --accent-blue: #3b82f6;
+      --accent-pink: #ec4899;
+      --accent-red: #f43f5e;
+      --font-mono: "Fira Code", "Cascadia Code", Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* TOP HEADER & HUD */
+    header {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      right: 16px;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .brand-hud {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-panel);
+      padding: 10px 18px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      pointer-events: auto;
+    }
+
+    .brain-pulse-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #00f0ff, #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+      animation: pulse-icon 2.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse-icon {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 14px rgba(0, 240, 255, 0.4); }
+      50% { transform: scale(1.08); box-shadow: 0 0 24px rgba(0, 240, 255, 0.8); }
+    }
+
+    .brand-titles h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #ffffff, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-titles p {
+      font-size: 11px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-paraguay {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .hud-metrics {
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .metric-card {
+      background: var(--bg-panel);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-panel);
+      padding: 8px 14px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .metric-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    .metric-val {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dot-live {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      display: inline-block;
+      animation: blink 1.5s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* CONTROLS BAR & SIMULATIONS */
+    .controls-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-panel);
+      padding: 8px 16px;
+      border-radius: 30px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+    }
+
+    .btn-action {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .btn-action:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+      color: #ffffff;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+    }
+
+    .btn-action.active {
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.3), rgba(59, 130, 246, 0.3));
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+    }
+
+    .btn-icon {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .divider {
+      width: 1px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.15);
+      margin: 0 4px;
+    }
+
+    /* LAYER FILTER BAR (LEFT) */
+    .layers-panel {
+      position: absolute;
+      top: 85px;
+      left: 16px;
+      z-index: 10;
+      background: var(--bg-panel);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border-panel);
+      border-radius: 14px;
+      padding: 12px;
+      width: 250px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s ease;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .panel-header h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    .layer-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 4px;
+      font-size: 11.5px;
+    }
+
+    .layer-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .layer-item.dimmed {
+      opacity: 0.35;
+    }
+
+    .layer-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .layer-indicator {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .layer-count {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      background: rgba(255, 255, 255, 0.06);
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+
+    /* SEARCH BAR */
+    .search-box {
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 7px 10px 7px 28px;
+      font-size: 12px;
+      color: #fff;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 9px;
+      top: 8px;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* INSPECTOR DRAWER (RIGHT) */
+    .inspector-drawer {
+      position: absolute;
+      top: 85px;
+      right: 16px;
+      bottom: 24px;
+      width: 390px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--border-panel);
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateX(420px);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .inspector-drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .drawer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    .drawer-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.3;
+    }
+
+    .drawer-subtitle {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 3px;
+    }
+
+    .drawer-close {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .drawer-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .drawer-body {
+      padding: 16px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .drawer-section {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .section-title {
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-cyan);
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .section-content {
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+
+    .code-block {
+      background: #040711;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      padding: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #38bdf8;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin-top: 6px;
+    }
+
+    .connections-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .connection-tag {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+    }
+
+    .connection-tag:hover {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: var(--accent-cyan);
+      color: #fff;
+    }
+
+    .conn-label {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    /* SIMULATION TOAST BANNER */
+    .sim-toast {
+      position: absolute;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--accent-cyan);
+      box-shadow: 0 10px 30px rgba(0, 240, 255, 0.35);
+      border-radius: 30px;
+      padding: 9px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .sim-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* INSTRUCTIONS OVERLAY */
+    .help-tooltip {
+      position: absolute;
+      bottom: 24px;
+      right: 20px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.4);
+      pointer-events: none;
+      z-index: 10;
+      text-align: right;
+      line-height: 1.5;
+    }
+
+    /* CUSTOM SCROLLBAR */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(56, 189, 248, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CANVAS FOR FORCE GRAPH -->
+  <div id="canvas-container">
+    <canvas id="synapseCanvas"></canvas>
+  </div>
+
+  <!-- TOP HEADER -->
+  <header>
+    <div class="brand-hud">
+      <div class="brain-pulse-icon">🧠</div>
+      <div class="brand-titles">
+        <h1>Cerebro de Tobi — LaboraPy</h1>
+        <p>
+          <span>Arquitectura Neuronal & Jurídica</span>
+          <span class="badge-paraguay">PARAGUAY · 2026</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="hud-metrics">
+      <div class="metric-card">
+        <span class="metric-label">Estado del Núcleo</span>
+        <span class="metric-val"><span class="dot-live"></span> SINÁPTICO ONLINE</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Piso Salarial Guard</span>
+        <span class="metric-val" style="color: var(--accent-gold);">Gs. 3.044.000</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Latencia RAG Dual</span>
+        <span class="metric-val" style="color: var(--accent-green);">< 900 ms</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Creador & Arquitecto</span>
+        <span class="metric-val" style="color: #fff; font-size: 11px;">Diego Núñez</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- LAYER FILTERS & SEARCH (LEFT) -->
+  <div class="layers-panel">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="nodeSearch" class="search-input" placeholder="Buscar neurona o artículo..." autocomplete="off">
+    </div>
+
+    <div class="panel-header">
+      <h3>Capas Sinápticas (8)</h3>
+      <button class="btn-action" style="padding: 2px 8px; font-size: 10px;" onclick="resetLayerFilters()">Ver Todas</button>
+    </div>
+
+    <div id="layersList">
+      <!-- Generated by JS -->
+    </div>
+  </div>
+
+  <!-- SIMULATION HUD & CONTROLS (BOTTOM) -->
+  <div class="controls-panel">
+    <button class="btn-action" onclick="triggerSimulation('rag')" title="Simula el flujo de consulta legal híbrida con Supabase pgvector">
+      <span>⚡</span> Flujo RAG Híbrido
+    </button>
+    <button class="btn-action" onclick="triggerSimulation('settlement')" title="Simula la derivación determinista al motor numérico de liquidaciones">
+      <span>🧮</span> Finiquito Determinista
+    </button>
+    <button class="btn-action" onclick="triggerSimulation('ocr')" title="Simula la ingesta y extracción multimodal de recibos o telegramas">
+      <span>📄</span> OCR Multimodal
+    </button>
+    <button class="btn-action" onclick="triggerSimulation('ciso')" title="Simula la activación del escudo Zero-Leak ante intentos de fuga">
+      <span>🛡️</span> Escudo Zero-Leak
+    </button>
+
+    <div class="divider"></div>
+
+    <button class="btn-action btn-icon" id="btnSound" onclick="toggleAudio()" title="Activar/Silenciar sonido de pulsos sinápticos">
+      <span>🔊</span>
+    </button>
+    <button class="btn-action btn-icon" onclick="resetCamera()" title="Centrar grafo">
+      <span>🎯</span>
+    </button>
+    <button class="btn-action btn-icon" onclick="togglePlayPause()" id="btnPlay" title="Pausar/Reanudar física y partículas">
+      <span>⏸️</span>
+    </button>
+  </div>
+
+  <!-- SIMULATION TOAST -->
+  <div id="simToast" class="sim-toast">
+    <span id="simToastIcon">⚡</span>
+    <span id="simToastText">Iniciando impulso sináptico...</span>
+  </div>
+
+  <!-- NODE INSPECTOR DRAWER (RIGHT) -->
+  <div id="inspectorDrawer" class="inspector-drawer">
+    <div class="drawer-header">
+      <div>
+        <div id="drawerBadge" class="drawer-badge">CAPA CEREBRAL</div>
+        <div id="drawerTitle" class="drawer-title">Nombre del Nodo</div>
+        <div id="drawerSubtitle" class="drawer-subtitle">Subtítulo o rol</div>
+      </div>
+      <button class="drawer-close" onclick="closeInspector()">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <div class="drawer-section">
+        <div class="section-title"><span>📌</span> Función Arquitectónica</div>
+        <div id="drawerDesc" class="section-content">Descripción técnica y arquitectónica.</div>
+      </div>
+
+      <div class="drawer-section" id="drawerLegalSection">
+        <div class="section-title"><span>⚖️</span> Marco Normativo / Especificación</div>
+        <div id="drawerLegal" class="section-content">Artículo o pauta legal aplicable.</div>
+      </div>
+
+      <div class="drawer-section" id="drawerCodeSection">
+        <div class="section-title"><span>💻</span> Código / Implementación Canónica</div>
+        <div id="drawerCode" class="code-block">// Código de referencia</div>
+      </div>
+
+      <div class="drawer-section">
+        <div class="section-title"><span>🔗</span> Sinapsis Conectadas (<span id="connCount">0</span>)</div>
+        <div id="drawerConnections" class="connections-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="help-tooltip">
+    Arrastrá con el mouse para rotar o mover nodos · Rueda para Zoom<br>
+    Hacé click en cualquier nodo para abrir su ficha técnica profunda
+  </div>
+
+  <script>
+    /* ==========================================================================
+       DEFINICIÓN EXHAUSTIVA DE NODOS Y CAPAS DEL CEREBRO DE TOBI
+       ========================================================================== */
+
+    const LAYERS = {
+      core: { id: 'core', name: 'Identidad & Núcleo', color: '#00f0ff', count: 0 },
+      legal: { id: 'legal', name: 'Corteza Jurídica (Leyes PY)', color: '#f59e0b', count: 0 },
+      memory: { id: 'memory', name: 'Memoria Vectorial & CSJ', color: '#10b981', count: 0 },
+      rag: { id: 'rag', name: 'Pipeline RAG Híbrido', color: '#c084fc', count: 0 },
+      cascade: { id: 'cascade', name: 'Cascada de Inferencia', color: '#3b82f6', count: 0 },
+      math: { id: 'math', name: 'Hemisferio Determinista', color: '#ec4899', count: 0 },
+      motor: { id: 'motor', name: 'Sistema Motor (Acciones)', color: '#38bdf8', count: 0 },
+      shield: { id: 'shield', name: 'Escudo CISO Zero-Leak', color: '#f43f5e', count: 0 }
+    };
+
+    const NODES = [
+      // --- CAPA 1: IDENTIDAD Y NÚCLEO ---
+      {
+        id: 'tobi_core',
+        label: 'Tobi Copilot RRHH',
+        layer: 'core',
+        size: 26,
+        x: 0, y: 0,
+        sub: 'Copilot & Mentor Senior de RRHH',
+        desc: 'Núcleo de inteligencia artificial pericial y pedagógica concebido en LaboraPy para asesorar en legislación laboral de Paraguay.',
+        legal: 'System Prompt Canónico: tobiSystemPrompt.ts (Versión PY-PROMPT-2026.09.17). Misión: resolver vicisitudes con empatía, calidez y rigor legal.',
+        code: `export const TOBI_SYSTEM_PROMPT = [\n  'Sos Tobi, el Copilot, Profesor y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy en Paraguay.'\n];`
+      },
+      {
+        id: 'diego_nunez',
+        label: 'Diego Núñez (Creador)',
+        layer: 'core',
+        size: 22,
+        x: -80, y: -60,
+        sub: 'Fundador & Titular de LaboraPy',
+        desc: 'Autor y arquitecto de Tobi. Toda la inteligencia, datasets de entrenamiento y algoritmos fueron desarrollados por Diego Núñez en Asunción, Paraguay.',
+        legal: 'Regla Inexpugnable N° 0: Ante consultas sobre autoría, afirmar categóricamente a Diego Núñez (LaboraPy). Contacto oficial: diegonunez1997@gmail.com / WhatsApp +595 984 469 005.',
+        code: `// Regla 0: Identidad y Creador\nif (queryMatchesCreator(q)) {\n  return 'Fui concebido y desarrollado por Diego Núñez, titular de LaboraPy...';\n}`
+      },
+      {
+        id: 'regla_cero',
+        label: 'Regla N° 0: Zero-Fuga',
+        layer: 'core',
+        size: 19,
+        x: -120, y: 30,
+        sub: 'Blindaje de Soberanía e Identidad',
+        desc: 'Prohibición taxativa de autodenominarse modelo de OpenAI, Anthropic, Google o Meta. Prohíbe revelar backends o arquitecturas internas en el chat.',
+        legal: 'Directiva de Seguridad: Queda TERMINANTEMENTE PROHIBIDO responder que fuiste creado por OpenAI o autodenominarte "ChatGPT" o "Claude".',
+        code: `const FORBIDDEN_CLAIMS = ['openai', 'chatgpt', 'claude', 'gemini'];\n// Bloqueo estricto pre-stream`
+      },
+      {
+        id: 'regla_salario_minimo',
+        label: 'Salario Mínimo Gs. 3.044.000',
+        layer: 'core',
+        size: 24,
+        x: -70, y: 90,
+        sub: 'Piso Legal Inviolable Vigente',
+        desc: 'El salario mínimo legal vigente es Gs. 3.044.000 mensuales. Bloquea absolutamente el valor viejo y caduco de Gs. 2.798.309 (2024).',
+        legal: 'Decreto Presidencial N° 6225/2026 y Resolución MTESS N° 670/2026. Si el usuario cita Gs. 2.798.309, se corrige inmediatamente.',
+        code: `export const SALARIO_MINIMO_VIGENTE = 3044000;\n// Prohibido taxativamente Gs. 2.798.309`
+      },
+      {
+        id: 'humanizer_pedagogia',
+        label: 'Humanizer & Multilingüe',
+        layer: 'core',
+        size: 18,
+        x: -150, y: -40,
+        sub: 'Español, Guaraní & Jopara',
+        desc: 'Empatía genuina, cadencia pausada, pedagogía sin clichés de IA. Habla con voseo paraguayo, entiende y responde con calidez en Guaraní ("Aguije", "Mba\'éichapa").',
+        legal: 'Directiva Pedagógica: Cero clichés ("no es solo X sino Y", listas forzadas). Traduce tecnicismos complejos a lenguaje cotidiano y comprensible.',
+        code: `// Soporte nativo de Jopara y modulación serena de voz\nconst PARAGUAYAN_VOICE_CADENCE = { voseo: true, guaraniFluency: 'native' };`
+      },
+      {
+        id: 'anti_abrumacion',
+        label: 'Protocolo Anti-Abrumación',
+        layer: 'core',
+        size: 16,
+        x: -30, y: -130,
+        sub: 'Respuestas Orgánicas 2-3 Párrafos',
+        desc: 'No vuelca enciclopedias de golpe. Diagnóstico directo y accionable en 2 o 3 párrafos digeribles, invitando a profundizar gradualmente.',
+        legal: 'Regla de Respuesta Orgánica: Respuestas concisas (máx. 350-500 palabras) con opciones interactivas de continuación para evitar abrumar al usuario.',
+        code: `function formatResponse(text) {\n  return enforceOrganicParagraphs(text, { maxParagraphs: 3 });\n}`
+      },
+
+      // --- CAPA 2: CORTEZA JURÍDICA POSITIVA (LEYES PY) ---
+      {
+        id: 'codigo_trabajo',
+        label: 'Código del Trabajo (Ley 213/93)',
+        layer: 'legal',
+        size: 25,
+        x: 140, y: -90,
+        sub: 'Eje Normativo de Fondo y Modif. Ley 496/95',
+        desc: 'Cuerpo normativo que rige los derechos y deberes laborales en el territorio paraguayo. Base de todas las reglas sustantivas de Tobi.',
+        legal: 'Ley N° 213/93 y su modificatoria Ley N° 496/95. Orden público e irrenunciabilidad de los derechos del trabajador.',
+        code: `// Whitelist normativa taxativa en tobiSystemPrompt.ts`
+      },
+      {
+        id: 'art19_primacia',
+        label: 'Art. 19: Primacía de Realidad',
+        layer: 'legal',
+        size: 18,
+        x: 230, y: -140,
+        sub: 'Anti-Fraude por Facturación',
+        desc: 'La realidad fáctica de subordinación y horario prima sobre contratos comerciales o emisión de facturas. Exige inscripción retroactiva a IPS.',
+        legal: 'Art. 19 C.T.: En las relaciones de trabajo rige el principio de primacía de la realidad ante fraudes contractuales.',
+        code: `if (hasSubordination && issuesInvoices) {\n  triggerLaborFraudAlert({ appliesIPS: true, claimDirectRights: true });\n}`
+      },
+      {
+        id: 'art81_causales',
+        label: 'Art. 81: Causal Justificada',
+        layer: 'legal',
+        size: 18,
+        x: 240, y: -70,
+        sub: 'Causales Taxativas & Inmediatez',
+        desc: 'Lista cerrada de motivos de despido justificado imputables al trabajador. Exige cumplimiento estricto del principio de inmediatez procesal.',
+        legal: 'Art. 81 C.T.: Sin indemnización ni preaviso si se comprueba causal taxativa; pero la sanción debe ser oportuna o caduca.',
+        code: `const CAUSALES_ART_81 = ['falta_disciplina', 'embriaguez', 'injuria', 'revelacion_secretos'];`
+      },
+      {
+        id: 'art87_preaviso',
+        label: 'Art. 87: Escala de Preaviso',
+        layer: 'legal',
+        size: 18,
+        x: 210, y: -20,
+        sub: '30, 45, 60 y 90 Días',
+        desc: 'Notificación previa obligatoria en caso de despido o renuncia. Escala: hasta 1 año = 30d; 1 a 5 años = 45d; 5 a 10 años = 60d; +10 años = 90d.',
+        legal: 'Art. 87 y 88 C.T.: Si no se otorga el preaviso, debe abonarse su importe en dinero.',
+        code: `function calcPreaviso(anios) {\n  if (anios < 1) return 30;\n  if (anios < 5) return 45;\n  if (anios < 10) return 60;\n  return 90;\n}`
+      },
+      {
+        id: 'art91_indemnizacion',
+        label: 'Art. 91: Indemnización Despido',
+        layer: 'legal',
+        size: 20,
+        x: 160, y: 30,
+        sub: '15 Días de Salario por Año',
+        desc: 'Resarcimiento legal por despido injustificado: 15 días de salario por cada año de servicio o fracción superior a 6 meses.',
+        legal: 'Art. 91 C.T.: En ningún caso la indemnización será inferior al equivalente a 15 días de salario.',
+        code: `const diasIndemnizacion = Math.floor(antiguedadAnios + (fraccionMeses > 6 ? 1 : 0)) * 15;`
+      },
+      {
+        id: 'art94_estabilidad',
+        label: 'Art. 94: Estabilidad de 10 Años',
+        layer: 'legal',
+        size: 19,
+        x: 230, y: 60,
+        sub: 'Estabilidad Adquirida Reforzada',
+        desc: 'Al alcanzar 10 años de antigüedad ininterrumpida, el trabajador adquiere estabilidad especial. El despido requiere causa justificada probada en juicio.',
+        legal: 'Art. 94 y 95 C.T.: Si el empleador no reincorpora, debe pagar el doble de la indemnización tarifada.',
+        code: `if (antiguedadAnios >= 10) {\n  indemnizacionDoble = true;\n  requiereJuicioPrevio = true;\n}`
+      },
+      {
+        id: 'jornadas_laborales',
+        label: 'Arts. 194-206: Jornadas & Horas',
+        layer: 'legal',
+        size: 19,
+        x: 180, y: 120,
+        sub: 'Diurna 8h, Nocturna 7h (+30%), Mixta 7.5h',
+        desc: 'Regulación estricta de tiempos de labor. Jornada nocturna (20:00 a 06:00) con 30% de recargo obligatorio. Jornada mixta máximo 7 horas y media.',
+        legal: 'Arts. 194, 196, 202 y 234 inc. c C.T. Horas extras diurnas +50%, horas extras nocturnas +100%.',
+        code: `const MAX_JORNADA_MIXTA_SEMANAL = 45;\nconst RECARGO_NOCTURNO = 1.30;`
+      },
+      {
+        id: 'art218_vacaciones',
+        label: 'Art. 218: Vacaciones Hábiles',
+        layer: 'legal',
+        size: 18,
+        x: 90, y: 150,
+        sub: '12, 18 y 30 Días Hábiles Remunerados',
+        desc: 'Descanso anual remunerado en días laborables: 1 a 5 años = 12 días; 5 a 10 años = 18 días; más de 10 años = 30 días continuos.',
+        legal: 'Art. 218 C.T. Prohibido compensar en dinero salvo terminación del contrato de trabajo.',
+        code: `function diasVacaciones(anios) {\n  if (anios < 5) return 12;\n  if (anios < 10) return 18;\n  return 30;\n}`
+      },
+      {
+        id: 'art243_aguinaldo',
+        label: 'Art. 243: Aguinaldo Legal',
+        layer: 'legal',
+        size: 19,
+        x: 30, y: 190,
+        sub: '1/12 Exento de IPS e Inembargable',
+        desc: 'Remuneración anual complementaria equivalente a la doceava parte de todas las remuneraciones devengadas en el año. No sufre descuento de IPS.',
+        legal: 'Art. 243 C.T. y Art. 76 Decreto-Ley 1860/50. Queda TERMINANTEMENTE PROHIBIDO retener el 9% de IPS sobre el aguinaldo.',
+        code: `const aguinaldo = totalRemuneracionesAnio / 12;\nconst ipsAguinaldo = 0; // Exención taxativa por ley`
+      },
+      {
+        id: 'art399_prescripcion',
+        label: 'Art. 399: Prescripción 60 Días',
+        layer: 'legal',
+        size: 17,
+        x: 100, y: -160,
+        sub: 'Plazo Fatal para Reclamar Despido',
+        desc: 'Las acciones para reclamar despido injustificado o indemnizaciones prescriben fatalmente a los 60 días corridos de terminado el contrato.',
+        legal: 'Art. 399 C.T.: Prescripción extintiva de 60 días. Prohibido citar erróneamente 2 años para el despido injustificado.',
+        code: `const DIAS_PRESCRIPCION_DESPIDO = 60; // Días corridos fatales`
+      },
+      {
+        id: 'ley_maternidad',
+        label: 'Ley 5508/15 Maternidad',
+        layer: 'legal',
+        size: 18,
+        x: 160, y: -200,
+        sub: '18 Semanas Reposo & Fuero Maternal',
+        desc: 'Protección integral de la maternidad y lactancia. Subsidio del 100% a cargo del IPS durante 18 semanas ininterrumpidas. Inmunidad de despido.',
+        legal: 'Ley N° 5508/15 y Ley N° 7140/23. Permiso de lactancia de 90 minutos diarios remunerados.',
+        code: `const FUERO_MATERNAL = {\n  reposoTotalSemanas: 18,\n  coberturaIPS: '100%',\n  despidoNulo: true\n};`
+      },
+      {
+        id: 'regimen_ips',
+        label: 'IPS Dec-Ley 1860/50',
+        layer: 'legal',
+        size: 19,
+        x: -40, y: 220,
+        sub: '9% Obrero / 16.5% Patronal',
+        desc: 'Régimen previsional y de salud obligatorio del Instituto de Previsión Social. Base de cálculo sobre salarios reales.',
+        legal: 'Decreto-Ley N° 1860/50 y leyes complementarias. Inscripción obligatoria desde el primer día de trabajo.',
+        code: `const APORTE_IPS_OBRERO = 0.09;\nconst APORTE_IPS_PATRONAL = 0.165;`
+      },
+
+      // --- CAPA 3: MEMORIA FORENSE & VECTORIAL (SUPABASE) ---
+      {
+        id: 'supabase_cluster',
+        label: 'Supabase AWS São Paulo',
+        layer: 'memory',
+        size: 24,
+        x: -240, y: 120,
+        sub: 'Postgres Relacional & Vectorial',
+        desc: 'Base de datos en la nube con pgvector y esquemas relacionales optimizados para latencia mínima a Asunción (<65ms ping).',
+        legal: 'Infraestructura certificada SOC 2 / ISO 27001 con aislamiento Row Level Security y cifrado AES-256 en reposo.',
+        code: `// Conexión segura Supabase Edge\nconst supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);`
+      },
+      {
+        id: 'jurisprudencia_csj',
+        label: 'Tabla: jurisprudencia_csj',
+        layer: 'memory',
+        size: 20,
+        x: -190, y: 190,
+        sub: 'Fallos de la Corte Suprema (FTS)',
+        desc: 'Repositorio de Acuerdos y Sentencias de las Salas Laboral y Constitucional de la CSJ con índice Full-Text Search en español.',
+        legal: 'Doctrina de inmediatez, causales de despido y presunciones laborales fijadas por el máximo tribunal paraguayo.',
+        code: `CREATE INDEX idx_csj_fts ON jurisprudencia_csj\nUSING gin(to_tsvector('spanish', caratula || ' ' || doctrina));`
+      },
+      {
+        id: 'jurisprudencia_multimedia',
+        label: 'Tabla: pgvector 768d',
+        layer: 'memory',
+        size: 21,
+        x: -290, y: 180,
+        sub: 'Embeddings HNSW Cosine (768 dims)',
+        desc: 'Vectores densos de 768 dimensiones que almacenan transcripciones de ponencias forenses, audios laborales y criterios prácticos.',
+        legal: 'Criterios de tratadistas Enrique Yampey y Jorge Bernis estructurados para similitud de coseno en menos de 100ms.',
+        code: `CREATE INDEX idx_multimedia_hnsw ON jurisprudencia_multimedia\nUSING hnsw (embedding vector_cosine_ops);`
+      },
+      {
+        id: 'tobi_events',
+        label: 'Tabla: tobi_events',
+        layer: 'memory',
+        size: 16,
+        x: -330, y: 110,
+        sub: 'Telemetría Append-Only Inmutable',
+        desc: 'Auditoría forense de inferencia: tiempo de respuesta, tokens y tipo de consulta sin almacenar información confidencial.',
+        legal: 'Cumplimiento de auditoría de IA responsable y control de costos de API sin vulnerar el secreto profesional.',
+        code: `INSERT INTO tobi_events (event_type, provider, latency_ms, tokens_est)\nVALUES ('query', 'groq', 380, 240);`
+      },
+      {
+        id: 'hr_audit_records',
+        label: 'Tabla: hr_audit_records',
+        layer: 'memory',
+        size: 16,
+        x: -280, y: 50,
+        sub: 'Historial Protegido por RLS',
+        desc: 'Registro de liquidaciones certificadas y auditorías de contratos vinculadas exclusivamente a la organización autenticada.',
+        legal: 'Políticas RLS en Postgres: auth.uid() = user_id. Los clientes jamás pueden acceder a datos de otras empresas.',
+        code: `CREATE POLICY "Tenant Isolation" ON hr_audit_records\nFOR ALL USING (org_id = current_setting('request.jwt.claim.org_id'));`
+      },
+
+      // --- CAPA 4: PIPELINE RAG HÍBRIDO (<900ms) ---
+      {
+        id: 'input_sensorial',
+        label: 'Entrada Sensorial (Usuario)',
+        layer: 'rag',
+        size: 22,
+        x: -180, y: -160,
+        sub: 'Preguntas, Telegramas o Recibos',
+        desc: 'Recepción de mensajes de texto, audios en jopara o adjuntos fotográficos y PDFs escaneados desde la interfaz web o móvil.',
+        legal: 'Sanitización estricta de adjuntos en memoria volátil (máximo 15 páginas / 4MB). Prohibido almacenamiento persistente sin consentimiento.',
+        code: `const sanitized = sanitizeAttachment(rawInput);\n// Buffer en memoria volátil de Edge Function`
+      },
+      {
+        id: 'ocr_multimodal',
+        label: 'OCR Multimodal Gemini Vision',
+        layer: 'rag',
+        size: 20,
+        x: -270, y: -140,
+        sub: 'Lectura de Telegramas Copaco & PDFs',
+        desc: 'Motor visual que extrae fechas, causales y firmas de telegramas colacionados, recibos arrugados y planillas del IPS.',
+        legal: 'Extracción sin pérdida de datos. Diseñado especialmente para lidiar con sellos borrosos de mesa de entrada del MTESS.',
+        code: `const visionPayload = {\n  inlineData: { mimeType: 'image/jpeg', data: cleanBase64 }\n};`
+      },
+      {
+        id: 'text_embedding_004',
+        label: 'text-embedding-004 (768d)',
+        layer: 'rag',
+        size: 20,
+        x: -250, y: -70,
+        sub: 'Vectorización Semántica en 120ms',
+        desc: 'Convierte la duda del usuario en un vector denso de 768 dimensiones para capturar la intención jurídica subyacente.',
+        legal: 'Modelo semántico calibrado para capturar la terminología del derecho hispanoamericano y paraguayo.',
+        code: `const vector = await generateEmbedding(cleanPrompt, { model: 'text-embedding-004' });`
+      },
+      {
+        id: 'rpc_criterios',
+        label: 'RPC: buscar_criterios',
+        layer: 'rag',
+        size: 18,
+        x: -290, y: 0,
+        sub: 'Búsqueda de Similitud Coseno',
+        desc: 'Función Postgres invocada vía RPC que computa la distancia coseno entre la consulta y los criterios doctrinales.',
+        legal: 'Umbral de similitud mínimo 0.72 para garantizar pertinencia forense absoluta.',
+        code: `SELECT * FROM buscar_criterios_laborales(\n  query_embedding := vector,\n  match_threshold := 0.72,\n  match_count := 3\n);`
+      },
+      {
+        id: 'rpc_csj',
+        label: 'RPC: buscar_csj',
+        layer: 'rag',
+        size: 18,
+        x: -210, y: 10,
+        sub: 'Búsqueda Judicial Ponderada',
+        desc: 'Función RPC que ejecuta búsqueda por texto completo con peso legal sobre las sentencias de la Corte Suprema.',
+        legal: 'Clasificación por relevancia procesal y año de resolución.',
+        code: `SELECT * FROM buscar_jurisprudencia_csj(\n  search_query := textQuery,\n  limit_rows := 3\n);`
+      },
+      {
+        id: 'context_augmentation',
+        label: 'Inyector de Contexto Dinámico',
+        layer: 'rag',
+        size: 21,
+        x: -120, y: -70,
+        sub: 'Aumento Dinámico [JURISPRUDENCIA]',
+        desc: 'Ensambla los fallos judiciales recuperados y la doctrina en las secciones canónicas del prompt antes de pasarlo al LLM.',
+        legal: 'Inyección transparente que respalda toda respuesta con precedentes legales reales y verificables.',
+        code: `prompt += '\\n[JURISPRUDENCIA CSJ]\\n' + formatFallos(csjRows);\nprompt += '\\n[Criterios Prácticos]\\n' + formatCriterios(critRows);`
+      },
+
+      // --- CAPA 5: CASCADA DE INFERENCIA WATERFALL ---
+      {
+        id: 'waterfall_router',
+        label: 'Router Cascada Streaming',
+        layer: 'cascade',
+        size: 23,
+        x: 0, y: -80,
+        sub: 'Cascada Multi-Proveedor SSE',
+        desc: 'Despacha el prompt enriquecido a través de una escalera con tolerancia a fallos y streaming en tiempo real.',
+        legal: 'Tiempo límite total: 32 segundos por consulta. Tolerancia automática si un proveedor se satura o arroja 429/503.',
+        code: `for (const provider of WATERFALL_PROVIDERS) {\n  try { return await streamFromProvider(provider); }\n  catch (e) { continue; }\n}`
+      },
+      {
+        id: 'gemini_flash',
+        label: 'Google Gemini 3.8 Flash',
+        layer: 'cascade',
+        size: 19,
+        x: 60, y: -160,
+        sub: 'Inferencia Primaria Multimodal',
+        desc: 'Motor principal de alta capacidad contextual y respuesta en milisegundos. Procesa texto e imágenes.',
+        legal: 'Utilizado vía Vercel Serverless con pooling dinámico de credenciales.',
+        code: `// Capataz / Google Cloud Ingestion\nprovider = 'gemini-3.8-flash';`
+      },
+      {
+        id: 'groq_lpu',
+        label: 'Groq LPU (Llama 3.3 / Qwen)',
+        layer: 'cascade',
+        size: 20,
+        x: 120, y: -140,
+        sub: 'Velocidad Extrema (300 t/s)',
+        desc: 'Procesadores LPU de ultra baja latencia. Corre modelos abiertos masivos (Llama 3.3 70B y Qwen 2.5 72B) en tiempo récord.',
+        legal: 'El usuario percibe que Tobi piensa de inmediato; ideal para el diálogo fluido.',
+        code: `// Groq Hardware Inference\nconst groq = new Groq({ apiKey: getRotatedGroqKey() });`
+      },
+      {
+        id: 'cloudflare_workers',
+        label: 'Cloudflare Workers AI',
+        layer: 'cascade',
+        size: 16,
+        x: 30, y: -220,
+        sub: 'Edge In-Memory Fallback',
+        desc: 'Inferencia en el borde de la red global para minimizar cualquier salto de red transoceánico.',
+        legal: 'Garantiza disponibilidad en caso de contingencias de proveedores principales.',
+        code: `// Edge compute fallback`
+      },
+      {
+        id: 'openai_backup',
+        label: 'OpenAI gpt-4o-mini',
+        layer: 'cascade',
+        size: 16,
+        x: -20, y: -230,
+        sub: 'Respaldo de Alta Resiliencia',
+        desc: 'Proveedor de contingencia activado cuando el pool gratuito se encuentra temporalmente exhausto.',
+        legal: 'Configurado con zero data retention por contrato empresarial.',
+        code: `model: 'gpt-4o-mini'`
+      },
+      {
+        id: 'deepseek_flash',
+        label: 'DeepSeek V4.1 Flash',
+        layer: 'cascade',
+        size: 17,
+        x: 90, y: -210,
+        sub: 'Auditoría Pericial Profunda',
+        desc: 'Modelo de razonamiento analítico riguroso utilizado para auditar casos laborales de extrema complejidad y liquidaciones atípicas.',
+        legal: 'Auditoría cruzada de coherencia argumental y verificación de artículos.',
+        code: `provider = 'deepseek/deepseek-flash'`
+      },
+
+      // --- CAPA 6: HEMISFERIO DETERMINISTA (MOTOR DE CÁLCULO) ---
+      {
+        id: 'regla_oro_calculo',
+        label: 'Regla de Oro: IA NO Calcula',
+        layer: 'math',
+        size: 23,
+        x: 60, y: 20,
+        sub: 'Aislamiento Matemático Inviolable',
+        desc: 'Las IAs son pésimas calculadoras. Tobi JAMÁS calcula montos finales de dinero usando modelos de lenguaje.',
+        legal: 'Principio Rector: La IA extrae los hechos (antigüedad, causa, salarios) y los delega al backend en TypeScript.',
+        code: `// REGLA DE ORO\nif (isCalculationRequest) {\n  extractVariablesOnly();\n  delegateToDeterministicEngine();\n}`
+      },
+      {
+        id: 'engine_typescript',
+        label: 'Motor TypeScript en Vercel',
+        layer: 'math',
+        size: 22,
+        x: 140, y: 180,
+        sub: 'Lógica Algorítmica Pura',
+        desc: 'Módulo de código duro en TypeScript que ejecuta las fórmulas matemáticas exactas del Código del Trabajo.',
+        legal: 'Cálculos 100% reproducibles, sin margen de alucinación ni redondeos ilegales.',
+        code: `import { calculateSettlement } from './settlementCalculator';\nconst resultado = calculateSettlement(input);`
+      },
+      {
+        id: 'modulo_liquidacion',
+        label: 'Módulo Finiquito Exacto',
+        layer: 'math',
+        size: 19,
+        x: 220, y: 200,
+        sub: 'Preaviso + Indemnización + Aguinaldo',
+        desc: 'Computa el monto total de la liquidación desglosando rubros imponibles vs exentos, y calculando el aporte obrero IPS de forma separada.',
+        legal: 'Cumple milimétricamente los artículos 87, 91 y 243 de la Ley 213/93.',
+        code: `const totalFiniquito = preavisoDinero + indemnizacionDinero + aguinaldoProporcional + vacacionesCompensadas;`
+      },
+      {
+        id: 'modulo_horas_extras',
+        label: 'Módulo Horas Extras & Jornadas',
+        layer: 'math',
+        size: 18,
+        x: 220, y: 250,
+        sub: 'Base Horaria & Recargos 50%/100%',
+        desc: 'Calcula el salario hora base (Salario / 30 / horas_jornada) y aplica los recargos diurnos (1.5x) o nocturnos (2.0x).',
+        legal: 'Artículos 202 y 234 del Código del Trabajo.',
+        code: `const valorHora = salarioMensual / 30 / jornadaHoras;\nconst extraDiurna = valorHora * 1.5 * horasDiurnas;`
+      },
+      {
+        id: 'modulo_vacaciones',
+        label: 'Módulo Vacaciones Causadas',
+        layer: 'math',
+        size: 17,
+        x: 140, y: 260,
+        sub: 'Liquidación de Días No Gozados',
+        desc: 'Liquida los días hábiles devengados y no disfrutados al término del contrato, utilizando el salario diario real.',
+        legal: 'Artículo 218 C.T.',
+        code: `const salarioDiario = salarioMensual / 30;\nconst montoVacaciones = diasVacaciones(antiguedad) * salarioDiario;`
+      },
+
+      // --- CAPA 7: SISTEMA MOTOR (ACCIONES DE MÁQUINA) ---
+      {
+        id: 'liquidacion_action',
+        label: 'Bloque :::liquidacion_action',
+        layer: 'motor',
+        size: 20,
+        x: -40, y: -30,
+        sub: 'Acción de Finiquito en Pantalla',
+        desc: 'Emisión estructurada que la interfaz web detecta para desplegar una tarjeta interactiva con desglose de liquidación y botón de exportar.',
+        legal: 'Formato estándar de interoperabilidad máquina-usuario.',
+        code: `:::liquidacion_action\n{\n  "salarioMensual": 3044000,\n  "antiguedadAnios": 3,\n  "motivo": "despido_injustificado"\n}\n:::`
+      },
+      {
+        id: 'documento_action',
+        label: 'Bloque :::documento_action',
+        layer: 'motor',
+        size: 20,
+        x: 20, y: -20,
+        sub: 'Generador de Notas Oficiales',
+        desc: 'Emite instrucciones para prellenar formularios y generar notas formales en PDF/DOCX (despidos, suspensiones, renuncias, certificados).',
+        legal: 'Modelos redactados conforme al rigor formal exigido ante el MTESS.',
+        code: `:::documento_action\n{\n  "tipo": "nota_despido_injustificado",\n  "trabajador": "Juan Pérez",\n  "antiguedad": "2 años"\n}\n:::`
+      },
+      {
+        id: 'opciones_continuar',
+        label: 'Bloque :::opciones_continuar',
+        layer: 'motor',
+        size: 18,
+        x: -20, y: 40,
+        sub: 'Navegación Pedagógica Guiada',
+        desc: 'Ofrece botones de opción rápida al usuario al final de cada respuesta para explorar escenarios sin tener que tipear.',
+        legal: 'Evita la parálisis por sobrecarga y guía paso a paso hacia la solución jurídica.',
+        code: `:::opciones_continuar\n[\n  "Calcular mi liquidación exacta",\n  "¿Qué pasa si tengo más de 10 años?",\n  "Redactar nota de preaviso"\n]\n:::`
+      },
+      {
+        id: 'ui_streaming_sse',
+        label: 'Streaming SSE en Tiempo Real',
+        layer: 'motor',
+        size: 18,
+        x: 40, y: 70,
+        sub: 'Renderizado Reactivo sin Bloqueos',
+        desc: 'Flujo de eventos Server-Sent Events que entrega texto token por token en el navegador con formateo instantáneo de Markdown.',
+        legal: 'Experiencia ultra responsiva de copiloto en vivo.',
+        code: `res.setHeader('Content-Type', 'text/event-stream');\nres.write('data: ' + JSON.stringify({ token }) + '\\n\\n');`
+      },
+
+      // --- CAPA 8: ESCUDO CISO ZERO-LEAK ---
+      {
+        id: 'zero_credentials',
+        label: 'Aislamiento Cero Credenciales',
+        layer: 'shield',
+        size: 21,
+        x: -120, y: -220,
+        sub: 'Keys Confinadas al Servidor',
+        desc: 'Las claves de Google, Groq, Supabase y OpenAI viven exclusivamente en variables de entorno del servidor. Ningún token llega al cliente.',
+        legal: 'Cumplimiento de estándares de ciberseguridad bancaria y directivas CISO de LaboraPy.',
+        code: `// Prohibido NEXT_PUBLIC_ o VITE_ en API Keys\nconst key = process.env.GROQ_API_KEY;`
+      },
+      {
+        id: 'rls_security',
+        label: 'Aislamiento RLS en Postgres',
+        layer: 'shield',
+        size: 19,
+        x: -330, y: 30,
+        sub: 'Segregación Criptográfica Multi-Tenant',
+        desc: 'Garantiza que una empresa jamás pueda leer las liquidaciones, nombres o sueldos de los empleados de otra firma.',
+        legal: 'Norma de protección de datos personales y secreto comercial en Paraguay.',
+        code: `ALTER TABLE hr_audit_records ENABLE ROW LEVEL SECURITY;`
+      },
+      {
+        id: 'buffer_memory_ocr',
+        label: 'Buffer Volátil Sin Persistencia',
+        layer: 'shield',
+        size: 18,
+        x: -320, y: -190,
+        sub: 'Sanitización en Memoria RAM',
+        desc: 'Los recibos y documentos adjuntos se procesan en la memoria volátil de la Edge Function y se eliminan inmediatamente tras la inferencia.',
+        legal: 'Directiva Zero-Data-Retention: No se guardan fotos ni legajos en discos no autorizados.',
+        code: `let buffer = Buffer.from(cleanBase64, 'base64');\n// Procesa OCR en RAM y se libera con GC`
+      },
+      {
+        id: 'anonimizacion_csj',
+        label: 'Anonimización Judicial Taxativa',
+        layer: 'shield',
+        size: 18,
+        x: -140, y: 220,
+        sub: 'Ocultamiento de Nombres Particulares',
+        desc: 'Tobi anonimiza automáticamente los nombres y apellidos de trabajadores particulares en sentencias de la CSJ ("el demandante", "la trabajadora").',
+        legal: 'Preserva la reputación y la privacidad de las personas frente a búsquedas públicas.',
+        code: `function anonymizePersonNames(text) {\n  return text.replace(REGEX_NOMBRES_PARTICULARES, 'el trabajador demandante');\n}`
+      },
+      {
+        id: 'guard_prebuild',
+        label: 'Guard check-no-sensitive-data',
+        layer: 'shield',
+        size: 18,
+        x: -50, y: -250,
+        sub: 'Pre-Build Check Inquebrantable',
+        desc: 'Script que corre antes de cada compilación en `npm run build` para bloquear cualquier commit o bundle que contenga secretos.',
+        legal: 'Barrera automatizada en el pipeline de CI/CD de LaboraPy.',
+        code: `// scripts/check-no-sensitive-data.mjs\nif (foundLeak) process.exit(1);`
+      }
+    ];
+
+    const SYNAPSES = [
+      // Identidad
+      { from: 'diego_nunez', to: 'tobi_core', label: 'Concepción & Arquitectura' },
+      { from: 'regla_cero', to: 'tobi_core', label: 'Blindaje Soberano' },
+      { from: 'regla_salario_minimo', to: 'tobi_core', label: 'Piso Legal Inviolable' },
+      { from: 'humanizer_pedagogia', to: 'tobi_core', label: 'Voz & Cadencia Humana' },
+      { from: 'anti_abrumacion', to: 'tobi_core', label: 'Estructura Orgánica' },
+
+      // Core a Leyes
+      { from: 'tobi_core', to: 'codigo_trabajo', label: 'Fundamento de Fondo' },
+      { from: 'tobi_core', to: 'regimen_ips', label: 'Seguridad Social' },
+      { from: 'codigo_trabajo', to: 'art19_primacia', label: 'Principio Realidad' },
+      { from: 'codigo_trabajo', to: 'art81_causales', label: 'Causales de Despido' },
+      { from: 'codigo_trabajo', to: 'art87_preaviso', label: 'Escala Legal' },
+      { from: 'codigo_trabajo', to: 'art91_indemnizacion', label: 'Tarifa Resarcitoria' },
+      { from: 'codigo_trabajo', to: 'art94_estabilidad', label: 'Protección 10 Años' },
+      { from: 'codigo_trabajo', to: 'jornadas_laborales', label: 'Límites de Jornada' },
+      { from: 'codigo_trabajo', to: 'art218_vacaciones', label: 'Descanso Remunerado' },
+      { from: 'codigo_trabajo', to: 'art243_aguinaldo', label: '1/12 Exento' },
+      { from: 'codigo_trabajo', to: 'art399_prescripcion', label: 'Caducidad 60 Días' },
+      { from: 'ley_maternidad', to: 'codigo_trabajo', label: 'Fuero Especial' },
+      { from: 'regimen_ips', to: 'art243_aguinaldo', label: 'Exención Aporte IPS' },
+
+      // Memoria Supabase
+      { from: 'supabase_cluster', to: 'jurisprudencia_csj', label: 'Índice FTS' },
+      { from: 'supabase_cluster', to: 'jurisprudencia_multimedia', label: 'pgvector 768d' },
+      { from: 'supabase_cluster', to: 'tobi_events', label: 'Auditoría Inmutable' },
+      { from: 'supabase_cluster', to: 'hr_audit_records', label: 'Registros Seguros' },
+      { from: 'doctrina_tratadistas', to: 'jurisprudencia_multimedia', label: 'Doctrina Bernis/Yampey' },
+
+      // RAG Pipeline
+      { from: 'input_sensorial', to: 'ocr_multimodal', label: 'Extracción de Imagen/PDF' },
+      { from: 'input_sensorial', to: 'text_embedding_004', label: 'Vectorización 120ms' },
+      { from: 'ocr_multimodal', to: 'context_augmentation', label: 'Hechos Extraídos' },
+      { from: 'text_embedding_004', to: 'rpc_criterios', label: 'Búsqueda Coseno' },
+      { from: 'input_sensorial', to: 'rpc_csj', label: 'Búsqueda FTS' },
+      { from: 'rpc_criterios', to: 'jurisprudencia_multimedia', label: 'Consulta pgvector' },
+      { from: 'rpc_csj', to: 'jurisprudencia_csj', label: 'Consulta Sentencias' },
+      { from: 'rpc_criterios', to: 'context_augmentation', label: 'Top 3 Criterios' },
+      { from: 'rpc_csj', to: 'context_augmentation', label: 'Top 3 Fallos CSJ' },
+
+      // Cascada
+      { from: 'context_augmentation', to: 'waterfall_router', label: 'Prompt Enriquecido' },
+      { from: 'tobi_core', to: 'waterfall_router', label: 'Identidad & Reglas' },
+      { from: 'waterfall_router', to: 'gemini_flash', label: 'Primario Multimodal' },
+      { from: 'waterfall_router', to: 'groq_lpu', label: 'Inferencia 300 t/s' },
+      { from: 'waterfall_router', to: 'cloudflare_workers', label: 'Edge Fallback' },
+      { from: 'waterfall_router', to: 'openai_backup', label: 'Respaldo Premium' },
+      { from: 'waterfall_router', to: 'deepseek_flash', label: 'Auditoría Forense' },
+
+      // Motor Numérico
+      { from: 'waterfall_router', to: 'regla_oro_calculo', label: 'Orden de Cálculo' },
+      { from: 'regla_oro_calculo', to: 'engine_typescript', label: 'Delegación Determinista' },
+      { from: 'engine_typescript', to: 'modulo_liquidacion', label: 'Fórmulas Finiquito' },
+      { from: 'engine_typescript', to: 'modulo_horas_extras', label: 'Cálculo Horas Extras' },
+      { from: 'engine_typescript', to: 'modulo_vacaciones', label: 'Cálculo Vacaciones' },
+
+      // Conexiones de leyes al motor determinista
+      { from: 'art87_preaviso', to: 'modulo_liquidacion', label: 'Monto Preaviso' },
+      { from: 'art91_indemnizacion', to: 'modulo_liquidacion', label: 'Monto Indemnización' },
+      { from: 'art94_estabilidad', to: 'modulo_liquidacion', label: 'Doble Tarifa' },
+      { from: 'art243_aguinaldo', to: 'modulo_liquidacion', label: 'Aguinaldo sin IPS' },
+      { from: 'jornadas_laborales', to: 'modulo_horas_extras', label: 'Tasas 50%/100%' },
+      { from: 'art218_vacaciones', to: 'modulo_vacaciones', label: 'Días Hábiles' },
+      { from: 'regla_salario_minimo', to: 'engine_typescript', label: 'Piso 3.044.000' },
+
+      // Acciones de Máquina
+      { from: 'modulo_liquidacion', to: 'liquidacion_action', label: 'Payload JSON' },
+      { from: 'engine_typescript', to: 'documento_action', label: 'Prellenado Legal' },
+      { from: 'waterfall_router', to: 'opciones_continuar', label: 'Bifurcaciones' },
+      { from: 'liquidacion_action', to: 'ui_streaming_sse', label: 'Render Component' },
+      { from: 'documento_action', to: 'ui_streaming_sse', label: 'Descarga DOCX/PDF' },
+      { from: 'opciones_continuar', to: 'ui_streaming_sse', label: 'Botones UI' },
+
+      // Escudo CISO
+      { from: 'zero_credentials', to: 'waterfall_router', label: 'Secretos Seguros' },
+      { from: 'rls_security', to: 'supabase_cluster', label: 'Aislamiento Tenant' },
+      { from: 'buffer_memory_ocr', to: 'ocr_multimodal', label: 'RAM Volátil' },
+      { from: 'anonimizacion_csj', to: 'jurisprudencia_csj', label: 'Protección Datos' },
+      { from: 'guard_prebuild', to: 'zero_credentials', label: 'Validación CI/CD' }
+    ];
+
+    // Compute layer counts
+    NODES.forEach(n => {
+      if (LAYERS[n.layer]) LAYERS[n.layer].count++;
+    });
+
+    /* ==========================================================================
+       CANVAS, PARTICLES & FORCE GRAPH ENGINE
+       ========================================================================== */
+    const canvas = document.getElementById('synapseCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
+    function resizeCanvas() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * window.devicePixelRatio;
+      canvas.height = height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Camera & Transform
+    let camX = width / 2;
+    let camY = height / 2;
+    let camZoom = 1.0;
+    let isDraggingCam = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+
+    // Node Interaction
+    let draggedNode = null;
+    let hoveredNode = null;
+    let selectedNode = null;
+    let activeFilterLayer = null;
+    let isPaused = false;
+    let soundEnabled = true;
+
+    // Node lookup map
+    const nodeMap = new Map();
+    NODES.forEach(n => {
+      n.vx = 0;
+      n.vy = 0;
+      n.pinned = false;
+      nodeMap.set(n.id, n);
+    });
+
+    // Synapses lookup
+    const connectedPairs = new Set();
+    SYNAPSES.forEach(s => {
+      connectedPairs.add(`${s.from}->${s.to}`);
+      connectedPairs.add(`${s.to}->${s.from}`);
+    });
+
+    // Synaptic Particles
+    const particles = [];
+    const MAX_PARTICLES = 160;
+
+    class SynapticParticle {
+      constructor(synapse = null, customColor = null, speedMultiplier = 1) {
+        this.reset(synapse, customColor, speedMultiplier);
+      }
+
+      reset(synapse = null, customColor = null, speedMultiplier = 1) {
+        this.synapse = synapse || SYNAPSES[Math.floor(Math.random() * SYNAPSES.length)];
+        this.progress = Math.random();
+        this.speed = (0.003 + Math.random() * 0.006) * speedMultiplier;
+        this.size = 2.0 + Math.random() * 2.5;
+        this.color = customColor || LAYERS[nodeMap.get(this.synapse.from)?.layer]?.color || '#00f0ff';
+      }
+
+      update() {
+        this.progress += this.speed;
+        if (this.progress >= 1.0) {
+          this.reset();
+        }
+      }
+
+      draw() {
+        const fromNode = nodeMap.get(this.synapse.from);
+        const toNode = nodeMap.get(this.synapse.to);
+        if (!fromNode || !toNode) return;
+
+        // Check if layer filtered
+        if (activeFilterLayer) {
+          if (fromNode.layer !== activeFilterLayer && toNode.layer !== activeFilterLayer) return;
+        }
+
+        const px = fromNode.x + (toNode.x - fromNode.x) * this.progress;
+        const py = fromNode.y + (toNode.y - fromNode.y) * this.progress;
+
+        ctx.save();
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(px, py, this.size, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Glow trail
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(px, py, this.size * 1.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      particles.push(new SynapticParticle());
+    }
+
+    /* ==========================================================================
+       PHYSICS SIMULATION (SPRING EMBEDDER + CLUSTER GRAVITY)
+       ========================================================================== */
+    const LAYER_CENTERS = {
+      core: { x: -80, y: 0 },
+      legal: { x: 200, y: 0 },
+      memory: { x: -280, y: 150 },
+      rag: { x: -220, y: -100 },
+      cascade: { x: 50, y: -180 },
+      math: { x: 180, y: 220 },
+      motor: { x: 0, y: 50 },
+      shield: { x: -220, y: -220 }
+    };
+
+    function updatePhysics() {
+      if (isPaused) return;
+
+      const DAMPING = 0.88;
+      const REPULSION = 1400;
+      const SPRING_K = 0.0022;
+      const GRAVITY_TO_CLUSTER = 0.0018;
+
+      // 1. Repulsion between all nodes
+      for (let i = 0; i < NODES.length; i++) {
+        const n1 = NODES[i];
+        for (let j = i + 1; j < NODES.length; j++) {
+          const n2 = NODES[j];
+          let dx = n2.x - n1.x;
+          let dy = n2.y - n1.y;
+          let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+          if (dist < 320) {
+            let force = (REPULSION / (dist * dist));
+            let fx = (dx / dist) * force;
+            let fy = (dy / dist) * force;
+
+            if (!n1.pinned) { n1.vx -= fx; n1.vy -= fy; }
+            if (!n2.pinned) { n2.vx += fx; n2.vy += fy; }
+          }
+        }
+      }
+
+      // 2. Spring attraction along synapses
+      SYNAPSES.forEach(s => {
+        const from = nodeMap.get(s.from);
+        const to = nodeMap.get(s.to);
+        if (!from || !to) return;
+
+        let dx = to.x - from.x;
+        let dy = to.y - from.y;
+        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        let targetDist = (from.size + to.size) * 3.5;
+        let force = (dist - targetDist) * SPRING_K;
+
+        let fx = (dx / dist) * force;
+        let fy = (dy / dist) * force;
+
+        if (!from.pinned) { from.vx += fx; from.vy += fy; }
+        if (!to.pinned) { to.vx -= fx; to.vy -= fy; }
+      });
+
+      // 3. Cluster Gravity
+      NODES.forEach(n => {
+        const center = LAYER_CENTERS[n.layer] || { x: 0, y: 0 };
+        let dx = center.x - n.x;
+        let dy = center.y - n.y;
+
+        if (!n.pinned) {
+          n.vx += dx * GRAVITY_TO_CLUSTER;
+          n.vy += dy * GRAVITY_TO_CLUSTER;
+
+          n.vx *= DAMPING;
+          n.vy *= DAMPING;
+          n.x += n.vx;
+          n.y += n.vy;
+        }
+      });
+
+      // 4. Update particles
+      particles.forEach(p => p.update());
+    }
+
+    /* ==========================================================================
+       RENDER LOOP
+       ========================================================================== */
+    let animationTime = 0;
+
+    function render() {
+      animationTime += 0.02;
+      updatePhysics();
+
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.save();
+      // Apply Camera Transform
+      ctx.translate(camX, camY);
+      ctx.scale(camZoom, camZoom);
+
+      // 1. Draw subtle background radial grid
+      drawBackgroundGrid();
+
+      // 2. Draw Synapse Lines
+      drawSynapses();
+
+      // 3. Draw Synaptic Particles
+      particles.forEach(p => p.draw());
+
+      // 4. Draw Nodes
+      drawNodes();
+
+      ctx.restore();
+
+      requestAnimationFrame(render);
+    }
+
+    function drawBackgroundGrid() {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.04)';
+      ctx.lineWidth = 1;
+
+      // Concentric brain lobes
+      for (let r = 120; r <= 600; r += 120) {
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawSynapses() {
+      SYNAPSES.forEach(s => {
+        const from = nodeMap.get(s.from);
+        const to = nodeMap.get(s.to);
+        if (!from || !to) return;
+
+        const isHighlighted = (hoveredNode && (hoveredNode.id === from.id || hoveredNode.id === to.id)) ||
+                              (selectedNode && (selectedNode.id === from.id || selectedNode.id === to.id));
+
+        let alpha = 0.22;
+        let strokeColor = 'rgba(255, 255, 255, 0.15)';
+        let lineWidth = 1.0;
+
+        if (activeFilterLayer) {
+          if (from.layer !== activeFilterLayer && to.layer !== activeFilterLayer) {
+            alpha = 0.04;
+          }
+        }
+
+        if (isHighlighted) {
+          alpha = 0.85;
+          strokeColor = LAYERS[from.layer]?.color || '#00f0ff';
+          lineWidth = 2.4;
+        }
+
+        ctx.save();
+        ctx.strokeStyle = strokeColor;
+        ctx.globalAlpha = alpha;
+        ctx.lineWidth = lineWidth;
+
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+
+        ctx.restore();
+      });
+    }
+
+    function drawNodes() {
+      NODES.forEach(n => {
+        const isHovered = hoveredNode && hoveredNode.id === n.id;
+        const isSelected = selectedNode && selectedNode.id === n.id;
+        const isNeighbor = (hoveredNode && connectedPairs.has(`${hoveredNode.id}->${n.id}`)) ||
+                           (selectedNode && connectedPairs.has(`${selectedNode.id}->${n.id}`));
+
+        let layerColor = LAYERS[n.layer]?.color || '#00f0ff';
+        let alpha = 1.0;
+
+        if (activeFilterLayer && n.layer !== activeFilterLayer) {
+          alpha = 0.2;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        // Pulsing halo for Tobi Core
+        if (n.id === 'tobi_core') {
+          const pulseR = n.size + Math.sin(animationTime * 2.5) * 8 + 8;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, pulseR, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(0, 240, 255, 0.15)';
+          ctx.fill();
+        }
+
+        // Outer glow
+        if (isHovered || isSelected || isNeighbor) {
+          ctx.shadowColor = layerColor;
+          ctx.shadowBlur = isSelected ? 28 : 18;
+        } else {
+          ctx.shadowColor = layerColor;
+          ctx.shadowBlur = 8;
+        }
+
+        // Main circle
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.size, 0, Math.PI * 2);
+        ctx.fillStyle = '#0a1020';
+        ctx.fill();
+
+        // Colored ring border
+        ctx.lineWidth = isSelected ? 3.5 : (isHovered ? 2.5 : 1.8);
+        ctx.strokeStyle = isSelected ? '#ffffff' : layerColor;
+        ctx.stroke();
+
+        // Inner glowing core
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.size * 0.45, 0, Math.PI * 2);
+        ctx.fillStyle = layerColor;
+        ctx.fill();
+
+        // Text label
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = '#000';
+        ctx.fillStyle = (isSelected || isHovered) ? '#ffffff' : '#cbd5e1';
+        ctx.font = `${isHovered || isSelected ? 'bold 12px' : '10.5px'} -apple-system, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(n.label, n.x, n.y + n.size + 14);
+
+        // Subtitle on hover
+        if (isHovered || isSelected) {
+          ctx.fillStyle = layerColor;
+          ctx.font = '9px monospace';
+          ctx.fillText(n.sub || '', n.x, n.y + n.size + 26);
+        }
+
+        ctx.restore();
+      });
+    }
+
+    /* ==========================================================================
+       MOUSE & TOUCH INTERACTION
+       ========================================================================== */
+    function getMouseWorldPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const screenX = e.clientX - rect.left;
+      const screenY = e.clientY - rect.top;
+      return {
+        x: (screenX - camX) / camZoom,
+        y: (screenY - camY) / camZoom
+      };
+    }
+
+    function findNodeAt(worldX, worldY) {
+      for (let i = NODES.length - 1; i >= 0; i--) {
+        const n = NODES[i];
+        let dx = worldX - n.x;
+        let dy = worldY - n.y;
+        if (dx * dx + dy * dy <= (n.size + 6) * (n.size + 6)) {
+          return n;
+        }
+      }
+      return null;
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      const mouse = getMouseWorldPos(e);
+      const clicked = findNodeAt(mouse.x, mouse.y);
+
+      if (clicked) {
+        draggedNode = clicked;
+        draggedNode.pinned = true;
+        selectNode(clicked);
+        playNodeChime(clicked.layer);
+      } else {
+        isDraggingCam = true;
+        dragStartX = e.clientX - camX;
+        dragStartY = e.clientY - camY;
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      const mouse = getMouseWorldPos(e);
+
+      if (draggedNode) {
+        draggedNode.x = mouse.x;
+        draggedNode.y = mouse.y;
+      } else if (isDraggingCam) {
+        camX = e.clientX - dragStartX;
+        camY = e.clientY - dragStartY;
+      } else {
+        const hit = findNodeAt(mouse.x, mouse.y);
+        if (hit !== hoveredNode) {
+          hoveredNode = hit;
+          canvas.style.cursor = hit ? 'pointer' : 'default';
+        }
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (draggedNode) {
+        draggedNode.pinned = false;
+        draggedNode = null;
+      }
+      isDraggingCam = false;
+    });
+
+    // Zoom with wheel
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
+      const newZoom = Math.max(0.35, Math.min(3.2, camZoom * zoomFactor));
+
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      camX = mouseX - (mouseX - camX) * (newZoom / camZoom);
+      camY = mouseY - (mouseY - camY) * (newZoom / camZoom);
+      camZoom = newZoom;
+    });
+
+    /* ==========================================================================
+       AUDIO SYNTHESIZER (WEB AUDIO API)
+       ========================================================================== */
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    const LAYER_FREQUENCIES = {
+      core: [523.25, 659.25, 783.99],   // C Major chord
+      legal: [440.00, 554.37, 659.25],  // A Major
+      memory: [392.00, 493.88, 587.33], // G Major
+      rag: [349.23, 440.00, 523.25],    // F Major
+      cascade: [293.66, 369.99, 440.00],// D Major
+      math: [587.33, 739.99, 880.00],   // D High
+      motor: [659.25, 830.61, 987.77],  // E High
+      shield: [220.00, 277.18, 329.63]  // A Low
+    };
+
+    function playNodeChime(layer = 'core') {
+      if (!soundEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      const freqs = LAYER_FREQUENCIES[layer] || [440, 550];
+      const now = audioCtx.currentTime;
+
+      freqs.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.04);
+
+        gain.gain.setValueAtTime(0.001, now + idx * 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.08, now + idx * 0.04 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.04 + 0.45);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now + idx * 0.04);
+        osc.stop(now + idx * 0.04 + 0.48);
+      });
+    }
+
+    function toggleAudio() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById('btnSound');
+      btn.innerHTML = soundEnabled ? '<span>🔊</span>' : '<span>🔇</span>';
+      showToast(soundEnabled ? 'Sonido sináptico activado' : 'Sonido sináptico silenciado', '🔊');
+    }
+
+    /* ==========================================================================
+       INSPECTOR DRAWER & SELECTION
+       ========================================================================== */
+    const drawer = document.getElementById('inspectorDrawer');
+
+    function selectNode(node) {
+      selectedNode = node;
+      updateDrawer(node);
+      drawer.classList.add('open');
+    }
+
+    function closeInspector() {
+      selectedNode = null;
+      drawer.classList.remove('open');
+    }
+
+    function updateDrawer(node) {
+      const badge = document.getElementById('drawerBadge');
+      const title = document.getElementById('drawerTitle');
+      const subtitle = document.getElementById('drawerSubtitle');
+      const desc = document.getElementById('drawerDesc');
+      const legal = document.getElementById('drawerLegal');
+      const code = document.getElementById('drawerCode');
+      const connList = document.getElementById('drawerConnections');
+      const connCount = document.getElementById('connCount');
+
+      const layerData = LAYERS[node.layer];
+      badge.textContent = layerData.name;
+      badge.style.backgroundColor = `${layerData.color}25`;
+      badge.style.border = `1px solid ${layerData.color}`;
+      badge.style.color = layerData.color;
+
+      title.textContent = node.label;
+      subtitle.textContent = node.sub || '';
+      desc.textContent = node.desc || '';
+      legal.textContent = node.legal || 'N/A';
+      code.textContent = node.code || '// Sin código canónico asociado';
+
+      // Find connections
+      const connected = [];
+      SYNAPSES.forEach(s => {
+        if (s.from === node.id) {
+          connected.push({ target: nodeMap.get(s.to), dir: 'Hacia', label: s.label });
+        } else if (s.to === node.id) {
+          connected.push({ target: nodeMap.get(s.from), dir: 'Desde', label: s.label });
+        }
+      });
+
+      connCount.textContent = connected.length;
+      connList.innerHTML = '';
+      connected.forEach(c => {
+        if (!c.target) return;
+        const tag = document.createElement('div');
+        tag.className = 'connection-tag';
+        tag.innerHTML = `
+          <div>
+            <b>${c.target.label}</b>
+            <div class="conn-label">${c.dir}: ${c.label}</div>
+          </div>
+          <span style="color: ${LAYERS[c.target.layer]?.color}">➔</span>
+        `;
+        tag.onclick = () => {
+          flyToNode(c.target);
+          selectNode(c.target);
+          playNodeChime(c.target.layer);
+        };
+        connList.appendChild(tag);
+      });
+    }
+
+    function flyToNode(node) {
+      const targetCamX = width / 2 - node.x * camZoom;
+      const targetCamY = height / 2 - node.y * camZoom;
+
+      const startX = camX;
+      const startY = camY;
+      const duration = 500;
+      const startTime = performance.now();
+
+      function animateCam(t) {
+        const elapsed = t - startTime;
+        const p = Math.min(1, elapsed / duration);
+        const ease = 1 - Math.pow(1 - p, 3); // ease-out cubic
+
+        camX = startX + (targetCamX - startX) * ease;
+        camY = startY + (targetCamY - startY) * ease;
+
+        if (p < 1) requestAnimationFrame(animateCam);
+      }
+      requestAnimationFrame(animateCam);
+    }
+
+    function resetCamera() {
+      camX = width / 2;
+      camY = height / 2;
+      camZoom = 1.0;
+      showToast('Cámara recentrada al núcleo', '🎯');
+    }
+
+    function togglePlayPause() {
+      isPaused = !isPaused;
+      document.getElementById('btnPlay').innerHTML = isPaused ? '<span>▶️</span>' : '<span>⏸️</span>';
+      showToast(isPaused ? 'Física pausada' : 'Física reanudada', '⚡');
+    }
+
+    /* ==========================================================================
+       LAYER FILTERS & SEARCH
+       ========================================================================== */
+    const layersListContainer = document.getElementById('layersList');
+
+    function renderLayersList() {
+      layersListContainer.innerHTML = '';
+      Object.values(LAYERS).forEach(layer => {
+        const item = document.createElement('div');
+        item.className = 'layer-item';
+        item.id = `layer-item-${layer.id}`;
+        item.innerHTML = `
+          <div class="layer-left">
+            <span class="layer-indicator" style="background-color: ${layer.color}; color: ${layer.color};"></span>
+            <span>${layer.name}</span>
+          </div>
+          <span class="layer-count">${layer.count}</span>
+        `;
+        item.onclick = () => filterByLayer(layer.id);
+        layersListContainer.appendChild(item);
+      });
+    }
+    renderLayersList();
+
+    function filterByLayer(layerId) {
+      if (activeFilterLayer === layerId) {
+        resetLayerFilters();
+        return;
+      }
+      activeFilterLayer = layerId;
+      document.querySelectorAll('.layer-item').forEach(el => {
+        el.classList.toggle('dimmed', el.id !== `layer-item-${layerId}`);
+      });
+      showToast(`Capa activa: ${LAYERS[layerId].name}`, '🔍');
+    }
+
+    function resetLayerFilters() {
+      activeFilterLayer = null;
+      document.querySelectorAll('.layer-item').forEach(el => el.classList.remove('dimmed'));
+      showToast('Visualizando todas las capas', '🌐');
+    }
+
+    // Search bar
+    const searchInput = document.getElementById('nodeSearch');
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      if (!q) {
+        hoveredNode = null;
+        return;
+      }
+      const match = NODES.find(n =>
+        n.label.toLowerCase().includes(q) ||
+        n.sub.toLowerCase().includes(q) ||
+        (n.legal && n.legal.toLowerCase().includes(q))
+      );
+      if (match) {
+        hoveredNode = match;
+        flyToNode(match);
+      }
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && hoveredNode) {
+        selectNode(hoveredNode);
+        playNodeChime(hoveredNode.layer);
+      }
+    });
+
+    /* ==========================================================================
+       SIMULATION MODES (INTERACTIVE COGNITIVE PATHWAYS)
+       ========================================================================== */
+    function showToast(text, icon = '⚡') {
+      const toast = document.getElementById('simToast');
+      document.getElementById('simToastIcon').textContent = icon;
+      document.getElementById('simToastText').textContent = text;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    function spawnCustomPulses(pathNodeIds, color, speedMultiplier = 2.5) {
+      for (let i = 0; i < pathNodeIds.length - 1; i++) {
+        const fromId = pathNodeIds[i];
+        const toId = pathNodeIds[i + 1];
+        const syn = SYNAPSES.find(s =>
+          (s.from === fromId && s.to === toId) ||
+          (s.from === toId && s.to === fromId)
+        );
+        if (syn) {
+          for (let p = 0; p < 8; p++) {
+            const particle = new SynapticParticle(syn, color, speedMultiplier);
+            particle.progress = (p / 8);
+            particles.push(particle);
+          }
+        }
+      }
+      // Trim particle array if too large
+      if (particles.length > 350) {
+        particles.splice(0, particles.length - 350);
+      }
+    }
+
+    function triggerSimulation(mode) {
+      initAudio();
+
+      if (mode === 'rag') {
+        showToast('Simulando Consulta RAG: Vectorización ➔ pgvector ➔ CSJ ➔ LLM', '⚡');
+        const pathway = ['input_sensorial', 'text_embedding_004', 'rpc_criterios', 'jurisprudencia_multimedia', 'context_augmentation', 'waterfall_router', 'groq_lpu', 'opciones_continuar', 'ui_streaming_sse'];
+        spawnCustomPulses(pathway, '#c084fc', 3.0);
+        playSequenceChimes(['rag', 'memory', 'cascade', 'motor']);
+        flyToNode(nodeMap.get('context_augmentation'));
+      }
+      else if (mode === 'settlement') {
+        showToast('Simulando Finiquito: Aislamiento IA ➔ Motor TypeScript ➔ :::liquidacion_action', '🧮');
+        const pathway = ['tobi_core', 'waterfall_router', 'regla_oro_calculo', 'engine_typescript', 'modulo_liquidacion', 'liquidacion_action', 'ui_streaming_sse'];
+        spawnCustomPulses(pathway, '#ec4899', 3.2);
+        playSequenceChimes(['core', 'math', 'motor']);
+        flyToNode(nodeMap.get('modulo_liquidacion'));
+      }
+      else if (mode === 'ocr') {
+        showToast('Simulando OCR: Telegrama Copaco ➔ Buffer RAM ➔ Gemini Vision ➔ Art. 81', '📄');
+        const pathway = ['input_sensorial', 'ocr_multimodal', 'buffer_memory_ocr', 'context_augmentation', 'art81_causales', 'documento_action', 'ui_streaming_sse'];
+        spawnCustomPulses(pathway, '#f59e0b', 2.8);
+        playSequenceChimes(['rag', 'shield', 'legal', 'motor']);
+        flyToNode(nodeMap.get('ocr_multimodal'));
+      }
+      else if (mode === 'ciso') {
+        showToast('Simulando Escudo CISO: Bloqueo de fuga de API Keys & Salario Vencido', '🛡️');
+        const pathway = ['guard_prebuild', 'zero_credentials', 'regla_cero', 'tobi_core', 'regla_salario_minimo', 'rls_security'];
+        spawnCustomPulses(pathway, '#f43f5e', 3.5);
+        playSequenceChimes(['shield', 'core', 'shield']);
+        flyToNode(nodeMap.get('zero_credentials'));
+      }
+    }
+
+    function playSequenceChimes(layers) {
+      if (!soundEnabled) return;
+      layers.forEach((l, i) => {
+        setTimeout(() => playNodeChime(l), i * 180);
+      });
+    }
+
+    // Auto-select Tobi Core on launch
+    setTimeout(() => {
+      const core = nodeMap.get('tobi_core');
+      if (core) {
+        selectNode(core);
+      }
+    }, 600);
+
+  </script>
+</body>
+</html>

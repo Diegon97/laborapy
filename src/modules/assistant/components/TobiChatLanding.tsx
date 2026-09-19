@@ -6,6 +6,8 @@ import {
   executeSettlementAction,
   toSettlementActionPayload,
   applyAgenticSettlementAdjustment,
+  cleanAllActionBlockMarkers,
+  extractSettlementFromUserPrompt,
 } from '../tobiSettlementAction';
 import { SALARIO_MINIMO_MENSUAL_2026 } from '../../payroll/constants';
 import {
@@ -19,6 +21,7 @@ import { processMediaFile, MAX_FILES_PER_DROP } from '../mediaProcessor';
 import { useTobiVoice } from '../hooks/useTobiVoice';
 import { evaluateTobiPeritaje } from '../systemOne';
 import { TobiSettlementCard } from './TobiSettlementCard';
+import { TobiArtifactPanel } from './TobiArtifactPanel';
 import { TobiDocumentCard } from './TobiDocumentCard';
 import { TobiContinuationOptions } from './TobiContinuationOptions';
 import { TobiDocumentFormCard } from './TobiDocumentFormCard';
@@ -105,11 +108,100 @@ const nextId = (prefix: string): string => {
   return `${prefix}-${Date.now()}-${messageIdCounter}`;
 };
 
+const formatGs = (val: number): string => {
+  return 'Gs. ' + Math.round(val).toLocaleString('es-PY');
+};
+
+/** Codifica los parámetros de un finiquito en un hash ultra-corto (~50-70 chars) */
+export function encodeShortSettlementLink(input: any): string {
+  try {
+    const compactStr = [
+      Math.round(input.salarioMensual || 3044000),
+      input.fechaIngreso || '',
+      input.fechaEgreso || '',
+      input.motivo || 'despido_sin_causa',
+      input.vacacionesPeriodosAnteriores ?? 0,
+      input.preaviso?.otorgado ? 1 : 0,
+      input.nombreEmpleado ? encodeURIComponent(String(input.nombreEmpleado).trim()) : '',
+    ].join('|');
+
+    return window
+      .btoa(
+        encodeURIComponent(compactStr).replace(/%([0-9A-F]{2})/g, (_, p1) =>
+          String.fromCharCode(parseInt(p1, 16)),
+        ),
+      )
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  } catch {
+    return '';
+  }
+}
+
+/** Decodifica un hash ultra-corto (#c=...) y monta la liquidación interactiva oficial */
+export function decodeShortSettlementLink(encoded: string): AssistantMessage[] | null {
+  try {
+    let b64 = decodeURIComponent(encoded).replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    const binary = window.atob(b64);
+    const decoded = decodeURIComponent(
+      Array.prototype.map
+        .call(binary, (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join(''),
+    );
+    const parts = decoded.split('|');
+    if (parts.length >= 4) {
+      const salarioMensual = Number(parts[0]) || 3044000;
+      const fechaIngreso = parts[1];
+      const fechaEgreso = parts[2];
+      const motivo = (parts[3] as any) || 'despido_sin_causa';
+      const vacacionesPeriodosAnteriores = Number(parts[4]) || 0;
+      const preavisoOtorgado = parts[5] === '1';
+      const nombreEmpleado = parts[6] ? decodeURIComponent(parts[6]) : undefined;
+
+      const payload = {
+        salarioMensual,
+        fechaIngreso,
+        fechaEgreso,
+        motivo,
+        vacacionesPeriodosAnteriores: vacacionesPeriodosAnteriores > 0 ? vacacionesPeriodosAnteriores : undefined,
+        preavisoOtorgado,
+        preavisoObligado: motivo === 'renuncia' ? ('trabajador' as const) : ('empleador' as const),
+        nombreEmpleado,
+      };
+
+      const settlementData = executeSettlementAction(payload as any);
+
+      const userMsg: AssistantMessage = {
+        id: `shared-u-${Date.now()}`,
+        role: 'user',
+        content: `Calculame la liquidación laboral oficial para un salario de Gs. ${salarioMensual.toLocaleString('es-PY')}, ingreso ${fechaIngreso}, egreso ${fechaEgreso}, causal: ${motivo.replace(/_/g, ' ')}${vacacionesPeriodosAnteriores > 0 ? `, con ${vacacionesPeriodosAnteriores} días de vacaciones pendientes` : ''}.`,
+        createdAt: new Date().toISOString(),
+      };
+
+      const assistantMsg: AssistantMessage = {
+        id: `shared-a-${Date.now()}`,
+        role: 'assistant',
+        content: `¡Hola! Aquí tenés el cálculo completo y oficial de tu liquidación laboral conforme a la Ley N° 213/93 de Paraguay.\n\nEl finiquito oficial y el documento en PDF están listos en la ventana interactiva de la derecha para que los descargues o consultes al instante.`,
+        createdAt: new Date().toISOString(),
+        settlementData,
+      };
+
+      return [userMsg, assistantMsg];
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 function encodeShareChat(msgs: AssistantMessage[]): string {
   try {
     // Poda extrema: solo serializa role (1: user, 0: assistant), texto y datos mínimos de entrada
     const compact = msgs.map((m) => {
-      const item: any = [m.role === 'user' ? 1 : 0, m.content || ''];
+      const cleanContent = cleanAllActionBlockMarkers(m.content || '');
+      const item: any = [m.role === 'user' ? 1 : 0, cleanContent];
       if (m.settlementData?.input) {
         const inp = m.settlementData.input;
         item[2] = {
@@ -121,6 +213,7 @@ function encodeShareChat(msgs: AssistantMessage[]): string {
           p: inp.preaviso?.otorgado,
           n: inp.nombreEmpleado,
           c: inp.ciEmpleado,
+          v: inp.vacacionesPeriodosAnteriores,
         };
       } else if (m.documentData) {
         item[3] = m.documentData;
@@ -161,11 +254,13 @@ function decodeShareChat(encoded: string): AssistantMessage[] | null {
     const parsed = JSON.parse(json);
     if (!Array.isArray(parsed)) return null;
 
+    let foundSettlement: any = null;
+
     // Formato ultra-compacto nuevo (arrays [role, content, settlementInput, docPayload])
     if (parsed.length > 0 && Array.isArray(parsed[0])) {
-      return parsed.map((item: any, idx: number) => {
+      const messagesResult = parsed.map((item: any, idx: number) => {
         const isUser = item[0] === 1;
-        const content = item[1] || '';
+        let content = item[1] || '';
         let settlementData: any = null;
 
         if (item[2]) {
@@ -179,34 +274,94 @@ function decodeShareChat(encoded: string): AssistantMessage[] | null {
             preavisoOtorgado: s.p,
             nombreEmpleado: s.n,
             ciEmpleado: s.c,
+            vacacionesPeriodosAnteriores: s.v,
           };
           try {
             settlementData = executeSettlementAction(payload);
+            foundSettlement = settlementData;
           } catch {
             // ignore
           }
         }
 
+        // Rescate preventivo: si no tenía settlementData, intentar extraer de bloque roto en texto
+        if (!settlementData && !isUser) {
+          const { cleanedText, payload } = extractSettlementAction(content);
+          if (payload) {
+            try {
+              settlementData = executeSettlementAction(payload);
+              foundSettlement = settlementData;
+              content = cleanedText;
+            } catch {
+              // ignore
+            }
+          }
+        }
+
+        content = cleanAllActionBlockMarkers(content);
+
         return {
           id: `shared-${idx}-${Date.now()}`,
-          role: isUser ? 'user' : 'assistant',
+          role: isUser ? ('user' as const) : ('assistant' as const),
           content,
           createdAt: new Date().toISOString(),
           settlementData,
           documentData: item[3] || null,
         };
       });
+
+      // Si ninguna respuesta tenía settlementData, revisar si algún mensaje de usuario contenía los datos
+      if (!foundSettlement) {
+        for (let i = 0; i < messagesResult.length; i++) {
+          if (messagesResult[i].role === 'user') {
+            const promptPayload = extractSettlementFromUserPrompt(messagesResult[i].content);
+            if (promptPayload) {
+              try {
+                const calculated = executeSettlementAction(promptPayload);
+                const nextAssistant = messagesResult.slice(i + 1).find((m) => m.role === 'assistant');
+                if (nextAssistant) {
+                  nextAssistant.settlementData = calculated;
+                } else if (messagesResult[i + 1]) {
+                  messagesResult[i + 1].settlementData = calculated;
+                }
+                break;
+              } catch {
+                // ignore
+              }
+            }
+          }
+        }
+      }
+
+      return messagesResult;
     }
 
     // Retrocompatibilidad con formato antiguo completo
-    return parsed.map((m: any, idx: number) => ({
-      id: `shared-${idx}-${Date.now()}`,
-      role: m.role || 'assistant',
-      content: m.content || '',
-      createdAt: m.createdAt || new Date().toISOString(),
-      settlementData: m.settlementData,
-      documentData: m.documentData,
-    }));
+    return parsed.map((m: any, idx: number) => {
+      let content = cleanAllActionBlockMarkers(m.content || '');
+      let settlementData = m.settlementData;
+
+      if (!settlementData && m.role === 'assistant') {
+        const { cleanedText, payload } = extractSettlementAction(m.content || '');
+        if (payload) {
+          try {
+            settlementData = executeSettlementAction(payload);
+            content = cleanedText;
+          } catch {
+            // ignore
+          }
+        }
+      }
+
+      return {
+        id: `shared-${idx}-${Date.now()}`,
+        role: m.role || 'assistant',
+        content,
+        createdAt: m.createdAt || new Date().toISOString(),
+        settlementData,
+        documentData: m.documentData,
+      };
+    });
   } catch {
     return null;
   }
@@ -417,17 +572,15 @@ const formatInline = (text: string): React.ReactNode[] => {
 const cleanAndRenderContent = (raw?: string): React.ReactNode => {
   if (!raw || typeof raw !== 'string') return null;
 
-  const cleaned = raw
+  const sanitizedHeader = raw
     .replace(/^🤝\s*\**\s*(?:Contención y )?Empatía(?:\s*Inicial)?\s*:?\**\s*/gim, '')
     .replace(/^💡\s*\**\s*(?:Explicación en )?Cristiano(?:\s*\(A prueba de bobos\))?\s*:?\**\s*/gim, '')
     .replace(/\(A prueba de bobos\)/gi, '')
     .replace(/a prueba de bobos/gi, '')
     .replace(/^⚖️\s*\**\s*(?:El )?Respaldo de la Ley(?:\s*Paraguaya)?\s*:?\**\s*/gim, '### Respaldo Normativo\n')
-    .replace(/^📋\s*\**\s*(?:Tu )?Plan de Acción(?:\s*Paso a Paso)?\s*:?\**\s*/gim, '### Recomendaciones y Próximos Pasos\n')
-    .replace(/:::liquidacion_action[\s\S]*?(:::|$)/g, '')
-    .replace(/:::documento_action[\s\S]*?(:::|$)/g, '')
-    .replace(/:::opciones_continuar[\s\S]*?(:::|$)/g, '')
-    .trim();
+    .replace(/^📋\s*\**\s*(?:Tu )?Plan de Acción(?:\s*Paso a Paso)?\s*:?\**\s*/gim, '### Recomendaciones y Próximos Pasos\n');
+
+  const cleaned = cleanAllActionBlockMarkers(sanitizedHeader).trim();
 
   const lines = cleaned.split('\n');
   const elements: React.ReactNode[] = [];
@@ -593,6 +746,7 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [isSharedSession, setIsSharedSession] = useState(false);
+  const [isArtifactOpen, setIsArtifactOpen] = useState(true);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -600,16 +754,35 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const activeRequestRef = useRef(false);
 
-  // Detección de conversación compartida en el Hash de la URL
+  // Detección de conversación o finiquito compartido en el Hash de la URL
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const hash = window.location.hash;
-    if (hash && hash.startsWith('#share=')) {
+    if (!hash) return;
+
+    if (hash.startsWith('#c=')) {
+      const encoded = hash.slice(3);
+      const decoded = decodeShortSettlementLink(encoded);
+      if (decoded && decoded.length > 0) {
+        setMessages(decoded);
+        setIsSharedSession(true);
+        setIsArtifactOpen(true);
+      }
+    } else if (hash.startsWith('#share=')) {
       const encoded = hash.slice(7);
       const decoded = decodeShareChat(encoded);
       if (decoded && decoded.length > 0) {
         setMessages(decoded);
         setIsSharedSession(true);
+        setIsArtifactOpen(true);
+      }
+    } else if (hash.startsWith('#s=')) {
+      const encoded = hash.slice(3);
+      const decoded = decodeShareChat(encoded);
+      if (decoded && decoded.length > 0) {
+        setMessages(decoded);
+        setIsSharedSession(true);
+        setIsArtifactOpen(true);
       }
     }
   }, []);
@@ -855,6 +1028,28 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
             } catch (err) {
               console.warn('Error en ajuste agéntico determinístico:', err);
             }
+          } else {
+            // Auto-detección proactiva si el usuario incluyó los datos del caso en su consulta
+            try {
+              let promptPayload = extractSettlementFromUserPrompt(text);
+              if (!promptPayload) {
+                for (let i = messages.length - 1; i >= 0; i--) {
+                  if (messages[i].role === 'user') {
+                    promptPayload = extractSettlementFromUserPrompt(messages[i].content);
+                    if (promptPayload) break;
+                  }
+                }
+              }
+              if (promptPayload) {
+                settlementData = executeSettlementAction(promptPayload);
+              }
+            } catch (err) {
+              console.warn('Error en auto-detección desde prompt:', err);
+            }
+          }
+
+          if (settlementData) {
+            setIsArtifactOpen(true);
           }
 
           const finalMessage: AssistantMessage = {
@@ -921,6 +1116,27 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
             } catch (err) {
               console.warn('Error en ajuste agéntico determinístico:', err);
             }
+          } else {
+            try {
+              let promptPayload = extractSettlementFromUserPrompt(text);
+              if (!promptPayload) {
+                for (let i = messages.length - 1; i >= 0; i--) {
+                  if (messages[i].role === 'user') {
+                    promptPayload = extractSettlementFromUserPrompt(messages[i].content);
+                    if (promptPayload) break;
+                  }
+                }
+              }
+              if (promptPayload) {
+                settlementData = executeSettlementAction(promptPayload);
+              }
+            } catch (err) {
+              console.warn('Error en auto-detección desde prompt:', err);
+            }
+          }
+
+          if (settlementData) {
+            setIsArtifactOpen(true);
           }
 
           const finalMessage: AssistantMessage = {
@@ -1000,8 +1216,14 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
 
   const getShareUrl = (): string => {
     if (typeof window === 'undefined') return '';
+    if (lastSettlement?.input) {
+      const shortHash = encodeShortSettlementLink(lastSettlement.input);
+      if (shortHash) {
+        return `${window.location.origin}${window.location.pathname}#c=${shortHash}`;
+      }
+    }
     const hash = encodeShareChat(messages);
-    return `${window.location.origin}${window.location.pathname}#share=${hash}`;
+    return `${window.location.origin}${window.location.pathname}#s=${hash}`;
   };
 
   const handleCopyShareLink = () => {
@@ -1280,6 +1502,33 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, flexWrap: 'nowrap', flexShrink: 0 }}>
+          {/* Botón Artifact Finiquito si existe liquidación activa */}
+          {lastSettlement && (
+            <button
+              type="button"
+              onClick={() => setIsArtifactOpen((prev) => !prev)}
+              style={{
+                background: isArtifactOpen ? 'rgba(16, 185, 129, 0.25)' : 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.4)',
+                color: '#34d399',
+                height: 32,
+                padding: isMobile ? '0 9px' : '0 12px',
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                boxShadow: isArtifactOpen ? '0 0 12px rgba(16, 185, 129, 0.3)' : 'none',
+              }}
+              title="Abrir o cerrar ventana interactiva de Finiquito PDF"
+            >
+              <span>📄</span>
+              <span>{isMobile ? 'PDF' : `Finiquito PDF (${formatGs(lastSettlement.result.totalNetoEstimado)})`}</span>
+            </button>
+          )}
+
           {/* Selector de consultas de ejemplo */}
           <button
             type="button"
@@ -2185,6 +2434,58 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
       )}
       </div>
 
+      {/* ── PANEL LATERAL INTERACTIVO ESTILO CLAUDE ARTIFACTS A LA DERECHA ── */}
+      {!isMobile && isArtifactOpen && lastSettlement && (
+        <div
+          style={{
+            width: 440,
+            maxWidth: '46%',
+            flexShrink: 0,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            zIndex: 5,
+          }}
+        >
+          <TobiArtifactPanel
+            settlementData={lastSettlement}
+            onClose={() => setIsArtifactOpen(false)}
+            onOpenForm={() => setIsSettlementFormActive(true)}
+            onShare={handleCopyShareLink}
+          />
+        </div>
+      )}
+
+      {/* Barra flotante inferior para móvil si hay finiquito activo */}
+      {isMobile && lastSettlement && !isSettlementFormActive && (
+        <div
+          onClick={() => setIsSettlementFormActive(true)}
+          style={{
+            position: 'fixed',
+            bottom: hasMessages ? 80 : 20,
+            left: 12,
+            right: 12,
+            background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+            borderRadius: 12,
+            padding: '10px 14px',
+            color: '#ffffff',
+            fontWeight: 700,
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 8px 24px rgba(16, 185, 129, 0.45)',
+            zIndex: 99,
+            cursor: 'pointer',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16 }}>📄</span>
+            <span>Finiquito PDF listo: {formatGs(lastSettlement.result.totalNetoEstimado)}</span>
+          </div>
+          <span style={{ fontSize: 12, background: 'rgba(0,0,0,0.2)', padding: '2px 8px', borderRadius: 6 }}>Ver / PDF →</span>
+        </div>
+      )}
       </div>
 
       {/* ── MODAL DE COMPARTIR CHAT (ESTILO CHATGPT) ── */}

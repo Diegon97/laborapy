@@ -8,6 +8,8 @@ import {
   executeSettlementAction,
   toSettlementActionPayload,
   applyAgenticSettlementAdjustment,
+  cleanAllActionBlockMarkers,
+  extractSettlementFromUserPrompt,
 } from '../tobiSettlementAction';
 import { prepareContextForInference } from '../sessionManager';
 import { SALARIO_MINIMO_MENSUAL_2026 } from '../../payroll/constants';
@@ -143,17 +145,15 @@ const cleanAndRenderContent = (raw?: string): React.ReactNode => {
   if (!raw || typeof raw !== 'string') return null;
 
   // Filtro preventivo estricto: eliminar cualquier residuo de etiquetas condescendientes o rígidas
-  const cleaned = raw
+  const sanitizedHeader = raw
     .replace(/^🤝\s*\**\s*(?:Contención y )?Empatía(?:\s*Inicial)?\s*:?\**\s*/gim, '')
     .replace(/^💡\s*\**\s*(?:Explicación en )?Cristiano(?:\s*\(A prueba de bobos\))?\s*:?\**\s*/gim, '')
     .replace(/\(A prueba de bobos\)/gi, '')
     .replace(/a prueba de bobos/gi, '')
     .replace(/^⚖️\s*\**\s*(?:El )?Respaldo de la Ley(?:\s*Paraguaya)?\s*:?\**\s*/gim, '### Respaldo Normativo\n')
-    .replace(/^📋\s*\**\s*(?:Tu )?Plan de Acción(?:\s*Paso a Paso)?\s*:?\**\s*/gim, '### Recomendaciones y Próximos Pasos\n')
-    .replace(/:::liquidacion_action[\s\S]*?(:::|$)/g, '')
-    .replace(/:::documento_action[\s\S]*?(:::|$)/g, '')
-    .replace(/:::opciones_continuar[\s\S]*?(:::|$)/g, '')
-    .trim();
+    .replace(/^📋\s*\**\s*(?:Tu )?Plan de Acción(?:\s*Paso a Paso)?\s*:?\**\s*/gim, '### Recomendaciones y Próximos Pasos\n');
+
+  const cleaned = cleanAllActionBlockMarkers(sanitizedHeader).trim();
 
   const lines = cleaned.split('\n');
   const elements: React.ReactNode[] = [];
@@ -613,6 +613,23 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
             } catch (err) {
               console.warn('Error al aplicar ajuste agéntico determinístico:', err);
             }
+          } else {
+            try {
+              let promptPayload = extractSettlementFromUserPrompt(text);
+              if (!promptPayload) {
+                for (let i = messages.length - 1; i >= 0; i--) {
+                  if (messages[i].role === 'user') {
+                    promptPayload = extractSettlementFromUserPrompt(messages[i].content);
+                    if (promptPayload) break;
+                  }
+                }
+              }
+              if (promptPayload) {
+                settlementData = executeSettlementAction(promptPayload);
+              }
+            } catch (err) {
+              console.warn('Error en auto-detección desde prompt en modal:', err);
+            }
           }
 
           // Si el asistente emitió un documentData que requiere completar casillas o el usuario pidió redactarlo,
@@ -686,6 +703,23 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
               }
             } catch (err) {
               console.warn('Error al aplicar ajuste agéntico determinístico:', err);
+            }
+          } else {
+            try {
+              let promptPayload = extractSettlementFromUserPrompt(text);
+              if (!promptPayload) {
+                for (let i = messages.length - 1; i >= 0; i--) {
+                  if (messages[i].role === 'user') {
+                    promptPayload = extractSettlementFromUserPrompt(messages[i].content);
+                    if (promptPayload) break;
+                  }
+                }
+              }
+              if (promptPayload) {
+                settlementData = executeSettlementAction(promptPayload);
+              }
+            } catch (err) {
+              console.warn('Error en auto-detección desde prompt en modal stream:', err);
             }
           }
           const partial: AssistantMessage = {

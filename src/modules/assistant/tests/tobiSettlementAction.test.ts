@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { extractSettlementAction, executeSettlementAction, toLiquidacionInput } from '../tobiSettlementAction';
+import {
+  extractSettlementAction,
+  executeSettlementAction,
+  toLiquidacionInput,
+  extractSettlementFromUserPrompt,
+} from '../tobiSettlementAction';
 
 describe('tobiSettlementAction — extracción y cálculo', () => {
   it('extrae el bloque :::liquidacion_action y limpia el texto visible', () => {
@@ -99,5 +104,56 @@ Texto después`;
     expect(input.salarioMensual).toBe(3044000);
     expect(result.totalNetoEstimado).toBeGreaterThan(0);
     expect(result.alertas.some((a) => a.id === 'ALERTA_PISO_SALARIO_MINIMO')).toBe(true);
+  });
+
+  it('rescata y repara bloques rotos generados por LLMs con prefijo **Bloque de acción y claves sin comillas', () => {
+    const malformed = `Total liquidable: Gs. 7.371.667.
+**Bloque de acción liquidacion_action {"salarioMensual":3500000,"fechaIngreso:2019-06-01,fechaEgreso:2026-09-18,motivo:despido_injustificado,tieneVariables":true,"preavisoOtorgado":false,"preavisoObligado:empleador,vacacionesPeriodosAnteriores":6,"vacacionesPeriodoActual":0,"comisiones":0,"horasExtras":0,"salariosPendientes":0,"aguinaldoAnteriorPendiente":0,"preavisoOtorgado":false,"preavisoObligado:empleador"} :::
+Recuerda que la liquidación debe ser pagada el mismo día.`;
+
+    const { cleanedText, payload } = extractSettlementAction(malformed);
+
+    expect(payload).not.toBeNull();
+    expect(payload?.salarioMensual).toBe(3500000);
+    expect(payload?.fechaIngreso).toBe('2019-06-01');
+    expect(payload?.fechaEgreso).toBe('2026-09-18');
+    expect(payload?.motivo).toBe('despido_sin_causa');
+    expect(payload?.vacacionesPeriodosAnteriores).toBe(6);
+    expect(cleanedText).not.toContain('Bloque de acción liquidacion_action');
+    expect(cleanedText).not.toContain(':::');
+    expect(cleanedText).toContain('Total liquidable');
+    expect(cleanedText).toContain('Recuerda que la liquidación');
+  });
+
+  it('extrae parámetros de liquidación directamente desde el prompt del usuario (fallback agéntico)', () => {
+    const prompt = '3500000, ingrese 01/06/2019, egrese 18/09/26, despido injustificado, tengo 6 dias de vacaciones pendientes';
+    const payload = extractSettlementFromUserPrompt(prompt);
+
+    expect(payload).not.toBeNull();
+    expect(payload?.salarioMensual).toBe(3500000);
+    expect(payload?.fechaIngreso).toBe('2019-06-01');
+    expect(payload?.fechaEgreso).toBe('2026-09-18');
+    expect(payload?.motivo).toBe('despido_sin_causa');
+    expect(payload?.vacacionesPeriodosAnteriores).toBe(6);
+  });
+
+  it('decodifica y repara el caso real del hash con bloque roto y calcula el resultado exacto de Gs. 7.371.667', () => {
+    const malformedText = `Total liquidable:
+* Gs. 6.341.667 (liquidación por despido injustificado) + Gs. 1.030.000 (vacaciones pendientes) = Gs. 7.371.667.
+
+**Bloque de acción liquidacion_action {"salarioMensual":3500000,"fechaIngreso:2019-06-01,fechaEgreso:2026-09-18,motivo:despido_injustificado,tieneVariables":true,"preavisoOtorgado":false,"preavisoObligado:empleador,vacacionesPeriodosAnteriores":6,"vacacionesPeriodoActual":0,"comisiones":0,"horasExtras":0,"salariosPendientes":0,"aguinaldoAnteriorPendiente":0,"preavisoOtorgado":false,"preavisoObligado:empleador"} :::
+
+Recuerda que la liquidación debe ser pagada el mismo día.`;
+
+    const { cleanedText, payload } = extractSettlementAction(malformedText);
+    expect(payload).not.toBeNull();
+    expect(payload?.salarioMensual).toBe(3500000);
+    expect(payload?.fechaIngreso).toBe('2019-06-01');
+    expect(payload?.fechaEgreso).toBe('2026-09-18');
+
+    const { result } = executeSettlementAction(payload!);
+    expect(result.totalNetoEstimado).toBeGreaterThan(7000000);
+    expect(cleanedText).not.toContain('Bloque de acción');
+    expect(cleanedText).not.toContain(':::');
   });
 });
