@@ -66,6 +66,27 @@ OBJETIVOS_PARAGUAY = [
         'tiktok_url': 'https://www.tiktok.com/@juanbernis',
         'instagram_url': 'https://www.instagram.com/juanbernis/',
         'facebook_url': 'https://www.facebook.com/juanbernisabogado/'
+    },
+    {
+        'clave': 'jorgefleitas',
+        'nombre': 'Dr. Jorge Fleitas',
+        'tiktok_url': 'https://www.tiktok.com/@jorgefleitasoficial8',
+        'instagram_url': 'https://www.instagram.com/jorgefleitasoficial8/',
+        'facebook_url': 'https://www.facebook.com/jorgefleitasoficial8/'
+    },
+    {
+        'clave': 'dahianavalos',
+        'nombre': 'Dahiana Avalos',
+        'tiktok_url': 'https://www.tiktok.com/@dahianavalos',
+        'instagram_url': 'https://www.instagram.com/dahianavalos/',
+        'facebook_url': 'https://www.facebook.com/dahianavalos/'
+    },
+    {
+        'clave': 'claralopez',
+        'nombre': 'Abg. Clara López',
+        'tiktok_url': 'https://www.tiktok.com/@abg.clara.lopez',
+        'instagram_url': 'https://www.instagram.com/abg.clara.lopez/',
+        'facebook_url': 'https://www.facebook.com/abg.clara.lopez/'
     }
 ]
 

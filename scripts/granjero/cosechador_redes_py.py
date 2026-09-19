@@ -55,6 +55,27 @@ ABOGADOS_PY = {
         'perfil_ig': '@juanbernis',
         'perfil_fb': 'Juan Bernis Abogado'
     },
+    'jorgefleitas': {
+        'id': 'e5192138-1184-48e2-9b2f-37891234abcd',
+        'nombre': 'Dr. Jorge Fleitas',
+        'perfil_tiktok': '@jorgefleitasoficial8',
+        'perfil_ig': '@jorgefleitasoficial8',
+        'perfil_fb': 'Jorge Fleitas'
+    },
+    'dahianavalos': {
+        'id': 'f7823901-2295-49f3-8c3e-48902345bcde',
+        'nombre': 'Dahiana Avalos',
+        'perfil_tiktok': '@dahianavalos',
+        'perfil_ig': '@dahianavalos',
+        'perfil_fb': 'Dahiana Avalos'
+    },
+    'claralopez': {
+        'id': 'a8934012-3306-40a4-9d4f-59013456cdef',
+        'nombre': 'Abg. Clara López',
+        'perfil_tiktok': '@abg.clara.lopez',
+        'perfil_ig': '@abg.clara.lopez',
+        'perfil_fb': 'Clara Lopez Abogada'
+    },
     'general_py': {
         'id': 'c8812f10-9923-41bb-92e1-789a424101bb',
         'nombre': 'Laboralista Paraguayo (Comunidad)',
