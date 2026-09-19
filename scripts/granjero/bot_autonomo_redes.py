@@ -36,6 +36,11 @@ except Exception:
 
 import requests
 
+# Asegurar que el directorio de este script esté en sys.path
+CURRENT_DIR = Path(__file__).resolve().parent
+if str(CURRENT_DIR) not in sys.path:
+    sys.path.insert(0, str(CURRENT_DIR))
+
 # Importar el motor pericial y filtro de cosecha
 from cosechador_redes_py import (
     es_comentario_paraguayo_valido,
