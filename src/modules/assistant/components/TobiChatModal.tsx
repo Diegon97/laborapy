@@ -952,7 +952,7 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
       const liqMessage: AssistantMessage = {
         id: nextId('assistant'),
         role: 'assistant',
-        content: `¡Listo! ${explicacionSalario}\n\nPodés revisar los rubros desglosados y descargar el finiquito blindado:`,
+        content: `¡Listo! ${explicacionSalario}\n\nPodés revisar los rubros desglosados y descargar el finiquito oficial:`,
         createdAt: new Date().toISOString(),
         settlementData,
       };
@@ -1586,7 +1586,7 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
                       Peritaje y Asesoría Personalizada con Diego Núñez (LaboraPy)
                     </div>
                     <div style={{ fontSize: 12.5, color: '#a7f3d0', marginTop: 3, lineHeight: 1.45 }}>
-                      ¿Tenés dudas con tu despido, liquidación o te presionan para firmar una nota? Escribile directamente a Diego Núñez por WhatsApp para revisar tu caso y blindar tus derechos laborales.
+                      ¿Tenés dudas sobre tu despido, liquidación o te presionan para firmar una nota? Escribile directamente a Diego Núñez por WhatsApp para revisar tu caso, recibir su opinión según su experiencia y saber exactamente dónde estás parado antes de tomar una decisión.
                     </div>
                   </div>
                 </div>
