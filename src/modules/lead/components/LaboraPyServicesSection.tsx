@@ -19,6 +19,7 @@ export const LaboraPyServicesSection: React.FC<Props> = ({ onSelectTab }) => {
   const seleccionWhatsAppUrl = createWhatsAppUrl(WhatsAppMessages.seleccionEmpresa());
   const postularCvWhatsAppUrl = createWhatsAppUrl(WhatsAppMessages.postulacionCandidato());
   const b2bWhatsAppUrl = createWhatsAppUrl(WhatsAppMessages.b2bEmpresas());
+  const expatWhatsAppUrl = createWhatsAppUrl(WhatsAppMessages.expatHrDesk());
   const b2cWhatsAppUrl = createWhatsAppUrl(WhatsAppMessages.b2cParticulares());
   const maternidadWhatsAppUrl = createWhatsAppUrl(WhatsAppMessages.maternidad());
   const primaciaWhatsAppUrl = createWhatsAppUrl(WhatsAppMessages.primaciaRealidad());
@@ -184,19 +185,56 @@ export const LaboraPyServicesSection: React.FC<Props> = ({ onSelectTab }) => {
                   Orientación técnica en acuerdos de mutuo consentimiento y auditoría preventiva de contratos de trabajo bajo la Ley N.º 213/93.
                 </div>
               </div>
+
+              <div style={{ background: '#f8fafc', border: '1.5px solid #3b82f6', borderRadius: '12px', padding: '14px', boxShadow: '0 2px 4px rgba(59,130,246,0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '20px' }}>🌐</span>
+                  <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#1d4ed8' }}>Expat HR Desk (Bilingual EN/ES)</div>
+                </div>
+                <div style={{ fontSize: '12px', color: '#334155', lineHeight: '1.45' }}>
+                  Asesoría para multinacionales e inversores: cuotas de personal extranjero (Art. 10), enrolamiento obligatorio en IPS y nóminas en USD/multimoneda.
+                </div>
+              </div>
             </div>
 
             {/* CTAs B2B */}
-            <div className="service-card-footer">
-              <a
-                href={b2bWhatsAppUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-whatsapp b2b-btn"
-              >
-                <span>💬</span>
-                <span>Consultar para mi Empresa en WhatsApp</span>
-              </a>
+            <div className="service-card-footer" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', width: '100%' }}>
+                <a
+                  href={b2bWhatsAppUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-whatsapp b2b-btn"
+                  style={{ flex: '1 1 240px' }}
+                >
+                  <span>💬</span>
+                  <span>Consultar para mi Empresa</span>
+                </a>
+                <a
+                  href={expatWhatsAppUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-whatsapp"
+                  style={{
+                    flex: '1 1 240px',
+                    background: '#1e40af',
+                    borderColor: '#1d4ed8',
+                    color: '#ffffff',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                    borderRadius: '10px',
+                    padding: '12px 18px',
+                  }}
+                >
+                  <span>🌐</span>
+                  <span>Expat HR Desk (English / B2B)</span>
+                </a>
+              </div>
               <div className="service-guarantee-note">
                 ⚡ Respuesta ágil · Criterio profesional, objetivo y confidencial ({LABORAPY_CONFIG.whatsAppDisplay})
               </div>

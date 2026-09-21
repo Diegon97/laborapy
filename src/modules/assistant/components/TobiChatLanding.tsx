@@ -107,6 +107,13 @@ const ACTION_PILLS: readonly ActionPill[] = [
     subtitle: 'Fallos vinculantes de la Corte Suprema en lo laboral',
     prompt: '¿Cuáles son los criterios vinculantes y precedentes de la Corte Suprema de Justicia (CSJ) sobre despidos y fraude laboral en Paraguay?',
   },
+  {
+    id: 'expat_desk',
+    icon: '🌐',
+    title: 'Expat HR Desk (Bilingual)',
+    subtitle: 'Paraguay Labour Law, hiring quotas & multi-currency (EN/ES)',
+    prompt: 'I need corporate HR guidance regarding hiring foreign personnel, staff quotas (Art. 10 Ley 213/93), multi-currency payroll, and legal compliance under Paraguayan Labour Law & IPS.',
+  },
 ];
 
 let messageIdCounter = 0;

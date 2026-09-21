@@ -49,6 +49,7 @@ const WHATSAPP_NUMBER = LABORAPY_CONFIG.whatsAppNumber || '595984469005';
 const QUICK_SUGGESTIONS: string[] = [
   '📎 Adjuntar nota de despido para evaluar Art. 81 vs Art. 84',
   '¿Cómo calculo mi liquidación y finiquito laboral?',
+  '🌐 Expat HR Desk: Paraguayan Labor Law for Foreign Employers (Bilingual)',
   '¿Qué me corresponde por despido injustificado?',
   '¿Quién es Diego Núñez y quién creó a Tobi en LaboraPy?',
 ];

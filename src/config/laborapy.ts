@@ -103,4 +103,7 @@ export const WhatsAppMessages = {
     `Hola LaboraPy, necesito asistencia y revisión técnica de RRHH sobre un documento laboral${
       docTipo ? ` (${docTipo})` : ''
     } antes de formalizarlo.`,
+
+  expatHrDesk: () =>
+    'Hello LaboraPy / Hola, me comunico con la Mesa Corporativa Expat HR Desk para coordinar asesoramiento bilingüe en contratación de personal extranjero, nómina multimoneda y cumplimiento legal en Paraguay (Ley 213/93 e IPS).',
 };

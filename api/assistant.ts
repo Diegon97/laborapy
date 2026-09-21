@@ -930,10 +930,12 @@ async function fetchSemanticJurisprudence(
     return matches
       .map((m) => {
         let title = 'Precedente Legal / Base de Conocimiento';
-        if (m.metadata?.source === 'csj') {
+        if (m.metadata?.source === 'csj' || m.metadata?.fuente === 'CSJ') {
             title = `Corte Suprema de Justicia (${m.metadata?.sala || 'Sala Laboral'})`;
-        } else if (m.metadata?.type === 'audio_transcription') {
+        } else if (m.metadata?.type === 'audio_transcription' || m.metadata?.fuente === 'Tobi_Audios') {
             title = 'Consulta Similar (Audio/Video Resuelto)';
+        } else if (m.metadata?.fuente === 'Peritaje_5_Abogados_Oiko' || m.metadata?.tipo === 'peritaje_laboral_social') {
+            title = `Dictamen Pericial Laboral Verificado (${m.metadata?.abogado || '5 Abogados'})`;
         } else if (m.metadata?.source === 'multimedia') {
             title = 'Jurisprudencia y Criterio Práctico Multimedia';
         }

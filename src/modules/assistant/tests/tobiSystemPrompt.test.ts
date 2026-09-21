@@ -213,4 +213,13 @@ describe('TOBI_SYSTEM_PROMPT — identidad pedagógica de Profesor y Mentor de R
     expect(TOBI_SYSTEM_PROMPT).toContain(':::opciones_continuar');
     expect(TOBI_SYSTEM_PROMPT).toMatch(/ZERO-LEAK/i);
   });
+
+  it('incorpora el protocolo corporativo bilingüe del Expat HR Desk (cuotas, IPS y multimoneda)', () => {
+    expect(TOBI_SYSTEM_PROMPT).toContain('EXPAT HR DESK & PROTOCOLO CORPORATIVO GLOBAL BILINGÜE');
+    expect(TOBI_SYSTEM_PROMPT).toContain('Art. 10 Código del Trabajo Ley 213/93');
+    expect(TOBI_SYSTEM_PROMPT).toContain('90% del personal debe ser de nacionalidad paraguaya');
+    expect(TOBI_SYSTEM_PROMPT).toContain('Afiliación Obligatoria al IPS para Extranjeros');
+    expect(TOBI_SYSTEM_PROMPT).toContain('Contratos y Nómina en Moneda Extranjera (USD / EUR)');
+    expect(TOBI_SYSTEM_PROMPT).toContain('Aguinaldo Legal Internacional (Art. 243 C.T.)');
+  });
 });
