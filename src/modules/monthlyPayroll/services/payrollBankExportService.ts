@@ -16,7 +16,7 @@ import type { PeriodoNomina, MonedaNomina } from '../types/noveltyTypes';
 import type { EmpresaCliente } from '../../clientPortal/types/clientPortal';
 import { roundGs } from '../engine/monthlyPayrollEngine';
 
-export type FormatoBanco = 'sipap_csv' | 'itau_txt' | 'sudameris_txt';
+export type FormatoBanco = 'sipap_csv' | 'itau_txt' | 'sudameris_txt' | 'ueno_csv';
 
 /**
  * Sanitiza valores de texto para evitar CSV / Formula Injection en Excel o software contable/bancario.
@@ -128,6 +128,48 @@ export function exportarBancoSudameris_TXT(
   });
 
   return filas.join('\r\n');
+}
+
+/**
+ * Genera archivo CSV delimitado por comas para Ueno Bank (Ueno Empresas - Acreditación Masiva).
+ * Columnas oficiales: Tipo_Doc, Nro_Doc, Beneficiario, Nro_Cuenta, Monto, Moneda, Concepto
+ */
+export function exportarBancoUeno_CSV(
+  liquidaciones: LiquidacionMensualResult[],
+  periodo: PeriodoNomina,
+  _empresa?: EmpresaCliente
+): string {
+  const moneda = periodo.moneda === 'USD' ? 'USD' : 'PYG';
+  const concepto = sanitizeBankCell(periodo.codigoFormal || `Haberes ${periodo.id}`);
+
+  const headers = [
+    'Tipo_Documento',
+    'Numero_Documento',
+    'Nombre_Beneficiario',
+    'Numero_Cuenta_Ueno_o_SIPAP',
+    'Monto_Acreditar',
+    'Moneda',
+    'Concepto',
+  ];
+
+  const filas = liquidaciones.map((liq) => {
+    const ci = sanitizeBankCell((liq.input.ci || '').replace(/[^0-9]/g, ''));
+    const nombre = sanitizeBankCell(liq.input.nombre);
+    const monto = Math.max(0, roundGs(liq.netoACobrar || 0));
+    const cuenta = sanitizeBankCell((liq.input as any).nroCuenta || ci);
+
+    return [
+      'CI',
+      `"${ci}"`,
+      `"${nombre}"`,
+      `"${cuenta}"`,
+      monto,
+      `"${moneda}"`,
+      `"${concepto}"`,
+    ].join(',');
+  });
+
+  return [headers.join(','), ...filas].join('\r\n');
 }
 
 /**

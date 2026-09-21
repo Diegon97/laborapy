@@ -11,6 +11,7 @@ import {
   type EmpresaCliente,
   type PatronalMtessSucursal,
 } from '../types/clientPortal';
+import { generarContratoMaestroDesdeEmpresa } from '../generators/masterServiceContractPdfGenerator';
 
 export interface CompanyProfileTabProps {
   empresa: EmpresaCliente;
@@ -319,6 +320,17 @@ export const CompanyProfileTab: React.FC<CompanyProfileTabProps> = ({
     });
     setDvManual(false);
     showFeedback('ok', '↺ Datos restaurados a la versión guardada.');
+  };
+
+  const handleDescargarContratoMaestro = () => {
+    try {
+      const doc = generarContratoMaestroDesdeEmpresa(form);
+      const rucLimpio = (form.ruc || 'EMPRESA').replace(/\D/g, '');
+      doc.save(`Contrato_Maestro_Tobi_${rucLimpio}.pdf`);
+      showFeedback('ok', '📄 Contrato Maestro de Servicios generado exitosamente en PDF para imprimir.');
+    } catch {
+      showFeedback('error', 'Error al generar el contrato en PDF. Verifique los datos de la empresa.');
+    }
   };
 
   const ipsPreview = formatearPatronalIps(form.nroPatronalIps);
@@ -1031,7 +1043,29 @@ export const CompanyProfileTab: React.FC<CompanyProfileTabProps> = ({
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={handleDescargarContratoMaestro}
+            style={{
+              padding: '10px 18px',
+              borderRadius: '8px',
+              border: '1px solid #cbd5e1',
+              background: '#0f172a',
+              color: '#f8fafc',
+              fontSize: '13px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.2)',
+            }}
+            title="Genera el contrato oficial con membrete Tobi listo para imprimir en papel y firmar"
+          >
+            <span>📄</span> Contrato Maestro (PDF)
+          </button>
+
           <button
             type="button"
             onClick={handleRestaurar}

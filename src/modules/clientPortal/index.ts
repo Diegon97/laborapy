@@ -8,6 +8,7 @@ export * from './services/clientAuthService';
 export * from './services/clientStorageService';
 export * from './generators/salaryReceiptPdfGenerator';
 export * from './generators/employmentContractPdfGenerator';
+export * from './generators/masterServiceContractPdfGenerator';
 export * from './generators/ipsReiTxtGenerator';
 export * from './generators/vacationNoticePdfGenerator';
 export * from './components/ClientLoginModal';
