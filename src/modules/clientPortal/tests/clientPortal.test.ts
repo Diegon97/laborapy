@@ -92,7 +92,10 @@ const EMPRESA_TEST: EmpresaCliente = {
   direccion: 'Asunción, Paraguay',
   telefono: '(021) 123-456',
   emailCorporativo: 'test@empresa.com.py',
-  nroPatronalIps: 'IPS-999888',
+  // El numero patronal del IPS es siempre de 10 digitos numericos. El valor anterior
+  // ("IPS-999888") no era una patronal valida y el motor ahora lo rechaza con PATRONAL_INVALIDA
+  // en lugar de emitirlo dentro del archivo.
+  nroPatronalIps: '0009998881',
   nroPatronalMtess: 'MTESS-777',
   representanteLegalNombre: 'Juan Director',
   representanteLegalCi: '1.234.567',
@@ -179,9 +182,10 @@ describe('Módulo IPS - Generador de Archivo Plano REI (TXT)', () => {
     expect(resultado.totalAportePatronal165).toBe(660000); // 16.5%
     expect(resultado.totalAporteIps255).toBe(1020000); // 25.5%
 
-    const lineas = resultado.content.split('\r\n');
+    // El archivo termina con CRLF; se filtran los tramos vacios para no contar el salto final.
+    const lineas = resultado.content.split('\r\n').filter((linea) => linea.length > 0);
     expect(lineas.length).toBe(3);
-    expect(lineas[0]).toContain('1|IPS-REI|80012345|6|IPS999888|202608');
+    expect(lineas[0]).toContain('1|IPS-REI|80012345|6|0009998881|202608');
     expect(lineas[1]).toContain('2|CI|4000000');
     expect(lineas[2]).toContain('3|CONTROL|202608');
   });
@@ -1235,7 +1239,7 @@ describe('Generador Oficial de Archivos IPS (.PRN 109 columnas)', () => {
     const resultado = generarIpsPrn([r1, r2], [EMPLEADO_1, EMPLEADO_2], EMPRESA_PRN, 7, 2026);
 
     expect(resultado.fileName).toBe('IPS_JULIO_2026.prn');
-    const lineas = resultado.content.split('\r\n');
+    const lineas = resultado.content.split('\r\n').filter((linea) => linea.length > 0);
     expect(lineas.length).toBe(2);
 
     for (const linea of lineas) {
@@ -1251,7 +1255,8 @@ describe('Generador Oficial de Archivos IPS (.PRN 109 columnas)', () => {
     });
 
     const resultado = generarIpsPrn([r1], [EMPLEADO_1], EMPRESA_PRN, 7, 2026);
-    const linea = resultado.content;
+    // El archivo termina con CRLF: se toma la primera linea, que es la unica del lote.
+    const [linea] = resultado.content.split('\r\n');
     expect(linea.length).toBe(109);
 
     // Pos 0..9 (10 chars): Patronal con padding de ceros a la izquierda

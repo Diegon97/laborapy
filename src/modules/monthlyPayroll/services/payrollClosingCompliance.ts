@@ -6,6 +6,7 @@ import type { PeriodoNomina, TipoLiquidacion, MonedaNomina } from '../types/nove
 import type { LiquidacionMensualResult } from '../types';
 import type { EmpresaCliente } from '../../clientPortal/types/clientPortal';
 import { roundGs } from '../engine/monthlyPayrollEngine';
+import { aplicarTasaPorMil, sumarGs } from '../../ips';
 
 export interface PlazoLegalItem {
   entidad: 'IPS' | 'MTESS';
@@ -120,10 +121,19 @@ export function generarImpactoCierreLegal(
   const totalHaberes = roundGs(liquidaciones.reduce((acc, l) => acc + (l.haberes?.totalHaberesBrutos || 0), 0));
   const totalDescuentos = roundGs(liquidaciones.reduce((acc, l) => acc + (l.descuentos?.totalDescuentos || 0), 0));
   const totalNeto = roundGs(liquidaciones.reduce((acc, l) => acc + (l.netoACobrar || 0), 0));
-  const totalImponibleIps = roundGs(liquidaciones.reduce((acc, l) => acc + (l.haberesImponiblesIps || 0), 0));
-  const totalAporteObrero9 = roundGs(liquidaciones.reduce((acc, l) => acc + (l.descuentos?.aporteObreroIps || 0), 0));
-  const totalAportePatronal165 = roundGs(liquidaciones.reduce((acc, l) => acc + (l.aportePatronalIps || roundGs(l.haberesImponiblesIps * 0.165)), 0));
-  const totalAporteIps255 = roundGs(totalAporteObrero9 + totalAportePatronal165);
+
+  // Base imponible de IPS por persona: es el único dato de entrada legítimo.
+  const basesImponiblesIps = liquidaciones.map((l) => l.haberesImponiblesIps || 0);
+
+  // Los cuatro totales de IPS se derivan de la base con la aritmética exacta del módulo IPS
+  // (BigInt + ROUND_HALF_UP), sumando los redondeos INDIVIDUALES. Nunca el porcentaje sobre el
+  // agregado, y nunca el 9 % almacenado en el recibo: así el cierre contable y los archivos
+  // planos del IPS no pueden divergir. Decreto-Ley N.º 1860/50, Art. 76.
+  const totalImponibleIps = sumarGs(basesImponiblesIps);
+  const totalAporteObrero9 = sumarGs(basesImponiblesIps.map((base) => aplicarTasaPorMil(base, 90)));
+  const totalAportePatronal165 = sumarGs(basesImponiblesIps.map((base) => aplicarTasaPorMil(base, 165)));
+  // Suma de enteros exactos: no se aplica roundGs, que solo enmascararía un error.
+  const totalAporteIps255 = totalAporteObrero9 + totalAportePatronal165;
 
   const resumenFinanciero: ResumenFinancieroCierre = {
     cantidadLiquidaciones: liquidaciones.length,
@@ -149,9 +159,9 @@ export function generarImpactoCierreLegal(
       const motivo = salida?.motivo || 'Despido / Salida';
       const codigoIPS = determinarCodigoEgresoIPS(motivo);
 
-      const salarioImponible = liqSalida?.haberesImponiblesIps || totalImponibleIps;
-      const aporteObrero = liqSalida?.descuentos?.aporteObreroIps || totalAporteObrero9;
-      const aportePatronal = roundGs(salarioImponible * 0.165);
+            const salarioImponible = liqSalida?.haberesImponiblesIps || totalImponibleIps;
+            const aporteObrero = liqSalida?.descuentos?.aporteObreroIps || totalAporteObrero9;
+            const aportePatronal = aplicarTasaPorMil(salarioImponible, 165);
       const fechaLimiteRei = addBusinessDays(fechaEgreso, 3);
       const fechaLimiteMtess = addCalendarDays(fechaEgreso, 30);
 

@@ -22,6 +22,7 @@ import type {
   NominaMasivaResult,
   TotalesNominaMasiva,
 } from '../types';
+import { aplicarTasaPorMil } from '../../ips';
 
 /* =========================================================================
  * CONSTANTES LEGALES Y CORPORATIVAS
@@ -33,8 +34,29 @@ export const MONTO_UNITARIO_BONIF_FAMILIAR = Math.round(
   SALARIO_MINIMO_LEGAL_VIGENTE * PORCENTAJE_BONIF_FAMILIAR,
 ); // Gs. 152.200
 
+/**
+ * Tasa obrera del IPS como fracción decimal (9 %).
+ *
+ * NO debe usarse para calcular aportes: multiplicar una base en guaraníes por esta fracción
+ * introduce aritmética de punto flotante y puede desviar ₲1 del valor legal (caso demostrado:
+ * 7.032.050 × 9 % = 632.884,5 exacto; el float devuelve 632.884 y el valor legal es 632.885).
+ * La tasa de cálculo es `TASA_IPS_OBRERO_POR_MIL` con `aplicarTasaPorMil`.
+ */
 export const PORCENTAJE_IPS_OBRERO = 0.09;
+
+/**
+ * Tasa patronal del IPS como fracción decimal (16,5 %).
+ *
+ * NO debe usarse para calcular aportes, por la misma razón que la tasa obrera.
+ * La tasa de cálculo es `TASA_IPS_PATRONAL_POR_MIL` con `aplicarTasaPorMil`.
+ */
 export const PORCENTAJE_IPS_PATRONAL = 0.165;
+
+/** Tasa obrera del IPS en enteros por mil (9 % → 90). Unidad de la aritmética exacta. */
+export const TASA_IPS_OBRERO_POR_MIL = 90;
+
+/** Tasa patronal del IPS en enteros por mil (16,5 % → 165). Unidad de la aritmética exacta. */
+export const TASA_IPS_PATRONAL_POR_MIL = 165;
 
 export const TASA_IVA_SERVICIOS = 0.10;
 export const TASA_RETENCION_IVA = 0.30;
@@ -232,15 +254,16 @@ export function calcularLiquidacionMensual(
         ),
       );
 
-  // Aporte Obrero IPS (9%)
+  // Aporte Obrero IPS (9 %): aritmética exacta (BigInt + ROUND_HALF_UP) sobre la base imponible,
+  // con un único redondeo al guaraní. Decreto-Ley N.º 1860/50, Art. 76.
   const aporteObreroIps = esFactura
     ? 0
-    : roundGs(haberesImponiblesIps * PORCENTAJE_IPS_OBRERO);
+    : aplicarTasaPorMil(haberesImponiblesIps, TASA_IPS_OBRERO_POR_MIL);
 
-  // Aporte Patronal IPS (16.5%)
+  // Aporte Patronal IPS (16,5 %): misma aritmética exacta, redondeo independiente.
   const aportePatronalIps = esFactura
     ? 0
-    : roundGs(haberesImponiblesIps * PORCENTAJE_IPS_PATRONAL);
+    : aplicarTasaPorMil(haberesImponiblesIps, TASA_IPS_PATRONAL_POR_MIL);
 
   // Retención de IVA en la fuente: 30% del IVA facturado SOLO si la empresa es agente retentor (DNIT / ex-SET)
   const retencionIva = esFactura && esAgenteRetentor ? roundGs(ivaMonto * TASA_RETENCION_IVA) : 0;

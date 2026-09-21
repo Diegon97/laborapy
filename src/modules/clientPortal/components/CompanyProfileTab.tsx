@@ -39,7 +39,7 @@ export function calcularDV(ruc: string): string {
 /**
  * Normaliza el número patronal IPS a 10 dígitos con ceros a la izquierda,
  * requerido para el formato de 109 columnas del archivo plano .PRN de IPS.
- * Ej: '4612819' -> '0004612819'
+ * Ej: '1234567' -> '0001234567'
  */
 export function formatearPatronalIps(nro: string | undefined): string {
   const digits = String(nro || '').replace(/\D/g, '');

@@ -213,7 +213,9 @@ describe('Gestión de Sucursales y Multi-patronal (IPS / MTESS)', () => {
     expect(resultadoPrn.fileName).toBe('IPS_JULIO_2026.prn');
     expect(resultadoPrn.totalEmpleados).toBe(2);
 
-    const lineas = resultadoPrn.content.split('\r\n');
+    // El archivo del IPS termina con el par CRLF, igual que el archivo real aceptado;
+    // se filtran los tramos vacios para no contar el salto final.
+    const lineas = resultadoPrn.content.split('\r\n').filter((linea) => linea.length > 0);
     expect(lineas).toHaveLength(2);
 
     // Línea 1 (Casa Central): debe iniciar con los 10 dígitos de la patronal IPS principal
