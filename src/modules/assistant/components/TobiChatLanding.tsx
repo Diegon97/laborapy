@@ -19,6 +19,7 @@ import {
 import { extractContinuationOptions } from '../tobiOptionsAction';
 import { processMediaFile, MAX_FILES_PER_DROP } from '../mediaProcessor';
 import { useTobiVoice } from '../hooks/useTobiVoice';
+import { getShortLink } from '../services/shortLinkService';
 import { evaluateTobiPeritaje } from '../systemOne';
 import { TobiSettlementCard } from './TobiSettlementCard';
 import { TobiArtifactPanel } from './TobiArtifactPanel';
@@ -785,6 +786,8 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
   // Estado de compartir chat
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [shortShareUrl, setShortShareUrl] = useState('');
+  const [isResolvingShareLink, setIsResolvingShareLink] = useState(false);
   const [isSharedSession, setIsSharedSession] = useState(false);
   const [isArtifactOpen, setIsArtifactOpen] = useState(true);
 
@@ -1283,19 +1286,50 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
     return `${window.location.origin}${window.location.pathname}#s=${hash}`;
   };
 
-  const handleCopyShareLink = () => {
+  // Resuelve el enlace corto (TinyURL/clck.ru vía /api/shorten) al abrir el modal de compartir
+  useEffect(() => {
+    if (!isShareModalOpen) return;
+    let cancelled = false;
+    const canonical = getShareUrl();
+    setShortShareUrl(canonical);
+    setIsResolvingShareLink(true);
+    void getShortLink(canonical)
+      .then((resolved) => {
+        if (!cancelled) setShortShareUrl(resolved);
+      })
+      .finally(() => {
+        if (!cancelled) setIsResolvingShareLink(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isShareModalOpen, messages, lastSettlement]);
+
+  const handleCopyShareLink = async () => {
+    const canonical = getShareUrl();
+    let link = shortShareUrl || canonical;
+    if (!shortShareUrl || isResolvingShareLink) {
+      link = await getShortLink(canonical);
+      setShortShareUrl(link);
+    }
     try {
-      void navigator.clipboard.writeText(getShareUrl());
+      if (!navigator.clipboard?.writeText) {
+        throw new Error('clipboard_unavailable');
+      }
+      await navigator.clipboard.writeText(link);
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 2500);
     } catch {
-      alert('Enlace: ' + getShareUrl());
+      alert('Enlace: ' + link);
     }
   };
 
-  const handleShareWhatsApp = () => {
-    const url = getShareUrl();
-    const text = encodeURIComponent(`Revisá esta asesoría y cálculos laborales en LaboraPy:\n${url}`);
+  const handleShareWhatsApp = async () => {
+    const canonical = getShareUrl();
+    const link = shortShareUrl || (await getShortLink(canonical));
+    if (link !== shortShareUrl) setShortShareUrl(link);
+    const text = encodeURIComponent(`Revisá esta asesoría y cálculos laborales en LaboraPy:\n${link}`);
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
@@ -2725,7 +2759,7 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
             >
               <input
                 readOnly
-                value={getShareUrl()}
+                value={shortShareUrl || getShareUrl()}
                 style={{
                   flex: 1,
                   background: 'transparent',
@@ -2739,6 +2773,7 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
               <button
                 type="button"
                 onClick={handleCopyShareLink}
+                disabled={isResolvingShareLink}
                 style={{
                   background: shareCopied ? '#059669' : '#10b981',
                   color: '#022c22',
@@ -2747,14 +2782,22 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
                   border: 'none',
                   borderRadius: 6,
                   padding: '6px 12px',
-                  cursor: 'pointer',
+                  cursor: isResolvingShareLink ? 'progress' : 'pointer',
+                  opacity: isResolvingShareLink ? 0.7 : 1,
                   flexShrink: 0,
                   transition: 'background 0.15s ease',
                 }}
               >
-                {shareCopied ? '✓ ¡Copiado!' : 'Copiar enlace'}
+                {shareCopied ? '✓ ¡Copiado!' : isResolvingShareLink ? 'Acortando…' : 'Copiar enlace'}
               </button>
             </div>
+
+            {shortShareUrl && shortShareUrl.length <= 40 && (
+              <div style={{ fontSize: 11, color: '#34d399', marginTop: -10, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span>⚡</span>
+                <span>Enlace ultra-corto listo para compartir ({shortShareUrl.length} caracteres)</span>
+              </div>
+            )}
 
             {/* Acciones Secundarias */}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
