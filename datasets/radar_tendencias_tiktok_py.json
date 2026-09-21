@@ -1,0 +1,68 @@
+{
+  "top_dolores_frecuentes": [
+    {
+      "dolor": "Liquidaciones irrisorias y cálculo erróneo del finiquito",
+      "porcentaje_estimado": 32,
+      "por_que_les_duele": "El trabajador es despedido o forzado a renunciar y recibe montos absurdos (ej. Gs. 800.000 por 3 años de trabajo). No saben calcular preaviso, indemnización ni vacaciones acumuladas, quedando a merced de lo que la empresa quiera pagarles."
+    },
+    {
+      "dolor": "Explotación horaria (12 a 14 hs nocturnas) y evasión de aporte a IPS",
+      "porcentaje_estimado": 24,
+      "por_que_les_duele": "Se les descuenta el 9% de IPS de su recibo pero la patronal no aporta al ente previsional; cumplen jornadas abusivas sin pago de horas extraordinarias ni recargo nocturno bajo amenaza de despido."
+    },
+    {
+      "dolor": "Acoso de agencias de cobranzas y 'muerte civil' por Informconf",
+      "porcentaje_estimado": 18,
+      "por_que_les_duele": "Entidades como Nexo, Credi Ágil o casas comerciales hostigan a cualquier hora a deudores, familiares y referencias por deudas prescritas de 8 a 15 años, amenazando con embargos ilegales del sueldo mínimo."
+    },
+    {
+      "dolor": "Descuentos arbitrarios (faltantes de caja, robos o mercaderías)",
+      "porcentaje_estimado": 14,
+      "por_que_les_duele": "Las empresas trasladan el riesgo del negocio al empleado, cobrándoles pérdidas o hurtos sin sumario ni pruebas de culpabilidad, mermando ilegalmente salarios ya deprimidos."
+    },
+    {
+      "dolor": "Barrera económica y desatención de la justicia tradicional",
+      "porcentaje_estimado": 12,
+      "por_que_les_duele": "Los abogados tradicionales cobran consultas de hasta Gs. 500.000 por adelantado y luego no atienden llamadas ni WhatsApp, dejando desprotegido al obrero que no tiene capital para litigar."
+    }
+  ],
+  "sectores_criticos": [
+    "Seguridad Privada y Vigilancia (guardias con turnos de 12 a 14 hs sin pago nocturno)",
+    "Estaciones de Servicio / Retail Combustible (playeros expuestos a faltantes de caja y jornadas rotativas abusivas)",
+    "Cobranzas Extrajudiciales y Microcrédito (financieras y casas de electrodomésticos: Nexo, Credi Ágil, Tupí, Innova)",
+    "Comercio Minorista, Supermercados y Farmacias (repositores, cajeros y personal de logística expuestos a descuentos ilegales)",
+    "Servicio Doméstico y Cuidado Familiar (trabajadoras sin contrato formal, IPS ni liquidación tras décadas de servicio)"
+  ],
+  "productos_laborapy_a_vender": [
+    {
+      "nombre": "Cálculo de Liquidación Real + Finiquito Blindado",
+      "resolucion": "Generación automatizada e instantánea del monto legal exacto (indemnización, preaviso, vacaciones, aguinaldo proporcional) para negociar de igual a igual antes de firmar cualquier renuncia."
+    },
+    {
+      "nombre": "Kit de Retiro Justificado Asistido (Demanda con Patrocinio)",
+      "resolucion": "Armado formal de telegrama colacionado e intimación por falta de IPS y exceso de horas para que el trabajador cobre indemnización íntegra como despido injustificado, operado bajo modelo de cuota litis (% a éxito)."
+    },
+    {
+      "nombre": "Escudo Anti-Acoso Financiero y Prescripción de Deudas",
+      "resolucion": "Trámite legal express para intimar el cese de llamadas extorsivas a cobranzas (Nexo/Credi Ágil), exigir la baja de Informconf por caducidad (3-5 años) y levantar embargos ilegales sobre sueldos inembargables."
+    }
+  ],
+  "ideas_anuncios_virales_whatsapp": [
+    {
+      "gancho": "¿Trabajaste 3 años y te quieren dar Gs. 800.000? Te están estafando en tu liquidación.",
+      "cuerpo": "En Paraguay la ley es clara: si te echan, no dejes que el patrón se quede con tu plata de preaviso y vacaciones. Escribinos ahora mismo al WhatsApp para calcular en 2 minutos lo que realmente te corresponde cobrar.",
+      "cta": "Tocá el enlace y hablá directo con Diego al WhatsApp: +595 984 469 005."
+    },
+    {
+      "gancho": "¿Hacés 12 horas de noche y tu patrón te descuenta IPS pero no paga al sistema?",
+      "cuerpo": "Eso es causal directa de RETIRO JUSTIFICADO con indemnización completa igual a un despido injustificado. No renuncies gratis ni aguantes maltratos.",
+      "cta": "Pedí tu auditoría confidencial con Diego Núñez al +595 984 469 005 antes de firmar nada."
+    },
+    {
+      "gancho": "¿Cansado de que Nexo o Credi Ágil te llamen 24/7 por una deuda de hace más de 5 años?",
+      "cuerpo": "Las deudas caducan y el acoso telefónico es ilegal. Si estás en Informconf indebidamente o te amenazan con embargarte el sueldo de empleada doméstica o guardia, defendete hoy.",
+      "cta": "Escribí 'LIBRE DE ACOSO' al +595 984 469 005 y limpiá tu historial con LaboraPy."
+    }
+  ],
+  "resumen_estrategico": "El mercado laboral paraguayo en TikTok sufre desinformación crítica sobre el despido indirecto y carece de acceso a abogados accesibles frente a abusos salariales e intimidación de cobradores. LaboraPy debe posicionar un embudo de entrada gratuito (cálculo de liquidación express en WhatsApp) y monetizar en backend con patrocinio a resultado (cuota litis del 20-30%) y fee fijo accesible para saneamiento de Informconf/deudas caducas. Centralizar el flujo directo al WhatsApp de Diego captura la demanda insatisfecha por el cobro abusivo de consultas de la competencia tradicional."
+}
