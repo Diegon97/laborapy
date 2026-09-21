@@ -55,19 +55,14 @@ const QUICK_SUGGESTIONS: string[] = [
 ];
 
 const SPECIALIST_KEYWORDS = [
-  'especialista',
-  'abogado',
-  'asesor',
-  'asesoría',
-  'asesoria',
-  'demanda',
-  'juicio',
-  'tribunal',
-  'audiencia',
-  'inspección',
-  'inspeccion',
-  'denuncia',
-  'ministerio',
+  'especialista', 'abogado', 'asesor', 'asesoría', 'asesoria', 'demanda', 'juicio', 'tribunal',
+  'audiencia', 'inspección', 'inspeccion', 'denuncia', 'ministerio', 'mtess',
+  'despido', 'despedir', 'despidieron', 'echar', 'echaron', 'echarme',
+  'abandono', 'ausencia', 'falta', 'faltas', 'reposo', 'injustificada', 'injustificado',
+  'firmar', 'firma', 'nota', 'telegrama', 'colacionado',
+  'renuncia', 'renunciar', 'sancion', 'sanción', 'suspension', 'suspensión', 'amonestacion', 'amonestación',
+  'liquidacion', 'liquidación', 'finiquito', 'indemnizacion', 'indemnización', 'preaviso', 'aguinaldo',
+  'embarazo', 'maternidad', 'lactancia', 'ips', 'factura', 'acoso', 'maltrato', 'patron', 'jefe', 'rrhh'
 ];
 
 let messageIdCounter = 0;
@@ -88,8 +83,8 @@ const needsSpecialist = (text: string): boolean => {
 };
 
 const buildWhatsAppLink = (question?: string): string => {
-  const base = 'Hola, necesito asesoría con un especialista de LaboraPy.';
-  const extra = question ? ` Mi consulta fue: "${question}".` : '';
+  const base = 'Hola Diego (LaboraPy), necesito asesoría profesional con mi caso laboral.';
+  const extra = question ? ` Mi consulta fue: "${question.slice(0, 150)}".` : '';
   const text = encodeURIComponent(`${base}${extra}`);
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;
 };
@@ -405,7 +400,12 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
       (m) => m.role === 'assistant' || (m as any).sender === 'assistant',
     );
     if (!lastAssistant) return false;
-    return needsSpecialist(lastAssistant.content || '') || needsSpecialist(lastUserQuestion);
+    const userMessageCount = messages.filter((m) => m.role === 'user' || (m as any).sender === 'user').length;
+    return (
+      needsSpecialist(lastAssistant.content || '') ||
+      needsSpecialist(lastUserQuestion) ||
+      userMessageCount >= 2
+    );
   }, [messages, lastUserQuestion]);
 
   const conversationStarting = messages.length <= 1;
@@ -1574,14 +1574,21 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
                   padding: '12px 14px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 10,
+                  gap: 12,
                   color: '#d1fae5',
+                  boxShadow: '0 8px 24px rgba(16, 185, 129, 0.25)',
                 }}
               >
-                <div style={{ fontSize: 13, lineHeight: 1.5 }}>
-                  🔎 Tu caso parece requerir{' '}
-                  <strong style={{ color: '#a7f3d0' }}>asesoría con un especialista</strong>. Un
-                  profesional puede revisar tu situación con detalle.
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <span style={{ fontSize: 24 }}>💼</span>
+                  <div>
+                    <div style={{ fontSize: 13.5, fontWeight: 800, color: '#ffffff' }}>
+                      Peritaje y Asesoría Personalizada con Diego Núñez (LaboraPy)
+                    </div>
+                    <div style={{ fontSize: 12.5, color: '#a7f3d0', marginTop: 3, lineHeight: 1.45 }}>
+                      ¿Tenés dudas con tu despido, liquidación o te presionan para firmar una nota? Escribile directamente a Diego Núñez por WhatsApp para revisar tu caso y blindar tus derechos laborales.
+                    </div>
+                  </div>
                 </div>
                 <a
                   href={buildWhatsAppLink(lastUserQuestion)}
@@ -1594,16 +1601,16 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
                     alignSelf: 'flex-start',
                     background: '#25D366',
                     color: '#06281a',
-                    fontWeight: 700,
+                    fontWeight: 800,
                     fontSize: 13,
-                    padding: '9px 14px',
+                    padding: '9px 16px',
                     borderRadius: 999,
                     textDecoration: 'none',
-                    boxShadow: '0 6px 18px rgba(37,211,102,0.35)',
+                    boxShadow: '0 4px 14px rgba(37,211,102,0.4)',
                   }}
                 >
                   <span aria-hidden="true">💬</span>
-                  Hablar por WhatsApp con un especialista
+                  Hablar con Diego Núñez por WhatsApp (+595 984 469 005)
                 </a>
               </div>
             )}

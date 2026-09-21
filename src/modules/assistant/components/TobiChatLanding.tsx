@@ -28,6 +28,7 @@ import { TobiDocumentFormCard } from './TobiDocumentFormCard';
 import { TobiSettlementFormCard } from './TobiSettlementFormCard';
 import { TobiPeritajeCard } from './TobiPeritajeCard';
 import { TobiSidebar } from './TobiSidebar';
+import { LABORAPY_CONFIG } from '../../../config/laborapy';
 import {
   listChatSessions,
   saveChatSession,
@@ -120,6 +121,31 @@ let messageIdCounter = 0;
 const nextId = (prefix: string): string => {
   messageIdCounter += 1;
   return `${prefix}-${Date.now()}-${messageIdCounter}`;
+};
+
+const WHATSAPP_NUMBER = LABORAPY_CONFIG.whatsAppNumber || '595984469005';
+
+const SPECIALIST_KEYWORDS = [
+  'especialista', 'abogado', 'asesor', 'asesoría', 'asesoria', 'demanda', 'juicio', 'tribunal',
+  'audiencia', 'inspección', 'inspeccion', 'denuncia', 'ministerio', 'mtess',
+  'despido', 'despedir', 'despidieron', 'echar', 'echaron', 'echarme',
+  'abandono', 'ausencia', 'falta', 'faltas', 'reposo', 'injustificada', 'injustificado',
+  'firmar', 'firma', 'nota', 'telegrama', 'colacionado',
+  'renuncia', 'renunciar', 'sancion', 'sanción', 'suspension', 'suspensión', 'amonestacion', 'amonestación',
+  'liquidacion', 'liquidación', 'finiquito', 'indemnizacion', 'indemnización', 'preaviso', 'aguinaldo',
+  'embarazo', 'maternidad', 'lactancia', 'ips', 'factura', 'acoso', 'maltrato', 'patron', 'jefe', 'rrhh'
+];
+
+const needsSpecialist = (text: string): boolean => {
+  const normalized = (text || '').toLowerCase();
+  return SPECIALIST_KEYWORDS.some((kw) => normalized.includes(kw));
+};
+
+const buildWhatsAppLink = (question?: string): string => {
+  const base = 'Hola Diego (LaboraPy), necesito asesoría profesional con mi caso laboral.';
+  const extra = question ? ` Mi consulta fue: "${question.slice(0, 150)}".` : '';
+  const text = encodeURIComponent(`${base}${extra}`);
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;
 };
 
 const formatGs = (val: number): string => {
@@ -761,6 +787,23 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
   const [shareCopied, setShareCopied] = useState(false);
   const [isSharedSession, setIsSharedSession] = useState(false);
   const [isArtifactOpen, setIsArtifactOpen] = useState(true);
+
+  const lastUserQuestion = useMemo(() => {
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+    return lastUser ? lastUser.content || '' : '';
+  }, [messages]);
+
+  const showSpecialistCTA = useMemo(() => {
+    if (messages.length === 0) return false;
+    const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
+    if (!lastAssistant) return false;
+    const userMessageCount = messages.filter((m) => m.role === 'user').length;
+    return (
+      needsSpecialist(lastAssistant.content || '') ||
+      needsSpecialist(lastUserQuestion) ||
+      userMessageCount >= 2
+    );
+  }, [messages, lastUserQuestion]);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -2211,6 +2254,60 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
                 </div>
               );
             })}
+
+            {/* Tarjeta de Conversión Comercial Directa con Diego Núñez (LaboraPy) */}
+            {showSpecialistCTA && !isLoading && (
+              <div
+                style={{
+                  alignSelf: 'flex-start',
+                  maxWidth: isMobile ? '100%' : '85%',
+                  background: 'linear-gradient(135deg, rgba(6, 78, 59, 0.95) 0%, rgba(4, 120, 87, 0.85) 100%)',
+                  border: '1.5px solid #10b981',
+                  borderRadius: 16,
+                  padding: '14px 18px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                  color: '#d1fae5',
+                  boxShadow: '0 8px 24px rgba(16, 185, 129, 0.25)',
+                  margin: '8px 0 12px 0',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <span style={{ fontSize: 24 }}>💼</span>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#ffffff' }}>
+                      Peritaje y Asesoría Directa con Diego Núñez (LaboraPy)
+                    </div>
+                    <div style={{ fontSize: 13, color: '#a7f3d0', marginTop: 3, lineHeight: 1.45 }}>
+                      ¿Dudas sobre tu despido, ausencias, liquidación o te presionan para firmar una nota? Escribile directamente a Diego Núñez por WhatsApp para revisar tu caso y blindar tus derechos laborales.
+                    </div>
+                  </div>
+                </div>
+                <a
+                  href={buildWhatsAppLink(lastUserQuestion)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    alignSelf: 'flex-start',
+                    background: '#25D366',
+                    color: '#06281a',
+                    fontWeight: 800,
+                    fontSize: 13,
+                    padding: '9px 16px',
+                    borderRadius: 999,
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 14px rgba(37,211,102,0.4)',
+                  }}
+                >
+                  <span aria-hidden="true">💬</span>
+                  Hablar con Diego Núñez por WhatsApp (+595 984 469 005)
+                </a>
+              </div>
+            )}
 
             {/* Casillas interactivas para completar notas laborales */}
             {activeDocFormTipo && (

@@ -222,4 +222,14 @@ describe('TOBI_SYSTEM_PROMPT — identidad pedagógica de Profesor y Mentor de R
     expect(TOBI_SYSTEM_PROMPT).toContain('Contratos y Nómina en Moneda Extranjera (USD / EUR)');
     expect(TOBI_SYSTEM_PROMPT).toContain('Aguinaldo Legal Internacional (Art. 243 C.T.)');
   });
+
+  it('blinda las reglas sobre reposo médico, ausencias y abandono de trabajo (Art. 81 incs. p y q)', () => {
+    expect(TOBI_SYSTEM_PROMPT).toContain('REGLA TAXATIVA SOBRE REPOSO MÉDICO, AUSENCIAS Y ABANDONO DE TRABAJO');
+    expect(TOBI_SYSTEM_PROMPT).toContain('Arts. 68 inc. a y 71 C.T.');
+    expect(TOBI_SYSTEM_PROMPT).toContain('Art. 81 inc. p C.T.');
+    expect(TOBI_SYSTEM_PROMPT).toContain('Art. 81 inc. q C.T.');
+    expect(TOBI_SYSTEM_PROMPT).toContain('PROHIBICIÓN ESTRICTA DE LA MULETILLA "CONSULTÁ CON UN ABOGADO LABORALISTA"');
+    expect(TOBI_SYSTEM_PROMPT).toMatch(/Telegrama Colacionado otorgando un plazo de 48 a 72 horas/i);
+    expect(TOBI_SYSTEM_PROMPT).toMatch(/Faltar 1 o 2 días en un mes sin justificación NO CONFIGURA causal de despido justificado/i);
+  });
 });
