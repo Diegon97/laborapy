@@ -22,8 +22,10 @@ import type {
   HRAuditRecord,
   HRChatMessage,
   TobiChatTurn,
+  TobiEngineMode,
   TobiFeedbackRating,
 } from './types';
+import type { TobiPeritajeJudgment } from './systemOne/types';
 import { searchKnowledgeBase } from './hrKnowledgeBase';
 import { auditSettlement } from './hrAuditor';
 import { getSettlementDeadlines } from './hrDeadlines';
@@ -32,13 +34,18 @@ import { consumeSseChunk } from './sse';
 import { supabase } from '../../lib/supabase';
 
 /**
- * Opciones del asistente: key directa opcional, memoria conversacional y callback de streaming.
+ * Opciones del asistente: key directa opcional, memoria conversacional, motor de inferencia,
+ * veredicto pericial de System One y callback de streaming.
  */
 export interface TobiAssistantOptions {
   apiKey?: string;
   history?: readonly TobiChatTurn[];
   onDelta?: (delta: string) => void;
   attachments?: readonly AssistantAttachment[];
+  /** Motor de inferencia: 'flash' (veloz) o 'deepthink' (razonamiento profundo). */
+  mode?: TobiEngineMode;
+  /** Veredicto pericial determinístico de System One para enrutar/condicionar la respuesta. */
+  systemOneJudgment?: TobiPeritajeJudgment | null;
 }
 
 const STREAM_IDLE_TIMEOUT_MS = 25000;
@@ -47,12 +54,13 @@ const STREAM_TOTAL_TIMEOUT_MS = 55000;
 /**
  * Construye un mensaje de asistente normalizado con id y timestamp actuales.
  */
-function buildAssistantMessage(content: string): AssistantMessage {
+function buildAssistantMessage(content: string, engineMode?: TobiEngineMode): AssistantMessage {
   return {
     id: `msg-${Date.now()}`,
     role: 'assistant',
     content,
     createdAt: new Date().toISOString(),
+    engineMode: engineMode ?? null,
   };
 }
 
@@ -175,6 +183,8 @@ async function streamServerAssistant(args: {
   attachment?: AssistantAttachment | null;
   attachments?: readonly AssistantAttachment[];
   history?: readonly TobiChatTurn[];
+  mode?: TobiEngineMode;
+  systemOneJudgment?: TobiPeritajeJudgment | null;
   onDelta?: (delta: string) => void;
 }): Promise<{ ok: boolean; content: string }> {
   let content = '';
@@ -196,6 +206,8 @@ async function streamServerAssistant(args: {
         attachment: args.attachment,
         attachments: args.attachments,
         history: args.history,
+        mode: args.mode ?? 'flash',
+        systemOneJudgment: args.systemOneJudgment ?? null,
       }),
       signal: controller.signal,
     });
@@ -269,6 +281,8 @@ export async function askDeepSeekAssistant(
   attachment?: AssistantAttachment | null,
   options?: TobiAssistantOptions,
 ): Promise<AssistantMessage> {
+  const mode: TobiEngineMode = options?.mode ?? 'flash';
+
   // 1. Intento primario: endpoint serverless con cascada multi-modelo y streaming SSE
   const server = await streamServerAssistant({
     prompt,
@@ -276,9 +290,11 @@ export async function askDeepSeekAssistant(
     attachment,
     attachments: options?.attachments,
     history: options?.history,
+    mode,
+    systemOneJudgment: options?.systemOneJudgment,
     onDelta: options?.onDelta,
   });
-  if (server.ok && server.content) return buildAssistantMessage(server.content);
+  if (server.ok && server.content) return buildAssistantMessage(server.content, mode);
 
   // 2. Intento secundario: key directa de DeepSeek en cliente (si existe)
   const directKey = options?.apiKey ?? (typeof process !== 'undefined' ? process.env?.DEEPSEEK_API_KEY : undefined);
@@ -293,20 +309,25 @@ export async function askDeepSeekAssistant(
         { role: 'user', content: userMessage },
       ];
       const directController = new AbortController();
-      const directTimer = setTimeout(() => directController.abort(), 15000);
+      const directTimeoutMs = mode === 'deepthink' ? 25000 : 15000;
+      const directTimer = setTimeout(() => directController.abort(), directTimeoutMs);
       const response = await fetch('https://api.deepseek.com/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${directKey}`,
         },
-        body: JSON.stringify({ model: 'deepseek-chat', messages, max_tokens: 1024 }),
+        body: JSON.stringify({
+          model: mode === 'deepthink' ? 'deepseek-reasoner' : 'deepseek-chat',
+          messages,
+          max_tokens: 1024,
+        }),
         signal: directController.signal,
       }).finally(() => clearTimeout(directTimer));
       if (response.ok) {
         const data = await response.json();
         const content = data.choices?.[0]?.message?.content ?? '';
-        if (content) return buildAssistantMessage(content);
+        if (content) return buildAssistantMessage(content, mode);
       }
     } catch {
       // cae al motor local

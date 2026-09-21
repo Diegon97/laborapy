@@ -200,6 +200,13 @@ export interface KnowledgeSearchResult {
 
 export type AssistantRole = 'user' | 'assistant' | 'system';
 
+/**
+ * Motor de inferencia de Tobi:
+ *  - `flash`: respuesta veloz (Gemini Cache → DeepSeek V3 → GPT-4o-mini).
+ *  - `deepthink`: razonamiento profundo (DeepSeek Reasoner → Gemini Thinking → DeepSeek V3).
+ */
+export type TobiEngineMode = 'flash' | 'deepthink';
+
 export type TobiFeedbackRating = 'positive' | 'negative';
 
 export interface AssistantCitation {
@@ -235,6 +242,8 @@ export interface AssistantMessage {
   readonly continuationOptions?: readonly string[] | null;
   /** Veredicto pericial determinístico de System One asociado al turno, si existió evaluación. */
   readonly systemOneJudgment?: import('./systemOne/types').TobiPeritajeJudgment | null;
+  /** Motor de inferencia utilizado para producir la respuesta. */
+  readonly engineMode?: TobiEngineMode | null;
 }
 
 export interface TobiSettlementActionPayload {

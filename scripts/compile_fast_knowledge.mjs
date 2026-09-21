@@ -15,6 +15,20 @@ const keyArticles = ['Art. 19', 'Art. 81', 'Art. 84', 'Art. 87', 'Art. 91', 'Art
 const selectedOiko = [];
 const seenThemes = new Set();
 
+const TERMINOS_PROHIBIDOS = [
+  'zavidoro', 'cantero', 'busto', 'azco', '5162734', '5173620', '1343704', 'merco sur', 'mercosur', 'meta lab', 'metalab'
+];
+
+function sanitizeSensitive(text) {
+  if (typeof text !== 'string') return text;
+  let clean = text;
+  for (const term of TERMINOS_PROHIBIDOS) {
+    const re = new RegExp(term, 'gi');
+    clean = clean.replace(re, '[Parte Anonimizada]');
+  }
+  return clean;
+}
+
 // 1. Primero los que tienen corrección de Diego Núñez (máxima autoridad)
 for (const item of oikoRaw) {
   if (item.correccion_diego && item.correccion_diego.length > 20) {
@@ -22,11 +36,11 @@ for (const item of oikoRaw) {
       seenThemes.add(item.tema);
       selectedOiko.push({
         id: item.id,
-        tema: item.tema,
-        consulta: item.consulta,
+        tema: sanitizeSensitive(item.tema),
+        consulta: sanitizeSensitive(item.consulta),
         articulos: item.articulos || [],
-        dictamen: item.deepseek_eval || '',
-        criterioDiego: item.correccion_diego,
+        dictamen: sanitizeSensitive(item.deepseek_eval || ''),
+        criterioDiego: sanitizeSensitive(item.correccion_diego),
         abogado: item.abogado || '@laboralistas.py'
       });
     }
@@ -41,11 +55,11 @@ for (const art of keyArticles) {
       seenThemes.add(item.tema);
       selectedOiko.push({
         id: item.id,
-        tema: item.tema,
-        consulta: item.consulta,
+        tema: sanitizeSensitive(item.tema),
+        consulta: sanitizeSensitive(item.consulta),
         articulos: item.articulos || [],
-        dictamen: item.deepseek_eval || '',
-        criterioDiego: item.correccion_diego || '',
+        dictamen: sanitizeSensitive(item.deepseek_eval || ''),
+        criterioDiego: sanitizeSensitive(item.correccion_diego || ''),
         abogado: item.abogado || '@laboralistas.py'
       });
       countForArt++;
@@ -69,8 +83,8 @@ for (const item of csjRaw) {
       seenCsj.add(inst);
       selectedCsj.push({
         materia: kw,
-        pregunta: inst,
-        doctrina: out
+        pregunta: sanitizeSensitive(inst),
+        doctrina: sanitizeSensitive(out)
       });
       break;
     }

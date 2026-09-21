@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import type { AssistantAttachment, AssistantMessage, AssistantQueryContext, TobiFeedbackRating } from '../types';
+import type { AssistantAttachment, AssistantMessage, AssistantQueryContext, TobiEngineMode, TobiFeedbackRating } from '../types';
 import { askDeepSeekAssistant, generateOfflineAnswer, recordTobiFeedback, saveChatMessageToSupabase } from '../assistantService';
 import { createWhatsAppUrl, LABORAPY_CONFIG } from '../../../config/laborapy';
 import { processMediaFile, MAX_FILES_PER_DROP } from '../mediaProcessor';
@@ -258,6 +258,7 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [input, setInput] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [engineMode, setEngineMode] = useState<TobiEngineMode>('flash');
   const isMinimized = false;
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -573,6 +574,8 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
             history,
             onDelta,
             attachments: activeAttachments,
+            mode: engineMode,
+            systemOneJudgment,
           });
           if (!assistantMessage || !assistantMessage.content) {
             assistantMessage = null;
@@ -1974,16 +1977,89 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
                 </div>
               )}
 
+              {/* Selector de Modo: Flash vs DeepThink */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 8,
+                  padding: '0 4px',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    borderRadius: 20,
+                    padding: 2,
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    gap: 2,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setEngineMode('flash')}
+                    title="Modo Flash: Respuestas ágiles e instantáneas con Gemini Flash y Context Caching"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      border: 'none',
+                      borderRadius: 16,
+                      padding: '3px 10px',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      background: engineMode === 'flash' ? 'linear-gradient(135deg, #0ea5e9 0%, #10b981 100%)' : 'transparent',
+                      color: engineMode === 'flash' ? '#ffffff' : '#94a3b8',
+                      boxShadow: engineMode === 'flash' ? '0 2px 8px rgba(14, 165, 233, 0.4)' : 'none',
+                    }}
+                  >
+                    <span>⚡ Flash</span>
+                    <span style={{ fontSize: 9, opacity: 0.85, fontWeight: 500 }}>Rápido</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEngineMode('deepthink')}
+                    title="Modo DeepThink: Razonamiento profundo con DeepSeek Reasoner para peritajes complejos"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      border: 'none',
+                      borderRadius: 16,
+                      padding: '3px 10px',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      background: engineMode === 'deepthink' ? 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)' : 'transparent',
+                      color: engineMode === 'deepthink' ? '#ffffff' : '#94a3b8',
+                      boxShadow: engineMode === 'deepthink' ? '0 2px 8px rgba(139, 92, 246, 0.4)' : 'none',
+                    }}
+                  >
+                    <span>🧠 DeepThink</span>
+                    <span style={{ fontSize: 9, opacity: 0.85, fontWeight: 500 }}>Peritaje</span>
+                  </button>
+                </div>
+                <span style={{ fontSize: 10, color: '#64748b', display: isMobile ? 'none' : 'inline' }}>
+                  {engineMode === 'deepthink' ? '🔬 Razonamiento deliberado (DeepSeek Reasoner)' : '⚡ Respuesta en <1s con caché legal'}
+                </span>
+              </div>
+
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'flex-end',
                   gap: 8,
                   background: 'rgba(30,41,59,0.65)',
-                  border: '1px solid rgba(99,102,241,0.35)',
+                  border: engineMode === 'deepthink' ? '1px solid rgba(139,92,246,0.5)' : '1px solid rgba(99,102,241,0.35)',
                   borderRadius: 22,
                   padding: '6px 6px 6px 10px',
-                  boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.02)',
+                  boxShadow: engineMode === 'deepthink' ? '0 0 12px rgba(139,92,246,0.15)' : 'inset 0 0 0 1px rgba(255,255,255,0.02)',
                   maxWidth: '100%',
                   transition: 'border 0.2s ease, box-shadow 0.2s ease',
                 }}
@@ -2054,6 +2130,8 @@ export const TobiChatModal: React.FC<TobiChatModalProps> = ({
                   placeholder={
                     attachments.length > 0
                       ? `Documento adjunto: ${attachments[0].name}${attachments.length > 1 ? ` (+${attachments.length - 1} archivos)` : ''}. Escribí una indicación o enviá directo…`
+                      : engineMode === 'deepthink'
+                      ? 'Consultá o adjuntá tu caso para análisis pericial profundo (DeepThink)...'
                       : isGuest
                       ? `Escribe tu consulta laboral (${GUEST_QUERY_LIMIT - guestQueriesCount} de ${GUEST_QUERY_LIMIT} restantes)…`
                       : 'Escribe tu consulta o caso laboral…'

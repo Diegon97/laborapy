@@ -1,14 +1,12 @@
 /**
  * VERCEL SERVERLESS FUNCTION: AUXILIAR INTELIGENTE RRHH LABORAPY
- * Motor de Inferencia en Escalera (Cascade Waterfall) con STREAMING SSE:
- *  0. (Opcional dev) Ollama local — solo si TOBI_LOCAL_LLM_URL está definida
- *  1. Google Gemini Flash (Gratis: 1,500 req/día)
- *  2. Groq Cloud (Pool concurrente de claves por env vars, ultra veloz, Vision)
- *  3. Cloudflare Workers AI
- *  4. OpenRouter Free
- *  5. OpenAI (Respaldo premium, activado por OPENAI_API_KEY)
- *  6. DeepSeek (Último recurso)
- *  7. Fallback a motor determinístico local
+ * Motor de Inferencia en Escalera (Cascade Waterfall) con STREAMING SSE y doble motor:
+ *  - mode 'flash'     : Gemini (Context Caching) -> DeepSeek V3 -> GPT-4o-mini -> Groq (120B) -> Cloudflare (70B)
+ *  - mode 'deepthink' : DeepSeek Reasoner -> Gemini Thinking -> DeepSeek V3 -> Gemini Flash -> GPT-4o-mini
+ *
+ * Base de conocimiento in-memory: Ley 213/93 (hrKnowledgeBase), casos TikTok/Oiko peritados
+ * y doctrina CSJ (tobiKnowledgeCatalog) + clasificación semáforo System One (heuristicTobiPeritaje),
+ * inyectada ANTES del RAG remoto.
  *
  * SEGURIDAD: ninguna credencial vive en el código fuente. El pool de Groq,
  * Gemini, Cloudflare, OpenRouter, OpenAI y DeepSeek se resuelve SOLO desde env vars.
@@ -18,6 +16,11 @@
  */
 
 import { TOBI_SYSTEM_PROMPT } from '../src/modules/assistant/tobiSystemPrompt.js';
+import { queryFastKnowledge } from '../src/modules/assistant/tobiKnowledgeCatalog.js';
+import { searchKnowledgeBase } from '../src/modules/assistant/hrKnowledgeBase.js';
+import { heuristicTobiPeritaje } from '../src/modules/assistant/systemOne/systemOneEngine.js';
+import type { TobiEngineMode } from '../src/modules/assistant/types.js';
+import type { TobiPeritajeJudgment } from '../src/modules/assistant/systemOne/types.js';
 
 declare const process: any;
 declare const Buffer: any;
@@ -32,6 +35,12 @@ const MAX_HISTORY_TURNS = 8;
 const MAX_HISTORY_TURN_CHARS = 2000;
 const MAX_GROQ_ATTEMPTS = 6;
 const MIN_ATTEMPT_MS = 700;
+
+// Gemini Context Caching (fallback transparente si la creación falla)
+const GEMINI_CACHE_TTL_SECONDS = 3600;
+const GEMINI_CACHE_MIN_CHARS = 1500;
+const GEMINI_FLASH_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+const GEMINI_THINKING_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash-thinking-exp'];
 
 // Adjuntos múltiples (resultado del procesamiento de PDFs en el cliente)
 const MAX_ATTACHMENTS = 15;
@@ -201,6 +210,9 @@ async function streamOpenAiCompatible(params: {
   messages: any[];
   timeoutMs: number;
   extraHeaders?: Record<string, string>;
+  /** DeepSeek Reasoner rechaza temperature/penalties: omitir muestreo si es true. */
+  omitSampling?: boolean;
+  maxTokens?: number;
   onDelta: (text: string) => void;
   externalSignal: AbortSignal;
 }): Promise<StreamOutcome> {
@@ -223,14 +235,14 @@ async function streamOpenAiCompatible(params: {
       body: JSON.stringify({
         model: params.model,
         stream: true,
-        temperature: 0.1,
-        max_tokens: 1400,
+        ...(params.omitSampling ? {} : { temperature: 0.1 }),
+        max_tokens: params.maxTokens ?? 1400,
         messages: params.messages,
       }),
       signal: controller.signal,
     });
-          if (!res.ok) return { committed: false, error: `HTTP ${res.status}` };
-          if (!res.body) return { committed: false, error: 'stream-empty' };
+    if (!res.ok) return { committed: false, error: `HTTP ${res.status}` };
+    if (!res.body) return { committed: false, error: 'stream-empty' };
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -247,22 +259,23 @@ async function streamOpenAiCompatible(params: {
         if (!payload || payload === '[DONE]') continue;
         try {
           const json = JSON.parse(payload);
+          // Solo se transmite `content`; el `reasoning_content` de deepseek-reasoner se descarta internamente
           const delta = json?.choices?.[0]?.delta?.content;
-                if (typeof delta === 'string' && delta.length > 0) {
-                  committed = true;
-                  content += delta;
-                  params.onDelta(delta);
-                }
-              } catch {
-                // Chunk parcial o no-JSON: ignorar
-              }
-            }
+          if (typeof delta === 'string' && delta.length > 0) {
+            committed = true;
+            content += delta;
+            params.onDelta(delta);
           }
-          if (!committed) return { committed: false, error: 'stream-empty' };
-          return { committed: true, content };
         } catch {
-          return { committed, content: content || undefined, error: committed ? undefined : 'network' };
-        } finally {
+          // Chunk parcial o no-JSON: ignorar
+        }
+      }
+    }
+    if (!committed) return { committed: false, error: 'stream-empty' };
+    return { committed: true, content };
+  } catch {
+    return { committed, content: content || undefined, error: committed ? undefined : 'network' };
+  } finally {
     clearTimeout(timer);
     params.externalSignal.removeEventListener('abort', onExternalAbort);
   }
@@ -296,12 +309,45 @@ function normalizeGeminiContents(history: ChatTurn[], parts: any[]): any[] {
   return contents;
 }
 
+/**
+ * Crea un CachedContent de Gemini para el bloque estático (prompt canónico + conocimiento base).
+ * Fallback transparente: si la API falla o expira, devuelve null y se usa inyección inline.
+ */
+async function createGeminiContextCache(params: {
+  apiKey: string;
+  model: string;
+  baseText: string;
+  timeoutMs: number;
+}): Promise<string | null> {
+  if (params.timeoutMs <= 0 || params.baseText.length < GEMINI_CACHE_MIN_CHARS) return null;
+  const data = await fetchJson<{ name?: string }>(
+    `https://generativelanguage.googleapis.com/v1beta/cachedContents?key=${params.apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: `models/${params.model}`,
+        systemInstruction: { parts: [{ text: TOBI_SYSTEM_PROMPT }] },
+        contents: [
+          { role: 'user', parts: [{ text: params.baseText }] },
+          { role: 'model', parts: [{ text: 'Contexto normativo interno recibido.' }] },
+        ],
+        ttl: `${GEMINI_CACHE_TTL_SECONDS}s`,
+      }),
+    },
+    params.timeoutMs,
+  );
+  return typeof data?.name === 'string' && data.name ? data.name : null;
+}
+
 async function streamGeminiModel(params: {
   apiKey: string;
   model: string;
   parts: any[];
   history: ChatTurn[];
   timeoutMs: number;
+  cachedContent?: string | null;
+  thinkingBudget?: number;
   onDelta: (text: string) => void;
   externalSignal: AbortSignal;
 }): Promise<StreamOutcome> {
@@ -313,18 +359,28 @@ async function streamGeminiModel(params: {
   let committed = false;
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${params.model}:streamGenerateContent?alt=sse&key=${params.apiKey}`;
+    const generationConfig: any = {
+      temperature: 0.1,
+      maxOutputTokens: 1400,
+      ...(params.thinkingBudget && params.thinkingBudget > 0
+        ? { thinkingConfig: { thinkingBudget: params.thinkingBudget } }
+        : {}),
+    };
+    const requestBody: any = {
+      ...(params.cachedContent
+        ? { cachedContent: params.cachedContent }
+        : { systemInstruction: { parts: [{ text: TOBI_SYSTEM_PROMPT }] } }),
+      contents: normalizeGeminiContents(params.history, params.parts),
+      generationConfig,
+    };
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: TOBI_SYSTEM_PROMPT }] },
-        contents: normalizeGeminiContents(params.history, params.parts),
-              generationConfig: { temperature: 0.1, maxOutputTokens: 1400 },
-            }),
-            signal: controller.signal,
-          });
-          if (!res.ok) return { committed: false, error: `HTTP ${res.status}` };
-          if (!res.body) return { committed: false, error: 'stream-empty' };
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    });
+    if (!res.ok) return { committed: false, error: `HTTP ${res.status}` };
+    if (!res.body) return { committed: false, error: 'stream-empty' };
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -340,23 +396,23 @@ async function streamGeminiModel(params: {
         const payload = line.slice(5).trim();
         if (!payload || payload === '[DONE]') continue;
         try {
-                const json = JSON.parse(payload);
-                const text = (json?.candidates?.[0]?.content?.parts ?? [])
-                  .map((p: any) => (typeof p?.text === 'string' ? p.text : ''))
-                  .join('');
-                if (text.length > 0) {
-                  committed = true;
-                  params.onDelta(text);
-                }
-              } catch {
-                // Chunk parcial o no-JSON: ignorar
-              }
-            }
+          const json = JSON.parse(payload);
+          const text = (json?.candidates?.[0]?.content?.parts ?? [])
+            .map((p: any) => (typeof p?.text === 'string' ? p.text : ''))
+            .join('');
+          if (text.length > 0) {
+            committed = true;
+            params.onDelta(text);
           }
-          return committed ? { committed: true } : { committed: false, error: 'stream-empty' };
         } catch {
-          return { committed, error: committed ? undefined : 'network' };
-        } finally {
+          // Chunk parcial o no-JSON: ignorar
+        }
+      }
+    }
+    return committed ? { committed: true } : { committed: false, error: 'stream-empty' };
+  } catch {
+    return { committed, error: committed ? undefined : 'network' };
+  } finally {
     clearTimeout(timer);
     params.externalSignal.removeEventListener('abort', onExternalAbort);
   }
@@ -391,12 +447,12 @@ async function streamCloudflare(params: {
       body: JSON.stringify({
         stream: true,
         messages: params.messages,
-              max_tokens: 1024,
-            }),
-            signal: controller.signal,
-          });
-          if (!res.ok) return { committed: false, error: `HTTP ${res.status}` };
-          if (!res.body) return { committed: false, error: 'stream-empty' };
+        max_tokens: 1024,
+      }),
+      signal: controller.signal,
+    });
+    if (!res.ok) return { committed: false, error: `HTTP ${res.status}` };
+    if (!res.body) return { committed: false, error: 'stream-empty' };
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -413,25 +469,25 @@ async function streamCloudflare(params: {
         if (!payload || payload === '[DONE]') continue;
         try {
           const json = JSON.parse(payload);
-                const text =
-                  typeof json?.response === 'string'
-                    ? json.response
-                    : typeof json?.choices?.[0]?.delta?.content === 'string'
-                      ? json.choices[0].delta.content
-                      : '';
-                if (text.length > 0) {
-                  committed = true;
-                  params.onDelta(text);
-                }
-              } catch {
-                // Chunk parcial o no-JSON: ignorar
-              }
-            }
+          const text =
+            typeof json?.response === 'string'
+              ? json.response
+              : typeof json?.choices?.[0]?.delta?.content === 'string'
+                ? json.choices[0].delta.content
+                : '';
+          if (text.length > 0) {
+            committed = true;
+            params.onDelta(text);
           }
-          return committed ? { committed: true } : { committed: false, error: 'stream-empty' };
         } catch {
-          return { committed, error: committed ? undefined : 'network' };
-        } finally {
+          // Chunk parcial o no-JSON: ignorar
+        }
+      }
+    }
+    return committed ? { committed: true } : { committed: false, error: 'stream-empty' };
+  } catch {
+    return { committed, error: committed ? undefined : 'network' };
+  } finally {
     clearTimeout(timer);
     params.externalSignal.removeEventListener('abort', onExternalAbort);
   }
@@ -505,7 +561,7 @@ async function callLocalLLM(
   return null;
 }
 
-// 1. Google Gemini Flash (Gratis con Visión Multimodal)
+// 1. Google Gemini (Flash con Context Caching o Thinking según el modo)
 async function callGemini(
   prompt: string,
   timeoutMs: number,
@@ -514,10 +570,11 @@ async function callGemini(
   onDelta: (text: string) => void,
   externalSignal: AbortSignal,
   onError?: (msg: string) => void,
+  opts?: { mode?: TobiEngineMode; cacheBase?: string; thinkingBudget?: number },
 ): Promise<{ provider: string; model: string } | null> {
   const apiKey = (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY)?.trim();
   if (!apiKey) return null;
-  const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+  const models = opts?.mode === 'deepthink' ? GEMINI_THINKING_MODELS : GEMINI_FLASH_MODELS;
 
   // Los text/plain ya vienen incorporados en el prompt: imagen, PDF y audio van como inlineData.
   const parts: any[] = [];
@@ -537,6 +594,17 @@ async function callGemini(
   }
   parts.push({ text: prompt });
 
+  // Context Caching: intento con fallback transparente a inyección inline.
+  let cachedContent: string | null = null;
+  if (opts?.cacheBase && opts.cacheBase.length >= GEMINI_CACHE_MIN_CHARS) {
+    cachedContent = await createGeminiContextCache({
+      apiKey,
+      model: models[0],
+      baseText: opts.cacheBase,
+      timeoutMs: Math.min(2000, timeoutMs),
+    });
+  }
+
   const deadlineAt = Date.now() + timeoutMs;
   let lastError: string | undefined;
   for (const model of models) {
@@ -548,6 +616,8 @@ async function callGemini(
       parts,
       history,
       timeoutMs: Math.min(remaining, PROVIDER_TIMEOUT_MS),
+      cachedContent,
+      thinkingBudget: opts?.thinkingBudget,
       onDelta,
       externalSignal,
     });
@@ -558,7 +628,7 @@ async function callGemini(
   return null;
 }
 
-// 2. Groq Cloud (Gratis Ultra Rápido con Pool Concurrente de Failover y Soporte Vision)
+// 2. Groq Cloud (Ultra Rápido con Pool Concurrente de Failover)
 const GROQ_POOL: string[] = Array.from(new Set([
   process.env.GROQ_API_KEY,
   process.env.GROQ_API_KEY_1,
@@ -578,28 +648,18 @@ async function callGroq(
 ): Promise<{ provider: string; model: string } | null> {
   if (GROQ_POOL.length === 0) return null;
 
-  // Groq no soporta vision de PDF: los PDF se ignoran; los text/plain
-  // ya vienen incorporados dentro del prompt.
   const images = attachments.filter((a) => a.mimeType.startsWith('image/'));
-
-  // Catálogo Groq actual (2026-09): SIN modelos de visión.
-  // Si Groq publica visión nuevamente, agregá los IDs aquí y el pipeline se activa solo.
   const GROQ_VISION_MODELS: string[] = [];
 
-  // Sin visión disponible: salida rápida para que la cascada siga con otros proveedores
-  // (el motivo queda registrado en telemetría).
   if (images.length > 0 && GROQ_VISION_MODELS.length === 0) {
     onError?.('sin modelos de visión en el catálogo actual de Groq');
     return null;
   }
 
-  // Presupuesto estricto: nunca más de MAX_GROQ_ATTEMPTS ni un intento
-  // con menos de MIN_ATTEMPT_MS de margen antes del deadline.
   const deadlineAt = Date.now() + timeoutMs;
   let attempts = 0;
   let lastError: string | undefined;
 
-  // Un intento OpenAI-compatible con el pool de claves y los modelos dados.
   const runCall = async (
     models: string[],
     userContent: any,
@@ -630,9 +690,9 @@ async function callGroq(
     return null;
   };
 
-  const textModels = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b'];
+  // Solo modelos de alta capacidad: eliminamos 8B/20B para evitar alucinaciones
+  const textModels = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b'];
 
-  // 0 imágenes: llamada de texto normal. 1 imagen: content array text + image_url.
   if (images.length <= 1) {
     const isImage = images.length === 1;
     const userContent: any = isImage
@@ -650,7 +710,6 @@ async function callGroq(
     return null;
   }
 
-  // >1 imágenes: un intento multi-imagen en una sola llamada.
   const multiContent: any = [
     { type: 'text', text: prompt },
     ...images.map((a) => ({
@@ -661,55 +720,11 @@ async function callGroq(
   const multiAnswer = await runCall(GROQ_VISION_MODELS, multiContent);
   if (multiAnswer) return multiAnswer;
 
-  // FALLBACK silencioso: transcripción secuencial (máx. 6 páginas) y luego
-  // una llamada final en texto con las transcripciones acumuladas.
-  const transcripts: string[] = [];
-  for (const image of images.slice(0, 6)) {
-    if (attempts >= MAX_GROQ_ATTEMPTS) break;
-    if (deadlineAt - Date.now() < MIN_ATTEMPT_MS) break;
-    for (const apiKey of GROQ_POOL) {
-      if (attempts >= MAX_GROQ_ATTEMPTS) break;
-      if (deadlineAt - Date.now() < MIN_ATTEMPT_MS) break;
-      attempts++;
-      const outcome = await streamOpenAiCompatible({
-        url: 'https://api.groq.com/openai/v1/chat/completions',
-        apiKey,
-        model: GROQ_VISION_MODELS[0],
-        messages: [
-          { role: 'system', content: 'Transcribí textualmente en español el contenido de la página escaneada. Devolvé SOLO la transcripción.' },
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: 'Transcribí esta página escaneada.' },
-              { type: 'image_url', image_url: { url: `data:${image.mimeType};base64,${image.cleanBase64}` } },
-            ],
-          },
-        ],
-        timeoutMs: Math.min(4000, deadlineAt - Date.now()),
-        onDelta: () => {},
-        externalSignal,
-      });
-      if (outcome.committed && outcome.content) {
-        transcripts.push(outcome.content);
-        break;
-      }
-      lastError = outcome.error;
-    }
-  }
-
-  if (transcripts.length === 0) {
-    onError?.(lastError ?? 'sin respuesta');
-    return null;
-  }
-
-  const finalPrompt = `${prompt}\n\n[Transcripción de páginas escaneadas]\n${transcripts.join('\n\n')}`;
-  const finalAnswer = await runCall(textModels, finalPrompt);
-  if (finalAnswer) return finalAnswer;
   onError?.(lastError ?? 'sin respuesta');
   return null;
 }
 
-// 3. Cloudflare Workers AI
+// 3. Cloudflare Workers AI (modelo 70B: sin 8B en la cascada)
 async function callCloudflare(
   prompt: string,
   timeoutMs: number,
@@ -721,7 +736,7 @@ async function callCloudflare(
   const token = (process.env.CLOUDFLARE_API_TOKEN || process.env.CF_API_TOKEN)?.trim();
   const accountId = (process.env.CLOUDFLARE_ACCOUNT_ID || process.env.CF_ACCOUNT_ID)?.trim();
   if (!token || !accountId) return null;
-  const model = '@cf/meta/llama-3.1-8b-instruct';
+  const model = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
   const outcome = await streamCloudflare({
     url: `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`,
     token,
@@ -809,7 +824,7 @@ async function callOpenAI(
   return null;
 }
 
-// 6. DeepSeek (Último recurso según solicitud del usuario)
+// 6. DeepSeek (V3 chat y Reasoner para modo deepthink)
 async function callDeepSeek(
   prompt: string,
   timeoutMs: number,
@@ -817,14 +832,16 @@ async function callDeepSeek(
   onDelta: (text: string) => void,
   externalSignal: AbortSignal,
   onError?: (msg: string) => void,
+  reasoner = false,
 ): Promise<{ provider: string; model: string } | null> {
   const apiKey = (process.env.DEEPSEEK_API_KEY || process.env.VITE_DEEPSEEK_API_KEY)?.trim();
   if (!apiKey) return null;
-  const model = 'deepseek-chat';
+  const model = reasoner ? 'deepseek-reasoner' : 'deepseek-chat';
   const outcome = await streamOpenAiCompatible({
     url: 'https://api.deepseek.com/chat/completions',
     apiKey,
     model,
+    omitSampling: reasoner,
     messages: [
       { role: 'system', content: TOBI_SYSTEM_PROMPT },
       ...history,
@@ -840,7 +857,7 @@ async function callDeepSeek(
 }
 
 const EMBEDDING_DIMENSIONS = 768;
-const SEMANTIC_MATCH_THRESHOLD = 0.3; // Menor umbral para capturar más contexto
+const SEMANTIC_MATCH_THRESHOLD = 0.3;
 const SEMANTIC_MATCH_COUNT = 4;
 
 interface TobiKnowledgeMatch {
@@ -876,10 +893,10 @@ async function embedQueryText(query: string, timeoutMs: number): Promise<number[
     if (!res.ok) return null;
     const data = await res.json();
     if (!data.success) return null;
-    
+
     const v = data.result.data[0];
     if (!Array.isArray(v) || v.length !== EMBEDDING_DIMENSIONS) return null;
-    
+
     // Normalización L2 requerida para operator class vector_cosine_ops en Supabase
     const norm = Math.sqrt(v.reduce((s, x) => s + x * x, 0));
     return norm === 0 ? v : v.map((x) => x / norm);
@@ -931,15 +948,15 @@ async function fetchSemanticJurisprudence(
       .map((m) => {
         let title = 'Precedente Legal / Base de Conocimiento';
         if (m.metadata?.source === 'csj' || m.metadata?.fuente === 'CSJ') {
-            title = `Corte Suprema de Justicia (${m.metadata?.sala || 'Sala Laboral'})`;
+          title = `Corte Suprema de Justicia (${m.metadata?.sala || 'Sala Laboral'})`;
         } else if (m.metadata?.type === 'audio_transcription' || m.metadata?.fuente === 'Tobi_Audios') {
-            title = 'Consulta Similar (Audio/Video Resuelto)';
+          title = 'Consulta Similar (Audio/Video Resuelto)';
         } else if (m.metadata?.fuente === 'Peritaje_5_Abogados_Oiko' || m.metadata?.tipo === 'peritaje_laboral_social') {
-            title = `Dictamen Pericial Laboral Verificado (${m.metadata?.abogado || '5 Abogados'})`;
+          title = `Dictamen Pericial Laboral Verificado (${m.metadata?.abogado || '5 Abogados'})`;
         } else if (m.metadata?.source === 'multimedia') {
-            title = 'Jurisprudencia y Criterio Práctico Multimedia';
+          title = 'Jurisprudencia y Criterio Práctico Multimedia';
         }
-        
+
         return (
           `• [${title}]:\n` +
           `  ${m.content.replace(/\n/g, '\n  ')}`
@@ -1111,6 +1128,78 @@ export async function fetchSupabaseJurisprudence(query: string, timeoutMs: numbe
   return sections.join('\n\n');
 }
 
+/* -------------------------------------------------------------------------- */
+/*                       Conocimiento in-memory (pre-RAG)                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Construye el bloque de conocimiento en memoria (sin red, <1ms):
+ *  - Ley 213/93 y complementarias vía hrKnowledgeBase (searchKnowledgeBase).
+ *  - Casos TikTok/Oiko peritados + doctrina CSJ vía tobiKnowledgeCatalog (queryFastKnowledge).
+ */
+function buildInMemoryKnowledgeBlock(query: string): string {
+  const sections: string[] = [];
+
+  const kbResults = searchKnowledgeBase(query, 3);
+  if (kbResults.length > 0) {
+    const kbText = kbResults
+      .map((r) => `• ${r.entry.title} (${r.entry.legalBasis.join('; ') || 'Ley 213/93'}): ${r.entry.summary}`)
+      .join('\n');
+    sections.push(`[BASE DE CONOCIMIENTO NORMATIVA (LEY 213/93 Y CONCORDANTES)]\n${kbText}`);
+  }
+
+  const fast = queryFastKnowledge(query, 3, 2);
+  if (fast.formattedContext) sections.push(fast.formattedContext);
+
+  return sections.join('\n\n');
+}
+
+/**
+ * Bloque de directiva derivado del veredicto determinístico de System One (semáforo).
+ */
+function buildSystemOneDirective(judgment: TobiPeritajeJudgment): string {
+  const rf = judgment.riesgoFraudeArt19;
+  const lines = [
+    `• Intención detectada: ${judgment.intencion}`,
+    `• Motivo de egreso probable: ${judgment.motivoEgreso}`,
+    `• Riesgo de fraude Art. 19 C.T.: nivel ${rf.nivel}/5${rf.flagrante ? ' (FLAGRANTE)' : ''}`,
+    `• Urgente por prescripción: ${judgment.esUrgentePrescripcion ? 'SÍ' : 'no'}`,
+    `• Lead B2B: ${judgment.leadB2B ? 'SÍ' : 'no'}`,
+    `• Confianza del clasificador: ${judgment.confianza}`,
+  ];
+  return (
+    `[CLASIFICACIÓN SEMÁFORO SYSTEM ONE (VEREDICTO DETERMINÍSTICO)]\n` +
+    lines.join('\n') +
+    `\nRespetá esta clasificación y priorizá los artículos correspondientes.`
+  );
+}
+
+const TOBI_INTENCIONES = new Set(['calcular_liquidacion', 'auditoria_documento', 'consulta_derechos', 'fraude_facturacion', 'fuera_de_dominio']);
+const TOBI_MOTIVOS_EGRESO = new Set(['despido_injustificado', 'despido_justificado', 'renuncia_voluntaria', 'retiro_justificado', 'estabilidad_10_anos', 'no_aplica']);
+
+function sanitizeSystemOneJudgment(raw: any): TobiPeritajeJudgment | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const intencion = TOBI_INTENCIONES.has(raw.intencion) ? raw.intencion : null;
+  const motivoEgreso = TOBI_MOTIVOS_EGRESO.has(raw.motivoEgreso) ? raw.motivoEgreso : null;
+  if (!intencion || !motivoEgreso) return null;
+  const rf = raw.riesgoFraudeArt19 && typeof raw.riesgoFraudeArt19 === 'object' ? raw.riesgoFraudeArt19 : {};
+  const score = Number(rf.score);
+  const nivel = Number(rf.nivel);
+  const confianza = Number(raw.confianza);
+  return {
+    intencion,
+    motivoEgreso,
+    riesgoFraudeArt19: {
+      score: Number.isFinite(score) ? Math.min(5, Math.max(1, score)) : 1,
+      nivel: (Number.isFinite(nivel) ? Math.min(5, Math.max(1, Math.round(nivel))) : 1) as 1 | 2 | 3 | 4 | 5,
+      flagrante: rf.flagrante === true,
+    },
+    esUrgentePrescripcion: raw.esUrgentePrescripcion === true,
+    leadB2B: raw.leadB2B === true,
+    confianza: Number.isFinite(confianza) ? Math.min(0.95, Math.max(0, confianza)) : 0.2,
+  };
+}
+
 export interface ParsedAssistantRequest {
   readonly valid: boolean;
   readonly prompt: string;
@@ -1118,7 +1207,8 @@ export interface ParsedAssistantRequest {
   readonly attachment: SanitizedAttachment | null;
   readonly attachments: SanitizedAttachment[];
   readonly history: ChatTurn[];
-  readonly mode: 'simple' | 'deep' | 'investigate';
+  readonly mode: TobiEngineMode;
+  readonly systemOneJudgment: TobiPeritajeJudgment | null;
   readonly error?: string;
 }
 
@@ -1143,7 +1233,8 @@ export function parseAssistantRequestBody(rawBody: unknown): ParsedAssistantRequ
       attachment: null,
       attachments: [],
       history: [],
-      mode: 'simple',
+      mode: 'flash',
+      systemOneJudgment: null,
       error: 'Prompt requerido',
     };
   }
@@ -1153,14 +1244,17 @@ export function parseAssistantRequestBody(rawBody: unknown): ParsedAssistantRequ
     ? (typeof rawContext === 'string' ? rawContext : JSON.stringify(rawContext)).slice(0, 12000)
     : '';
 
-  const mode = ['simple', 'deep', 'investigate'].includes(body?.mode) ? body.mode : 'simple';
+  // Parser dual con fallback seguro y retrocompatibilidad con 'deep'/'investigate'.
+  const rawMode = body?.mode;
+  const mode: TobiEngineMode =
+    rawMode === 'deepthink' || rawMode === 'deep' || rawMode === 'investigate' ? 'deepthink' : 'flash';
 
-  // Compatibilidad total: adjuntos múltiples (nuevo) + adjunto legado (singular).
+  const systemOneJudgment = sanitizeSystemOneJudgment(body?.systemOneJudgment);
+
   const attachments = sanitizeAttachments([
     ...(Array.isArray(body?.attachments) ? body.attachments : []),
     ...(body?.attachment ? [body.attachment] : []),
   ]);
-  // `attachment` legado: primer binario (nunca text/plain) o null.
   const attachment = attachments.find((a) => a.mimeType !== 'text/plain') ?? null;
   const history = sanitizeHistory(body?.history);
 
@@ -1171,7 +1265,8 @@ export function parseAssistantRequestBody(rawBody: unknown): ParsedAssistantRequ
     attachment,
     attachments,
     history,
-    mode: mode as 'simple' | 'deep' | 'investigate',
+    mode,
+    systemOneJudgment,
   };
 }
 
@@ -1215,6 +1310,8 @@ export function buildEnrichedPrompt(params: {
   readonly context?: string;
   readonly attachment?: SanitizedAttachment | null;
   readonly attachments?: readonly SanitizedAttachment[];
+  readonly fastKnowledge?: string;
+  readonly systemOneDirective?: string;
   readonly jurisprudence?: string;
 }): string {
   const attachmentBlocks: string[] = [];
@@ -1241,6 +1338,10 @@ export function buildEnrichedPrompt(params: {
   return [
     contextFormatted,
     ...attachmentBlocks,
+    params.fastKnowledge
+      ? `[BASE DE CONOCIMIENTO EN MEMORIA — LEYES, CASOS PERITADOS Y DOCTRINA CSJ]\n${params.fastKnowledge}`
+      : '',
+    params.systemOneDirective ?? '',
     params.jurisprudence
       ? `[Jurisprudencia y Criterios Prácticos de Abogados Laboralistas Paraguayos]\n${params.jurisprudence}`
       : '',
@@ -1382,7 +1483,7 @@ export default async function handler(req: any, res: any): Promise<void> {
     if (a.mimeType.startsWith('audio/')) {
       const transcript = await transcribeAudio(a.cleanBase64, a.mimeType);
       if (transcript) {
-        a.mimeType = 'text/plain'; // Convertir a texto para compatibilidad universal en la cascada
+        a.mimeType = 'text/plain';
         a.cleanBase64 = `[Transcripción de la nota de voz del usuario]: "${transcript}"`;
         a.name = `${a.name} (Transcrito)`;
       } else {
@@ -1393,22 +1494,28 @@ export default async function handler(req: any, res: any): Promise<void> {
     }
   }
 
-  // Búsqueda RAG de criterios jurisprudenciales y doctrinales en Supabase
-  const jurisprudence = await fetchSupabaseJurisprudence(prompt, 1200);
+  // 1. Semáforo pericial determinístico con System One / Jev
+  const systemOneJudgment = parsed.systemOneJudgment ?? heuristicTobiPeritaje(prompt);
+  const systemOneDirective = buildSystemOneDirective(systemOneJudgment);
+
+  // 2. Base de conocimiento in-memory (<1ms): Leyes 213/93, casos TikTok/Oiko peritados y doctrina CSJ
+  const fastKnowledge = buildInMemoryKnowledgeBlock(prompt);
+
+  // 3. RAG remoto en Supabase (si responde en menos de 800ms)
+  const jurisprudence = await fetchSupabaseJurisprudence(prompt, 800);
 
   const enrichedPrompt = buildEnrichedPrompt({
     prompt,
     context,
     attachments: parsed.attachments,
+    fastKnowledge,
+    systemOneDirective,
     jurisprudence,
   });
 
   beginSseStream(res);
 
   const abortController = new AbortController();
-  // Detección de desconexión del cliente: en Node ≥16 `req` emite 'close' al
-  // completar el body (no solo al desconectarse), por lo que se usa `res`,
-  // que emite 'close' al terminar la respuesta o cerrarse el socket.
   const handleClose = () => {
     if (!res.writableEnded) abortController.abort();
   };
@@ -1429,26 +1536,85 @@ export default async function handler(req: any, res: any): Promise<void> {
   };
 
   const deadline = Date.now() + (parsed.attachments.length > 0 ? ATTACHMENT_DEADLINE_MS : TOTAL_DEADLINE_MS);
-
   const failedReasons: string[] = [];
-  const steps: Array<{ name: string; run: (p: string, b: number) => Promise<{ provider: string; model: string } | null> }> = [
-    ...(process.env.GRANJERO_URL?.trim()
-      ? [{ name: 'granjero', run: (p: string, b: number) => callGranjero(p, Math.min(b, 45000), parsed.mode, parsed.history, onDelta, abortController.signal, (m: string) => failedReasons.push(`granjero: ${m}`)) }]
-      : []),
-    ...(process.env.TOBI_LOCAL_LLM_URL?.trim()
-      ? [{ name: 'local', run: (p: string, b: number) => callLocalLLM(p, Math.min(b, 45000), parsed.history, onDelta, abortController.signal, (m: string) => failedReasons.push(`local: ${m}`)) }]
-      : []),
-    { name: 'gemini', run: (p, b) => callGemini(p, Math.min(b, 12000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`gemini: ${m}`)) },
-    { name: 'groq', run: (p, b) => callGroq(p, Math.min(b, 15000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`groq: ${m}`)) },
-    { name: 'cloudflare', run: (p, b) => callCloudflare(p, Math.min(b, 10000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`cloudflare: ${m}`)) },
-    { name: 'openrouter', run: (p, b) => callOpenRouter(p, Math.min(b, 10000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`openrouter: ${m}`)) },
-    { name: 'openai', run: (p, b) => callOpenAI(p, Math.min(b, 15000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`openai: ${m}`)) },
-    { name: 'deepseek', run: (p, b) => callDeepSeek(p, Math.min(b, 15000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`deepseek: ${m}`)) },
-  ];
+
+  // Cascada dual según el modo: 'deepthink' (razonamiento profundo) vs 'flash' (velocidad y caché)
+  const isDeepThink = parsed.mode === 'deepthink';
+
+  const steps: Array<{ name: string; run: (p: string, b: number) => Promise<{ provider: string; model: string } | null> }> = isDeepThink
+    ? [
+        // Modo DeepThink: 1) DeepSeek Reasoner, 2) Gemini Thinking, 3) DeepSeek V3, 4) Gemini Flash, 5) OpenAI
+        {
+          name: 'deepseek-reasoner',
+          run: (p, b) =>
+            callDeepSeek(p, Math.min(b, 28000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`deepseek-reasoner: ${m}`), true),
+        },
+        {
+          name: 'gemini-thinking',
+          run: (p, b) =>
+            callGemini(p, Math.min(b, 20000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`gemini-thinking: ${m}`), {
+              mode: 'deepthink',
+              thinkingBudget: 1024,
+            }),
+        },
+        {
+          name: 'deepseek-chat',
+          run: (p, b) =>
+            callDeepSeek(p, Math.min(b, 15000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`deepseek-chat: ${m}`), false),
+        },
+        {
+          name: 'gemini-flash',
+          run: (p, b) =>
+            callGemini(p, Math.min(b, 12000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`gemini-flash: ${m}`), {
+              mode: 'flash',
+            }),
+        },
+        {
+          name: 'openai',
+          run: (p, b) => callOpenAI(p, Math.min(b, 15000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`openai: ${m}`)),
+        },
+      ]
+    : [
+        // Modo Flash: 1) Granjero/Local (dev), 2) Gemini Flash con Context Cache, 3) DeepSeek V3, 4) OpenAI, 5) Groq (120B), 6) Cloudflare (70B), 7) OpenRouter
+        ...(process.env.GRANJERO_URL?.trim()
+          ? [{ name: 'granjero', run: (p: string, b: number) => callGranjero(p, Math.min(b, 45000), 'simple', parsed.history, onDelta, abortController.signal, (m: string) => failedReasons.push(`granjero: ${m}`)) }]
+          : []),
+        ...(process.env.TOBI_LOCAL_LLM_URL?.trim()
+          ? [{ name: 'local', run: (p: string, b: number) => callLocalLLM(p, Math.min(b, 45000), parsed.history, onDelta, abortController.signal, (m: string) => failedReasons.push(`local: ${m}`)) }]
+          : []),
+        {
+          name: 'gemini',
+          run: (p, b) =>
+            callGemini(p, Math.min(b, 12000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`gemini: ${m}`), {
+              mode: 'flash',
+              cacheBase: fastKnowledge,
+            }),
+        },
+        {
+          name: 'deepseek',
+          run: (p, b) =>
+            callDeepSeek(p, Math.min(b, 12000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`deepseek: ${m}`), false),
+        },
+        {
+          name: 'openai',
+          run: (p, b) => callOpenAI(p, Math.min(b, 12000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`openai: ${m}`)),
+        },
+        {
+          name: 'groq',
+          run: (p, b) => callGroq(p, Math.min(b, 12000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`groq: ${m}`)),
+        },
+        {
+          name: 'cloudflare',
+          run: (p, b) => callCloudflare(p, Math.min(b, 10000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`cloudflare: ${m}`)),
+        },
+        {
+          name: 'openrouter',
+          run: (p, b) => callOpenRouter(p, Math.min(b, 10000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`openrouter: ${m}`)),
+        },
+      ];
 
   let answered: { provider: string; model: string } | null = null;
 
-  // Telemetría y registro de entrenamiento: guarda metadatos y par de conversación para fine-tuning.
   const emitTelemetry = async (kind: string): Promise<void> => {
     await logTobiEvent({
       kind,
@@ -1461,6 +1627,7 @@ export default async function handler(req: any, res: any): Promise<void> {
       detail: JSON.stringify({
         prompt: prompt.slice(0, 2500),
         response: fullAssistantResponse.slice(0, 4000),
+        mode: parsed.mode,
         provider: answered?.provider ?? 'fallback',
         model: answered?.model ?? 'local',
         timestamp: new Date().toISOString(),
@@ -1481,7 +1648,6 @@ export default async function handler(req: any, res: any): Promise<void> {
         return;
       }
       if (anyDelta) {
-        // Un proveedor ya empezó a streamear y se cortó: cerrar con lo recibido
         await emitTelemetry('request_partial');
         writeSseEvent(res, { type: 'done', provider: 'partial', model: 'stream' });
         res.end();
