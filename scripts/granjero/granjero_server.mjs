@@ -31,9 +31,14 @@ import http from 'node:http';
 import { buildTobiSystemPrompt, getAnswerSheetVersion } from '../lib/tobi_context_builder.mjs';
 
 const PORT = Number(process.env.PORT || 8319);
-const CAPATAZ_URL = process.env.CAPATAZ_URL || 'http://127.0.0.1:8317/v1/chat/completions';
+const CAPATAZ_URL = process.env.CAPATAZ_URL || 'http://127.0.0.1:9317/v1/chat/completions';
+const CAPATAZ_URLS = (process.env.CAPATAZ_URLS || `${CAPATAZ_URL},http://127.0.0.1:9327/v1/chat/completions`)
+  .split(',')
+  .map((u) => u.trim())
+  .filter((u, i, arr) => u && arr.indexOf(u) === i);
+let roundRobinNodeIdx = 0;
 const CAPATAZ_KEY =
-  process.env.CAPATAZ_KEY || 'cpa-local-2f1e299d67fe4fbbaa862ef78d418f08047245b8';
+  process.env.CAPATAZ_KEY || 'cpa-nodo-b348c415de9419898e7bd43852592a4a4dd3c1db';
 const GRANJERO_TOKEN = (process.env.GRANJERO_TOKEN || '').trim();
 
 // El system prompt canónico se extrae una sola vez al arrancar (la ficha es
@@ -151,57 +156,66 @@ async function handleChat(body, res) {
   const attempted = [];
   let lastErrorDetail = '';
 
+  const startIdx = roundRobinNodeIdx++ % CAPATAZ_URLS.length;
+  const orderedNodes = CAPATAZ_URLS.map((_, idx) => CAPATAZ_URLS[(startIdx + idx) % CAPATAZ_URLS.length]);
+
   for (const candidate of candidates) {
     const reasoningEffort = reasoning_effort || candidate.reasoningEffort;
-    console.log(
-      `[${new Date().toISOString()}] 🚀 nivel=${candidate.level} modelo=${candidate.model} reasoning=${
-        reasoningEffort || 'n/a'
-      } stream=${wantsStream}`,
-    );
 
-    let attempt;
-    try {
-      attempt = await fetch(CAPATAZ_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: wantsStream ? 'text/event-stream' : 'application/json',
-          Authorization: `Bearer ${CAPATAZ_KEY}`,
-        },
-        body: JSON.stringify({
+    for (const targetUrl of orderedNodes) {
+      const nodeLabel = targetUrl.includes('9327') ? 'Josema:9327' : targetUrl.includes('9317') ? 'Diego:9317' : targetUrl;
+      console.log(
+        `[${new Date().toISOString()}] 🚀 nodo=${nodeLabel} nivel=${candidate.level} modelo=${candidate.model} reasoning=${
+          reasoningEffort || 'n/a'
+        } stream=${wantsStream}`,
+      );
+
+      let attempt;
+      try {
+        attempt = await fetch(targetUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: wantsStream ? 'text/event-stream' : 'application/json',
+            Authorization: `Bearer ${CAPATAZ_KEY}`,
+          },
+          body: JSON.stringify({
+            model: candidate.model,
+            messages: finalMessages,
+            temperature: typeof temperature === 'number' ? temperature : 0.1,
+            max_tokens: typeof max_tokens === 'number' ? max_tokens : 900,
+            stream: wantsStream,
+            ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
+          }),
+        });
+      } catch (err) {
+        lastErrorDetail = err && err.message ? err.message : String(err);
+        attempted.push(`${nodeLabel}/${candidate.level} (red)`);
+        continue;
+      }
+
+      if (attempt.ok) {
+        upstream = attempt;
+        chosen = { ...candidate, reasoningEffort, node: nodeLabel };
+        break;
+      }
+
+      lastErrorDetail = await attempt.text().catch(() => '');
+      attempted.push(`${nodeLabel}/${candidate.level} (HTTP ${attempt.status})`);
+
+      if (!retryableStatuses.has(attempt.status)) {
+        sendJson(res, attempt.status, {
+          error: `Capataz (${nodeLabel}) respondió HTTP ${attempt.status}`,
+          detail: lastErrorDetail.slice(0, 500),
+          level: candidate.level,
           model: candidate.model,
-          messages: finalMessages,
-          temperature: typeof temperature === 'number' ? temperature : 0.1,
-          max_tokens: typeof max_tokens === 'number' ? max_tokens : 900,
-          stream: wantsStream,
-          ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
-        }),
-      });
-    } catch (err) {
-      lastErrorDetail = err && err.message ? err.message : String(err);
-      attempted.push(`${candidate.level} (red)`);
-      continue;
+        });
+        return;
+      }
+      console.warn(`⚠️ ${nodeLabel}/${candidate.level} no disponible (HTTP ${attempt.status}); probando siguiente nodo/carril...`);
     }
 
-    if (attempt.ok) {
-      upstream = attempt;
-      chosen = { ...candidate, reasoningEffort };
-      break;
-    }
-
-    lastErrorDetail = await attempt.text().catch(() => '');
-    attempted.push(`${candidate.level} (HTTP ${attempt.status})`);
-
-    if (!retryableStatuses.has(attempt.status)) {
-      sendJson(res, attempt.status, {
-        error: `Capataz respondió HTTP ${attempt.status}`,
-        detail: lastErrorDetail.slice(0, 500),
-        level: candidate.level,
-        model: candidate.model,
-      });
-      return;
-    }
-    console.warn(`⚠️ ${candidate.level} no disponible (HTTP ${attempt.status}); probando siguiente carril...`);
+    if (upstream && chosen) break;
   }
 
   if (!upstream || !chosen) {
