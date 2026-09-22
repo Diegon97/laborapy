@@ -5,6 +5,10 @@
     {
       "path": "/api/keep-alive",
       "schedule": "0 9 * * 1,4"
+    },
+    {
+      "path": "/api/tobi-curator",
+      "schedule": "0 3 * * *"
     }
   ],
   "rewrites": [

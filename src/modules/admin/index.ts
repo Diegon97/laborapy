@@ -4,5 +4,7 @@
  */
 
 export * from './services/adminAuthService';
+export * from './services/tobiLearningService';
 export * from './components/AdminLoginModal';
 export * from './components/AdminHubModal';
+export * from './components/TobiLearningAdminModal';

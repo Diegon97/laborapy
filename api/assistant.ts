@@ -1154,6 +1154,81 @@ function buildInMemoryKnowledgeBlock(query: string): string {
   return sections.join('\n\n');
 }
 
+interface CachedAuthorizedCases {
+  timestamp: number;
+  cases: Array<{
+    consulta: string;
+    articulos: string[];
+    respuesta_tobi: string;
+    correccion_diego: string;
+  }>;
+}
+
+let cachedAuthorizedCases: CachedAuthorizedCases | null = null;
+const AUTHORIZED_CASES_CACHE_TTL_MS = 60_000;
+
+/**
+ * Consulta en Supabase los casos periciales recientemente autorizados y comentados
+ * por Diego Núñez en el Centro de Control Administrativo (con caché RAM de 60s).
+ */
+export async function fetchAuthorizedLearningCases(query: string): Promise<string> {
+  const supabaseUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL)?.trim();
+  const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY)?.trim();
+  if (!supabaseUrl || !serviceKey) return '';
+
+  try {
+    const now = Date.now();
+    let cases = cachedAuthorizedCases?.cases || [];
+
+    if (!cachedAuthorizedCases || now - cachedAuthorizedCases.timestamp > AUTHORIZED_CASES_CACHE_TTL_MS) {
+      const url = `${supabaseUrl}/rest/v1/tobi_learning_candidates?autorizado=eq.AUTORIZADO&select=consulta,articulos,respuesta_tobi,correccion_diego&order=auditado_at.desc&limit=50`;
+      const res = await fetchJson<any[]>(
+        url,
+        {
+          headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
+        },
+        800,
+      );
+
+      if (res && Array.isArray(res)) {
+        cases = res;
+        cachedAuthorizedCases = { timestamp: now, cases };
+      }
+    }
+
+    if (cases.length === 0) return '';
+
+    const lowerQ = query.toLowerCase();
+    const words = lowerQ
+      .replace(/[^a-záéíóúñ0-9\s]/gi, ' ')
+      .split(/\s+/)
+      .filter((w) => w.length >= 4);
+
+    const relevant = cases
+      .filter((c) => {
+        const q = (c.consulta || '').toLowerCase();
+        const arts = (c.articulos || []).map((a: string) => a.toLowerCase());
+        return words.some((w) => q.includes(w)) || arts.some((a) => lowerQ.includes(a));
+      })
+      .slice(0, 3);
+
+    if (relevant.length === 0) return '';
+
+    const lines = relevant.map((c) => {
+      const criterio = c.correccion_diego || c.respuesta_tobi || 'Criterio oficial validado.';
+      return (
+        `• Consulta laboral autorizada: "${c.consulta}"\n` +
+        `  Artículos: ${(c.articulos || []).join(', ') || 'Ley 213/93'}\n` +
+        `  Criterio de Diego Núñez: ${criterio}`
+      );
+    });
+
+    return `[CRITERIOS Y CASOS PERICIALES AUTORIZADOS POR DIEGO NÚÑEZ (MÁXIMA PRECEDENCIA)]\n${lines.join('\n\n')}`;
+  } catch {
+    return '';
+  }
+}
+
 /**
  * Bloque de directiva derivado del veredicto determinístico de System One (semáforo).
  */
@@ -1311,6 +1386,7 @@ export function buildEnrichedPrompt(params: {
   readonly attachment?: SanitizedAttachment | null;
   readonly attachments?: readonly SanitizedAttachment[];
   readonly fastKnowledge?: string;
+  readonly authorizedCases?: string;
   readonly systemOneDirective?: string;
   readonly jurisprudence?: string;
 }): string {
@@ -1338,6 +1414,7 @@ export function buildEnrichedPrompt(params: {
   return [
     contextFormatted,
     ...attachmentBlocks,
+    params.authorizedCases ?? '',
     params.fastKnowledge
       ? `[BASE DE CONOCIMIENTO EN MEMORIA — LEYES, CASOS PERITADOS Y DOCTRINA CSJ]\n${params.fastKnowledge}`
       : '',
@@ -1501,7 +1578,10 @@ export default async function handler(req: any, res: any): Promise<void> {
   // 2. Base de conocimiento in-memory (<1ms): Leyes 213/93, casos TikTok/Oiko peritados y doctrina CSJ
   const fastKnowledge = buildInMemoryKnowledgeBlock(prompt);
 
-  // 3. RAG remoto en Supabase (si responde en menos de 800ms)
+  // 3. Casos y criterios periciales aprobados por Diego Núñez en el Centro de Control
+  const authorizedCases = await fetchAuthorizedLearningCases(prompt);
+
+  // 4. RAG remoto en Supabase (si responde en menos de 800ms)
   const jurisprudence = await fetchSupabaseJurisprudence(prompt, 800);
 
   const enrichedPrompt = buildEnrichedPrompt({
@@ -1509,6 +1589,7 @@ export default async function handler(req: any, res: any): Promise<void> {
     context,
     attachments: parsed.attachments,
     fastKnowledge,
+    authorizedCases,
     systemOneDirective,
     jurisprudence,
   });

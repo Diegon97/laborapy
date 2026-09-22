@@ -17,6 +17,7 @@ import {
 } from '../services/adminAuthService';
 import { getLeadMetrics, type LeadMetrics } from '../../lead/services/leadService';
 import { getMetaPixelId } from '../../analytics/metaPixel';
+import { getTobiLearningMetrics } from '../services/tobiLearningService';
 
 interface Props {
   isOpen: boolean;
@@ -26,6 +27,7 @@ interface Props {
   onLogout: () => void;
   onReconfigure2FA?: () => void;
   onOpenClientERP?: () => void;
+  onOpenTobiLearning?: () => void;
 }
 
 export const AdminHubModal: React.FC<Props> = ({
@@ -36,10 +38,12 @@ export const AdminHubModal: React.FC<Props> = ({
   onLogout,
   onReconfigure2FA,
   onOpenClientERP,
+  onOpenTobiLearning,
 }) => {
   const [metrics, setMetrics] = useState<LeadMetrics | null>(null);
   const [pixelId, setPixelId] = useState('');
   const [securityProfile, setSecurityProfile] = useState<AdminSecurityProfile | null>(null);
+  const [tobiPendingCount, setTobiPendingCount] = useState(0);
 
   // Cambio de contraseña
   const [showPasswordChange, setShowPasswordChange] = useState(false);
@@ -58,6 +62,7 @@ export const AdminHubModal: React.FC<Props> = ({
       setMetrics(getLeadMetrics());
       setPixelId(getMetaPixelId());
       setSecurityProfile(getAdminSecurityProfile());
+      void getTobiLearningMetrics().then(m => setTobiPendingCount(m.pending)).catch(() => {});
       setShowPasswordChange(false);
       setCurrentPass('');
       setNewPass('');
@@ -477,6 +482,67 @@ export const AdminHubModal: React.FC<Props> = ({
                 </div>
               </div>
               <span style={{ color: '#38bdf8', fontSize: '18px' }}>➔</span>
+            </button>
+          )}
+
+          {/* Módulo Centro de Aprendizaje Pericial de Tobi */}
+          {onOpenTobiLearning && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenTobiLearning();
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '14px 16px',
+                backgroundColor: '#1e293b',
+                border: '1px solid #6366f1',
+                borderRadius: '12px',
+                color: '#f8fafc',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'border-color 0.2s, background-color 0.2s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = '#a855f7';
+                e.currentTarget.style.backgroundColor = '#251b3d';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = '#6366f1';
+                e.currentTarget.style.backgroundColor = '#1e293b';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '24px' }}>🧠</span>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: '600', fontSize: '14px', color: '#f8fafc' }}>
+                      Centro de Aprendizaje de Tobi
+                    </span>
+                    {tobiPendingCount > 0 && (
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          backgroundColor: 'rgba(251, 191, 36, 0.15)',
+                          color: '#fbbf24',
+                          border: '1px solid #f59e0b',
+                          borderRadius: '9999px',
+                          padding: '1px 7px',
+                          fontWeight: '600',
+                        }}
+                      >
+                        {tobiPendingCount} pendiente(s)
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                    Auditar casos reales, autorizar aprendizaje pericial y fijar criterios oficiales.
+                  </div>
+                </div>
+              </div>
+              <span style={{ color: '#a855f7', fontSize: '18px' }}>➔</span>
             </button>
           )}
 

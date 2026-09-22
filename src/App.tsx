@@ -17,6 +17,7 @@ import {
   isAdminAuthenticated,
   AdminLoginModal,
   AdminHubModal,
+  TobiLearningAdminModal,
 } from './modules/admin';
 import {
   ClientLoginModal,
@@ -68,6 +69,7 @@ export const App: React.FC = () => {
   const [isMetaPixelModalOpen, setIsMetaPixelModalOpen] = useState(false);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [isAdminHubOpen, setIsAdminHubOpen] = useState(false);
+  const [isTobiLearningOpen, setIsTobiLearningOpen] = useState(false);
 
   // Estado de Verificación Oficial QR (Estilo Reposo IPS)
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
@@ -998,10 +1000,12 @@ export const App: React.FC = () => {
         onClose={() => setIsAdminHubOpen(false)}
         onOpenCommercial={() => setIsCommercialModalOpen(true)}
         onOpenMetaPixel={() => setIsMetaPixelModalOpen(true)}
+        onOpenTobiLearning={() => setIsTobiLearningOpen(true)}
         onLogout={() => {
           setIsAdminHubOpen(false);
           setIsCommercialModalOpen(false);
           setIsMetaPixelModalOpen(false);
+          setIsTobiLearningOpen(false);
         }}
         onReconfigure2FA={() => {
           setIsAdminLoginOpen(true);
@@ -1011,6 +1015,17 @@ export const App: React.FC = () => {
           handleOpenClientPortal();
         }}
       />
+
+      {/* Modal del Centro de Aprendizaje Pericial de Tobi (Protegido con sesión) */}
+      {isAdminAuthenticated() && (
+        <TobiLearningAdminModal
+          isOpen={isTobiLearningOpen}
+          onClose={() => {
+            setIsTobiLearningOpen(false);
+            setIsAdminHubOpen(true);
+          }}
+        />
+      )}
 
       {/* Modal Comercial de Gestión y Exportación de Leads (Protegido con sesión) */}
       {isAdminAuthenticated() && (
