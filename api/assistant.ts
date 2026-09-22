@@ -628,14 +628,21 @@ async function callGemini(
   return null;
 }
 
-// 2. Groq Cloud (Ultra Rápido con Pool Concurrente de Failover)
-const GROQ_POOL: string[] = Array.from(new Set([
-  process.env.GROQ_API_KEY,
-  process.env.GROQ_API_KEY_1,
-  process.env.GROQ_API_KEY_2,
-  process.env.GROQ_API_KEY_3,
-  process.env.GROQ_API_KEY_4,
-].map((k: any) => (typeof k === 'string' ? k.trim() : '')).filter(Boolean)));
+function getGroqPool(): string[] {
+  return Array.from(
+    new Set(
+      [
+        process.env.GROQ_API_KEY,
+        process.env.GROQ_API_KEY_1,
+        process.env.GROQ_API_KEY_2,
+        process.env.GROQ_API_KEY_3,
+        process.env.GROQ_API_KEY_4,
+      ]
+        .map((k: any) => (typeof k === 'string' ? k.replace(/^["']|["']$/g, '').trim() : ''))
+        .filter(Boolean),
+    ),
+  );
+}
 
 async function callGroq(
   prompt: string,
@@ -646,7 +653,8 @@ async function callGroq(
   externalSignal: AbortSignal,
   onError?: (msg: string) => void,
 ): Promise<{ provider: string; model: string } | null> {
-  if (GROQ_POOL.length === 0) return null;
+  const pool = getGroqPool();
+  if (pool.length === 0) return null;
 
   const images = attachments.filter((a) => a.mimeType.startsWith('image/'));
   const GROQ_VISION_MODELS: string[] = [];
@@ -669,7 +677,7 @@ async function callGroq(
       ...history,
       { role: 'user', content: userContent },
     ];
-    for (const apiKey of GROQ_POOL) {
+    for (const apiKey of pool) {
       for (const model of models) {
         if (attempts >= MAX_GROQ_ATTEMPTS) return null;
         if (deadlineAt - Date.now() < MIN_ATTEMPT_MS) return null;
@@ -724,7 +732,7 @@ async function callGroq(
   return null;
 }
 
-// 3. Cloudflare Workers AI (modelo 70B: sin 8B en la cascada)
+// 3. Cloudflare Workers AI (modelo 70B y Reasoner: sin 8B en la cascada)
 async function callCloudflare(
   prompt: string,
   timeoutMs: number,
@@ -732,11 +740,14 @@ async function callCloudflare(
   onDelta: (text: string) => void,
   externalSignal: AbortSignal,
   onError?: (msg: string) => void,
+  reasoner = false,
 ): Promise<{ provider: string; model: string } | null> {
   const token = (process.env.CLOUDFLARE_API_TOKEN || process.env.CF_API_TOKEN)?.trim();
   const accountId = (process.env.CLOUDFLARE_ACCOUNT_ID || process.env.CF_ACCOUNT_ID)?.trim();
   if (!token || !accountId) return null;
-  const model = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+  const model = reasoner
+    ? '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b'
+    : '@cf/meta/llama-3.1-70b-instruct';
   const outcome = await streamCloudflare({
     url: `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`,
     token,
@@ -1500,9 +1511,10 @@ async function logTobiEvent(payload: TobiEventPayload): Promise<void> {
 /* -------------------------------------------------------------------------- */
 
 async function transcribeAudio(base64Data: string, mimeType: string): Promise<string> {
-  if (GROQ_POOL.length === 0) return '';
+  const pool = getGroqPool();
+  if (pool.length === 0) return '';
   const ext = mimeType.includes('mp4') ? 'm4a' : mimeType.includes('ogg') ? 'ogg' : mimeType.includes('wav') ? 'wav' : 'webm';
-  for (const apiKey of GROQ_POOL) {
+  for (const apiKey of pool) {
     try {
       const buffer = Buffer.from(base64Data, 'base64');
       const blob = new Blob([buffer], { type: mimeType });
@@ -1624,7 +1636,7 @@ export default async function handler(req: any, res: any): Promise<void> {
 
   const steps: Array<{ name: string; run: (p: string, b: number) => Promise<{ provider: string; model: string } | null> }> = isDeepThink
     ? [
-        // Modo DeepThink: 1) DeepSeek Reasoner, 2) Gemini Thinking, 3) DeepSeek V3, 4) Gemini Flash, 5) OpenAI
+        // Modo DeepThink: 1) DeepSeek Reasoner, 2) Gemini Thinking, 3) Cloudflare Reasoner (DeepSeek R1), 4) Groq 120B, 5) DeepSeek V3, 6) Gemini Flash, 7) OpenAI
         {
           name: 'deepseek-reasoner',
           run: (p, b) =>
@@ -1637,6 +1649,15 @@ export default async function handler(req: any, res: any): Promise<void> {
               mode: 'deepthink',
               thinkingBudget: 1024,
             }),
+        },
+        {
+          name: 'cloudflare-reasoner',
+          run: (p, b) =>
+            callCloudflare(p, Math.min(b, 20000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`cloudflare-reasoner: ${m}`), true),
+        },
+        {
+          name: 'groq',
+          run: (p, b) => callGroq(p, Math.min(b, 15000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`groq: ${m}`)),
         },
         {
           name: 'deepseek-chat',
@@ -1656,7 +1677,7 @@ export default async function handler(req: any, res: any): Promise<void> {
         },
       ]
     : [
-        // Modo Flash: 1) Granjero/Local (dev), 2) Gemini Flash con Context Cache, 3) DeepSeek V3, 4) OpenAI, 5) Groq (120B), 6) Cloudflare (70B), 7) OpenRouter
+        // Modo Flash: 1) Granjero/Local (dev), 2) Gemini Flash con Context Cache, 3) Groq (120B ultra veloz), 4) Cloudflare (70B), 5) DeepSeek V3, 6) OpenAI, 7) OpenRouter
         ...(process.env.GRANJERO_URL?.trim()
           ? [{ name: 'granjero', run: (p: string, b: number) => callGranjero(p, Math.min(b, 45000), 'simple', parsed.history, onDelta, abortController.signal, (m: string) => failedReasons.push(`granjero: ${m}`)) }]
           : []),
@@ -1672,6 +1693,14 @@ export default async function handler(req: any, res: any): Promise<void> {
             }),
         },
         {
+          name: 'groq',
+          run: (p, b) => callGroq(p, Math.min(b, 12000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`groq: ${m}`)),
+        },
+        {
+          name: 'cloudflare',
+          run: (p, b) => callCloudflare(p, Math.min(b, 10000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`cloudflare: ${m}`), false),
+        },
+        {
           name: 'deepseek',
           run: (p, b) =>
             callDeepSeek(p, Math.min(b, 12000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`deepseek: ${m}`), false),
@@ -1679,14 +1708,6 @@ export default async function handler(req: any, res: any): Promise<void> {
         {
           name: 'openai',
           run: (p, b) => callOpenAI(p, Math.min(b, 12000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`openai: ${m}`)),
-        },
-        {
-          name: 'groq',
-          run: (p, b) => callGroq(p, Math.min(b, 12000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`groq: ${m}`)),
-        },
-        {
-          name: 'cloudflare',
-          run: (p, b) => callCloudflare(p, Math.min(b, 10000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`cloudflare: ${m}`)),
         },
         {
           name: 'openrouter',

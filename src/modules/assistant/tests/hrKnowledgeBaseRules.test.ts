@@ -68,4 +68,15 @@ describe('hrKnowledgeBase — Reglas legales y regresiones normativas', () => {
       expect(entry?.legalBasis.some((b) => b.includes('Arts. 242 y 245'))).toBe(true);
     });
   });
+
+  describe('Precisión semántica: Fraude de facturación y derechos irrenunciables', () => {
+    it('prioriza Primacía de la Realidad (Art. 19) y jamás sugiere licencias por matrimonio/duelo ante reclamos de facturación encubierta', () => {
+      const query = 'trabajo hace 11 años en un estudio contable y me hacen facturar, mi patron no me quiere pagar mis vacaciones ni aguinaldo.';
+      const results = searchKnowledgeBase(query, 3);
+      expect(results.length).toBeGreaterThan(0);
+      expect(results[0].entry.id).toBe('primacia-realidad-factura');
+      const ids = results.map((r) => r.entry.id);
+      expect(ids).not.toContain('licencias-especiales');
+    });
+  });
 });

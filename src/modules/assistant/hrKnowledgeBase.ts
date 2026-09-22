@@ -19,8 +19,10 @@ const STOPWORDS: ReadonlySet<string> = new Set<string>([
   'de', 'del', 'la', 'el', 'los', 'las', 'un', 'una', 'unos', 'unas',
   'y', 'e', 'o', 'u', 'en', 'a', 'al', 'por', 'para', 'con', 'sin',
   'que', 'es', 'son', 'se', 'su', 'sus', 'lo', 'le', 'les', 'me',
-  'mi', 'tu', 'te', 'como', 'mas', 'muy', 'no', 'si', 'sobre', 'entre',
+  'mi', 'mis', 'tu', 'tus', 'te', 'como', 'mas', 'muy', 'no', 'si', 'sobre', 'entre',
   'cuando', 'donde', 'cual', 'cuales', 'este', 'esta', 'estos', 'estas',
+  'ni', 'hace', 'hacen', 'anos', 'meses', 'dias', 'tengo', 'puedo', 'quiere',
+  'hola', 'buenas', 'tardes', 'noches', 'favor', 'ayuda',
 ]);
 
 /**
@@ -279,6 +281,7 @@ export function searchKnowledgeBase(
   const tokens = tokenize(query);
   if (tokens.length === 0) return [];
 
+  const normalizedQuery = normalizeSearchText(query);
   const results: KnowledgeSearchResult[] = [];
 
   for (const entry of KNOWLEDGE_ENTRIES) {
@@ -286,29 +289,39 @@ export function searchKnowledgeBase(
 
     const normalizedTitle = normalizeSearchText(entry.title);
     const normalizedKeywords = entry.keywords.map(normalizeSearchText);
-    const normalizedSummary = normalizeSearchText(entry.summary);
-    const normalizedContent = normalizeSearchText(entry.content);
+    const titleWords = new Set(tokenize(entry.title));
+    const summaryWords = new Set(tokenize(entry.summary));
 
     let score = 0;
     const matched = new Set<string>();
 
-    for (const token of tokens) {
-      let tokenScore = 0;
-      if (normalizedTitle.includes(token)) tokenScore += 8;
-      if (normalizedKeywords.some((k) => k === token)) tokenScore += 6;
-      else if (normalizedKeywords.some((k) => k.includes(token))) tokenScore += 4;
-      if (normalizedSummary.includes(token)) tokenScore += 3;
-      if (normalizedContent.includes(token)) tokenScore += 1;
+    // 1. Coincidencia por frase o palabra clave compuesta (máximo peso)
+    for (const kw of normalizedKeywords) {
+      if (normalizedQuery.includes(kw)) {
+        score += 25;
+        matched.add(kw);
+      }
+    }
 
-      if (tokenScore > 0) {
-        score += tokenScore;
+    // 2. Coincidencia por tokens exactos
+    for (const token of tokens) {
+      if (normalizedKeywords.includes(token)) {
+        score += 15;
+        matched.add(token);
+      }
+      if (titleWords.has(token)) {
+        score += 10;
+        matched.add(token);
+      }
+      if (summaryWords.has(token)) {
+        score += 5;
         matched.add(token);
       }
     }
 
     if (score > 0) {
-      if (normalizedTitle.includes(normalizeSearchText(query))) {
-        score += 15;
+      if (normalizedQuery.includes(normalizedTitle)) {
+        score += 20;
       }
       results.push({
         entry,
