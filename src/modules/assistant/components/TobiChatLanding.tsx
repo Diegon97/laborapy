@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import type { AssistantAttachment, AssistantMessage, AssistantQueryContext } from '../types';
+import type { AssistantAttachment, AssistantMessage, AssistantQueryContext, TobiEngineMode } from '../types';
 import { askDeepSeekAssistant, generateOfflineAnswer } from '../assistantService';
 import {
   extractSettlementAction,
@@ -735,6 +735,7 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [engineMode, setEngineMode] = useState<TobiEngineMode>('flash');
   const [attachments, setAttachments] = useState<AssistantAttachment[]>([]);
   const [pdfProcessing, setPdfProcessing] = useState(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -1056,6 +1057,8 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
             history,
             onDelta,
             attachments: activeAttachments,
+            mode: engineMode,
+            systemOneJudgment,
           });
           if (!assistantMessage || !assistantMessage.content) {
             assistantMessage = null;
@@ -1883,8 +1886,8 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
                 width: '100%',
                 maxWidth: 680,
                 background: 'rgba(15, 23, 42, 0.85)',
-                border: '1px solid rgba(52, 211, 153, 0.3)',
-                boxShadow: '0 16px 40px rgba(0, 0, 0, 0.45)',
+                border: engineMode === 'deepthink' ? '1px solid rgba(139, 92, 246, 0.5)' : '1px solid rgba(52, 211, 153, 0.3)',
+                boxShadow: engineMode === 'deepthink' ? '0 16px 40px rgba(139, 92, 246, 0.15)' : '0 16px 40px rgba(0, 0, 0, 0.45)',
                 backdropFilter: 'blur(16px)',
                 WebkitBackdropFilter: 'blur(16px)',
                 borderRadius: 18,
@@ -1892,14 +1895,95 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
                 marginBottom: isMobile ? 16 : 24,
                 textAlign: 'left',
                 boxSizing: 'border-box',
+                transition: 'border 0.2s ease, box-shadow 0.2s ease',
               }}
             >
+              {/* Selector de Modo Flash vs DeepThink en Hero Landing */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 10,
+                  paddingBottom: 8,
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    background: 'rgba(2, 6, 23, 0.6)',
+                    borderRadius: 20,
+                    padding: 3,
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    gap: 3,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setEngineMode('flash')}
+                    title="Modo Flash: Respuestas rápidas en <1s con Gemini Flash y Context Caching"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      border: 'none',
+                      borderRadius: 16,
+                      padding: '4px 12px',
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      background: engineMode === 'flash' ? 'linear-gradient(135deg, #0ea5e9 0%, #10b981 100%)' : 'transparent',
+                      color: engineMode === 'flash' ? '#ffffff' : '#94a3b8',
+                      boxShadow: engineMode === 'flash' ? '0 2px 8px rgba(14, 165, 233, 0.4)' : 'none',
+                    }}
+                  >
+                    <span>⚡ Flash</span>
+                    <span style={{ fontSize: 9.5, opacity: 0.85, fontWeight: 500 }}>Rápido</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEngineMode('deepthink')}
+                    title="Modo DeepThink: Razonamiento profundo con DeepSeek Reasoner para peritajes"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      border: 'none',
+                      borderRadius: 16,
+                      padding: '4px 12px',
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      background: engineMode === 'deepthink' ? 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)' : 'transparent',
+                      color: engineMode === 'deepthink' ? '#ffffff' : '#94a3b8',
+                      boxShadow: engineMode === 'deepthink' ? '0 2px 8px rgba(139, 92, 246, 0.4)' : 'none',
+                    }}
+                  >
+                    <span>🧠 DeepThink</span>
+                    <span style={{ fontSize: 9.5, opacity: 0.85, fontWeight: 500 }}>Peritaje</span>
+                  </button>
+                </div>
+                <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                  {engineMode === 'deepthink' ? '🔬 Razonamiento deliberado (DeepSeek Reasoner)' : '⚡ Respuestas en <1s con caché legal'}
+                </span>
+              </div>
+
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 rows={2}
-                placeholder={isMobile ? "Escribí tu consulta laboral… (ej: amonestar a un chofer)" : "Escribí tu consulta o caso laboral... (ej: 'Necesito amonestar por escrito a un chofer que no vino el lunes')"}
+                placeholder={
+                  engineMode === 'deepthink'
+                    ? "Consultá o adjuntá tu caso para análisis pericial profundo (DeepThink)..."
+                    : isMobile
+                    ? "Escribí tu consulta laboral… (ej: amonestar a un chofer)"
+                    : "Escribí tu consulta o caso laboral... (ej: 'Necesito amonestar por escrito a un chofer que no vino el lunes')"
+                }
                 style={{
                   width: '100%',
                   background: 'transparent',
@@ -2501,16 +2585,87 @@ export const TobiChatLanding: React.FC<TobiChatLandingProps> = ({
               </div>
             )}
 
+            {/* Selector de Modo en Footer Input */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 6,
+                padding: '0 4px',
+              }}
+            >
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  background: 'rgba(2, 6, 23, 0.6)',
+                  borderRadius: 20,
+                  padding: 2,
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  gap: 2,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setEngineMode('flash')}
+                  title="Modo Flash: Respuestas ágiles en <1s con Gemini Flash"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    border: 'none',
+                    borderRadius: 16,
+                    padding: '2px 8px',
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    background: engineMode === 'flash' ? 'linear-gradient(135deg, #0ea5e9 0%, #10b981 100%)' : 'transparent',
+                    color: engineMode === 'flash' ? '#ffffff' : '#94a3b8',
+                    boxShadow: engineMode === 'flash' ? '0 2px 6px rgba(14, 165, 233, 0.4)' : 'none',
+                  }}
+                >
+                  <span>⚡ Flash</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEngineMode('deepthink')}
+                  title="Modo DeepThink: Razonamiento profundo con DeepSeek Reasoner"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    border: 'none',
+                    borderRadius: 16,
+                    padding: '2px 8px',
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    background: engineMode === 'deepthink' ? 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)' : 'transparent',
+                    color: engineMode === 'deepthink' ? '#ffffff' : '#94a3b8',
+                    boxShadow: engineMode === 'deepthink' ? '0 2px 6px rgba(139, 92, 246, 0.4)' : 'none',
+                  }}
+                >
+                  <span>🧠 DeepThink</span>
+                </button>
+              </div>
+              <span style={{ fontSize: 10, color: '#64748b' }}>
+                {engineMode === 'deepthink' ? '🔬 Modo Peritaje Activo' : '⚡ Modo Flash Activo'}
+              </span>
+            </div>
+
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
                 background: 'rgba(15, 23, 42, 0.85)',
-                border: '1px solid rgba(52, 211, 153, 0.3)',
+                border: engineMode === 'deepthink' ? '1px solid rgba(139, 92, 246, 0.5)' : '1px solid rgba(52, 211, 153, 0.3)',
                 borderRadius: 16,
                 padding: '8px 12px',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                boxShadow: engineMode === 'deepthink' ? '0 8px 24px rgba(139, 92, 246, 0.15)' : '0 8px 24px rgba(0,0,0,0.35)',
                 transition: 'border 0.2s ease, box-shadow 0.2s ease',
               }}
             >
