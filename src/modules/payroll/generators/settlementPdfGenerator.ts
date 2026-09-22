@@ -13,11 +13,12 @@ import { ASIGNACION_FAMILIAR_LIMITE_SALARIO } from '../constants';
 import { LABORAPY_CONFIG } from '../../../config/laborapy';
 
 export function generarLiquidacionPDF(input: LiquidacionInput, result: LiquidacionResult): jsPDF {
-  const doc = new jsPDF({
+  const JsPdfClass = (jsPDF as any).jsPDF || jsPDF;
+  const doc = new JsPdfClass({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
-  });
+  }) as jsPDF;
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();

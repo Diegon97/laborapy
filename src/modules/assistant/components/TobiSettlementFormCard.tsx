@@ -29,6 +29,7 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
   const [motivo, setMotivo] = useState<MotivoEgreso>('despido_sin_causa');
   const [regimen, setRegimen] = useState<RegimenIPS>('general');
   const [preavisoOtorgado, setPreavisoOtorgado] = useState<boolean>(false);
+  const [sinVacacionesPendientes, setSinVacacionesPendientes] = useState<boolean>(false);
   const [vacacionesPeriodosAnteriores, setVacacionesPeriodosAnteriores] = useState<number | ''>('');
   const [comisionesHorasExtras, setComisionesHorasExtras] = useState<number | ''>('');
   const [aguinaldoAnterior, setAguinaldoAnterior] = useState<number | ''>('');
@@ -65,7 +66,8 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
       regimen,
       preavisoOtorgado,
       preavisoObligado: motivo === 'renuncia' ? 'trabajador' : 'empleador',
-      vacacionesPeriodosAnteriores: Number(vacacionesPeriodosAnteriores) || undefined,
+      vacacionesPeriodosAnteriores: sinVacacionesPendientes ? 0 : (Number(vacacionesPeriodosAnteriores) || undefined),
+      vacacionesPeriodoActual: sinVacacionesPendientes ? 99 : undefined,
       comisiones: Number(comisionesHorasExtras) || undefined,
       aguinaldoAnteriorPendiente: Number(aguinaldoAnterior) || undefined,
       embargoJudicial: embargoTopeado > 0 ? embargoTopeado : undefined,
@@ -229,7 +231,13 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
         <label style={labelStyle}>Motivo de la Desvinculación:</label>
         <select
           value={motivo}
-          onChange={(e) => setMotivo(e.target.value as MotivoEgreso)}
+          onChange={(e) => {
+            const nextMotivo = e.target.value as MotivoEgreso;
+            setMotivo(nextMotivo);
+            if (nextMotivo === 'renuncia') {
+              setPreavisoOtorgado(true);
+            }
+          }}
           style={{ ...inputStyle, cursor: 'pointer' }}
         >
           <option value="despido_sin_causa">Despido Injustificado / Sin Causa (Art. 84 - Indemnización + Preaviso)</option>
@@ -241,18 +249,20 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
         </select>
       </div>
 
-      {/* Preaviso otorgado */}
-      {motivo === 'despido_sin_causa' && (
+      {/* Preaviso otorgado / cumplido */}
+      {(motivo === 'despido_sin_causa' || motivo === 'renuncia') && (
         <div style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
           <input
             type="checkbox"
             id="chkPreaviso"
             checked={preavisoOtorgado}
             onChange={(e) => setPreavisoOtorgado(e.target.checked)}
-            style={{ width: 16, height: 16, cursor: 'pointer' }}
+            style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#059669' }}
           />
           <label htmlFor="chkPreaviso" style={{ fontSize: 12, color: '#e2e8f0', cursor: 'pointer' }}>
-            ¿El empleador le dio el preaviso trabajado con antelación?
+            {motivo === 'renuncia'
+              ? '¿El trabajador cumplió / otorgó el preaviso legal de renuncia? (Sin descuento Art. 90)'
+              : '¿El empleador le dio el preaviso trabajado con antelación?'}
           </label>
         </div>
       )}
@@ -271,6 +281,20 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
         <div style={{ fontSize: 11.5, fontWeight: 700, color: '#38bdf8', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
           <span>⚖️</span>
           <span>Conceptos Adicionales y Límites Legales (Opcional):</span>
+        </div>
+
+        {/* Checkbox para exonerar o declarar vacaciones ya gozadas */}
+        <div style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input
+            type="checkbox"
+            id="chkSinVacaciones"
+            checked={sinVacacionesPendientes}
+            onChange={(e) => setSinVacacionesPendientes(e.target.checked)}
+            style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#059669' }}
+          />
+          <label htmlFor="chkSinVacaciones" style={{ fontSize: 12, color: '#e2e8f0', cursor: 'pointer' }}>
+            El trabajador <strong>no tiene vacaciones pendientes</strong> (ya gozó todas sus vacaciones)
+          </label>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 8, marginBottom: 8 }}>

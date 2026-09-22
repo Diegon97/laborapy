@@ -11,9 +11,9 @@ export const LABORAPY_CONFIG = {
   tagline: 'Soluciones integrales de Recursos Humanos, selección de personal y gestión contable, impositiva (IVA/IRE/IRP) y financiera en Paraguay',
   legalBadge: 'Ley 213/93 · IPS · DNIT Ley 6380/19',
   location: 'Asunción, República del Paraguay',
-  whatsAppNumber: (import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined) || '595984469005',
-  whatsAppDisplay: (import.meta.env.VITE_WHATSAPP_DISPLAY as string | undefined) || '+595 984 469 005',
-  contactEmail: (import.meta.env.VITE_CONTACT_EMAIL as string | undefined) || 'diegonunez1997@gmail.com',
+  whatsAppNumber: ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_WHATSAPP_NUMBER) as string | undefined) || '595984469005',
+  whatsAppDisplay: ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_WHATSAPP_DISPLAY) as string | undefined) || '+595 984 469 005',
+  contactEmail: ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_CONTACT_EMAIL) as string | undefined) || 'diegonunez1997@gmail.com',
   horarioAtencion: 'Lunes a Viernes de 08:00 a 18:00 hs',
 };
 
