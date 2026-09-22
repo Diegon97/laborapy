@@ -13,7 +13,7 @@ import type {
   KnowledgeEntry,
   KnowledgeSearchResult,
   KnowledgeTopic,
-} from './types';
+} from './types.js';
 
 const STOPWORDS: ReadonlySet<string> = new Set<string>([
   'de', 'del', 'la', 'el', 'los', 'las', 'un', 'una', 'unos', 'unas',
