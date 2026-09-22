@@ -91,6 +91,7 @@ export function calcularVacaciones(
   vacacionesPeriodosAnteriores: number = 0,
   vacacionesPeriodoActualGozadas: number = 0,
   vacacionesAnterioresVencidas: boolean = true,
+  vacacionesPeriodoActualPendientes?: number,
 ): VacacionesResult {
   const conceptos: Concepto[] = [];
   const alertas: Alerta[] = [];
@@ -148,7 +149,11 @@ export function calcularVacaciones(
   // Aplica cuando el trabajador tiene al menos 1 año completo en el período actual
   // y aún no gozó las vacaciones correspondientes.
   if (antiguedad.years >= 1) {
-    const diasDisponibles = escala.dias - vacacionesPeriodoActualGozadas;
+    const diasDisponibles =
+      vacacionesPeriodoActualPendientes !== undefined
+        ? Math.max(0, vacacionesPeriodoActualPendientes)
+        : Math.max(0, escala.dias - vacacionesPeriodoActualGozadas);
+
     if (diasDisponibles > 0) {
       const monto = Math.round(jornalDiario * diasDisponibles);
       conceptos.push({

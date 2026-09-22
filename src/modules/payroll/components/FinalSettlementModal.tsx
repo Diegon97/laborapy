@@ -71,9 +71,11 @@ export const FinalSettlementModal: React.FC<Props> = ({ onClose }) => {
 
   // Preaviso y Vacaciones avanzadas
   const [preavisoOtorgado, setPreavisoOtorgado] = useState(false);
+  const [preavisoExonerado, setPreavisoExonerado] = useState(false);
   const [preavisoDiasOtorgados, setPreavisoDiasOtorgados] = useState<number | ''>(0);
   const [vacacionesPeriodosAnteriores, setVacacionesPeriodosAnteriores] = useState<number | ''>(0);
   const [vacacionesAnterioresVencidas, setVacacionesAnterioresVencidas] = useState(true);
+  const [sinVacacionesPendientesActual, setSinVacacionesPendientesActual] = useState(false);
   const [vacacionesPeriodoActualGozadas, setVacacionesPeriodoActualGozadas] = useState<number | ''>(0);
 
   // Aguinaldo de período anterior pendiente
@@ -133,11 +135,13 @@ export const FinalSettlementModal: React.FC<Props> = ({ onClose }) => {
         remuneracionesUltimos6Meses: rem6m,
         vacacionesPeriodosAnteriores: Number(vacacionesPeriodosAnteriores) || 0,
         vacacionesAnterioresVencidas,
-        vacacionesPeriodoActual: Number(vacacionesPeriodoActualGozadas) || 0,
+        vacacionesPeriodoActual: sinVacacionesPendientesActual ? 99 : (Number(vacacionesPeriodoActualGozadas) || 0),
+        vacacionesPeriodoActualPendientes: sinVacacionesPendientesActual ? 0 : undefined,
         preaviso: {
           obligado: motivo === 'renuncia' ? 'trabajador' : 'empleador',
           otorgado: preavisoOtorgado,
           diasOtorgados: Number(preavisoDiasOtorgados) || 0,
+          exonerado: motivo === 'renuncia' ? preavisoExonerado : undefined,
         },
         regimen,
         regimenLaboral: categoriaSeleccionadaId === 'trabajo_domestico' ? 'domestico' : 'general',
@@ -271,11 +275,13 @@ export const FinalSettlementModal: React.FC<Props> = ({ onClose }) => {
       remuneracionesUltimos6Meses: rem6m,
       vacacionesPeriodosAnteriores: Number(vacacionesPeriodosAnteriores) || 0,
       vacacionesAnterioresVencidas,
-      vacacionesPeriodoActual: Number(vacacionesPeriodoActualGozadas) || 0,
+      vacacionesPeriodoActual: sinVacacionesPendientesActual ? 99 : (Number(vacacionesPeriodoActualGozadas) || 0),
+      vacacionesPeriodoActualPendientes: sinVacacionesPendientesActual ? 0 : undefined,
       preaviso: {
         obligado: motivo === 'renuncia' ? 'trabajador' : 'empleador',
         otorgado: preavisoOtorgado,
         diasOtorgados: Number(preavisoDiasOtorgados) || 0,
+        exonerado: motivo === 'renuncia' ? preavisoExonerado : undefined,
       },
       regimen,
       regimenLaboral: categoriaSeleccionadaId === 'trabajo_domestico' ? 'domestico' : 'general',
@@ -1187,42 +1193,76 @@ export const FinalSettlementModal: React.FC<Props> = ({ onClose }) => {
                   )}
                 </div>
 
-                {/* Preaviso cumplido */}
+                {/* Preaviso cumplido y exoneración */}
                 <div style={{ marginBottom: '14px', padding: '10px 12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={preavisoOtorgado}
-                      onChange={e => setPreavisoOtorgado(e.target.checked)}
-                      style={{ width: '16px', height: '16px', accentColor: '#059669' }}
-                    />
-                    ¿El preaviso fue trabajado / otorgado en tiempo y forma?
-                  </label>
-                  {preavisoOtorgado && (
-                    <div style={{ marginTop: '8px' }}>
-                      <label style={{ display: 'block', fontSize: '11px', color: '#64748b', marginBottom: '3px' }}>
-                        Días efectivamente otorgados:
+                  {motivo === 'renuncia' && (
+                    <div style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid #e2e8f0' }}>
+                      <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', color: '#1e293b' }}>
+                        <input
+                          type="checkbox"
+                          checked={preavisoExonerado}
+                          onChange={e => {
+                            const checked = e.target.checked;
+                            setPreavisoExonerado(checked);
+                            if (checked) setPreavisoOtorgado(true);
+                          }}
+                          style={{ width: '16px', height: '16px', accentColor: '#059669', marginTop: '2px' }}
+                        />
+                        <div>
+                          <span>¿En la empresa exoneran el preaviso de renuncia?</span>
+                          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 400, marginTop: '2px' }}>
+                            Si se exonera, <strong>no se descuenta ningún importe</strong> y se asienta la constancia legal en la liquidación.
+                          </div>
+                        </div>
                       </label>
-                      <input
-                        type="number"
-                        value={preavisoDiasOtorgados}
-                        onChange={e => {
-                          const val = e.target.value;
-                          setPreavisoDiasOtorgados(val === '' ? '' : Math.max(0, Number(val)));
-                        }}
-                        onFocus={e => e.target.select()}
-                        className="input-control"
-                        style={{ width: '100px' }}
-                        placeholder="0"
-                      />
                     </div>
+                  )}
+
+                  {!preavisoExonerado && (
+                    <>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={preavisoOtorgado}
+                          onChange={e => setPreavisoOtorgado(e.target.checked)}
+                          style={{ width: '16px', height: '16px', accentColor: '#059669' }}
+                        />
+                        {motivo === 'renuncia'
+                          ? '¿Cumpliste o estás cumpliendo el preaviso de renuncia?'
+                          : '¿El preaviso fue trabajado / otorgado en tiempo y forma?'}
+                      </label>
+                      {preavisoOtorgado && (
+                        <div style={{ marginTop: '8px', marginLeft: '24px' }}>
+                          <label style={{ display: 'block', fontSize: '11px', color: '#64748b', marginBottom: '3px' }}>
+                            Días efectivamente cumplidos / trabajados:
+                          </label>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <input
+                              type="number"
+                              value={preavisoDiasOtorgados}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setPreavisoDiasOtorgados(val === '' ? '' : Math.max(0, Number(val)));
+                              }}
+                              onFocus={e => e.target.select()}
+                              className="input-control"
+                              style={{ width: '100px' }}
+                              placeholder="0"
+                            />
+                            <span style={{ fontSize: '11px', color: '#64748b' }}>
+                              (0 o vacío = cumplió todo; si es parcial, se descuenta la mitad de los días omitidos)
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
                 {/* Vacaciones pendientes */}
                 <div className="grid-2col field-group">
                   <div>
-                    <label className="field-label">Vacaciones Años Anteriores (Días pendientes)</label>
+                    <label className="field-label">Vacaciones Años Anteriores (Días vencidos)</label>
                     <input
                       type="number"
                       value={vacacionesPeriodosAnteriores}
@@ -1249,18 +1289,32 @@ export const FinalSettlementModal: React.FC<Props> = ({ onClose }) => {
                     )}
                   </div>
                   <div>
-                    <label className="field-label">Vacaciones Gozadas Año Actual</label>
-                    <input
-                      type="number"
-                      value={vacacionesPeriodoActualGozadas}
-                      onChange={e => {
-                        const val = e.target.value;
-                        setVacacionesPeriodoActualGozadas(val === '' ? '' : Math.max(0, Number(val)));
-                      }}
-                      onFocus={e => e.target.select()}
-                      className="input-control"
-                      placeholder="0"
-                    />
+                    <label className="field-label">Vacaciones Período Actual</label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', fontSize: '12px', color: '#0f172a', fontWeight: 600, cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={sinVacacionesPendientesActual}
+                        onChange={e => setSinVacacionesPendientesActual(e.target.checked)}
+                        style={{ accentColor: '#059669' }}
+                      />
+                      <span>¿Ya gozó todas las vacaciones de este año? (0 pendientes)</span>
+                    </label>
+                    {!sinVacacionesPendientesActual && (
+                      <div>
+                        <label style={{ fontSize: '11px', color: '#64748b', display: 'block', marginBottom: '2px' }}>Días ya gozados del período actual:</label>
+                        <input
+                          type="number"
+                          value={vacacionesPeriodoActualGozadas}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setVacacionesPeriodoActualGozadas(val === '' ? '' : Math.max(0, Number(val)));
+                          }}
+                          onFocus={e => e.target.select()}
+                          className="input-control"
+                          placeholder="0"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 

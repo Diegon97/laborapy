@@ -253,6 +253,7 @@ export function calcularLiquidacion(input: LiquidacionInput): LiquidacionResult 
     input.vacacionesPeriodosAnteriores ?? 0,
     input.vacacionesPeriodoActual ?? 0,
     input.vacacionesAnterioresVencidas,
+    input.vacacionesPeriodoActualPendientes,
   );
   conceptos.push(...vacacionesResult.conceptos);
   alertas.push(...vacacionesResult.alertas);

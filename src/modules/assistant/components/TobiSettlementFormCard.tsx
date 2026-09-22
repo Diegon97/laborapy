@@ -28,8 +28,11 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
   const [fechaEgreso, setFechaEgreso] = useState<string>(new Date().toISOString().slice(0, 10));
   const [motivo, setMotivo] = useState<MotivoEgreso>('despido_sin_causa');
   const [regimen, setRegimen] = useState<RegimenIPS>('general');
-  const [preavisoOtorgado, setPreavisoOtorgado] = useState<boolean>(false);
+  const [preavisoOtorgado, setPreavisoOtorgado] = useState<boolean>(true);
+  const [preavisoExonerado, setPreavisoExonerado] = useState<boolean>(false);
+  const [diasPreavisoCumplidos, setDiasPreavisoCumplidos] = useState<number | ''>('');
   const [sinVacacionesPendientes, setSinVacacionesPendientes] = useState<boolean>(false);
+  const [vacacionesPendientesActual, setVacacionesPendientesActual] = useState<number | ''>('');
   const [vacacionesPeriodosAnteriores, setVacacionesPeriodosAnteriores] = useState<number | ''>('');
   const [comisionesHorasExtras, setComisionesHorasExtras] = useState<number | ''>('');
   const [aguinaldoAnterior, setAguinaldoAnterior] = useState<number | ''>('');
@@ -65,9 +68,12 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
       motivo,
       regimen,
       preavisoOtorgado,
+      preavisoExonerado: motivo === 'renuncia' ? preavisoExonerado : undefined,
+      diasPreavisoOtorgados: diasPreavisoCumplidos !== '' ? Number(diasPreavisoCumplidos) : undefined,
       preavisoObligado: motivo === 'renuncia' ? 'trabajador' : 'empleador',
-      vacacionesPeriodosAnteriores: sinVacacionesPendientes ? 0 : (Number(vacacionesPeriodosAnteriores) || undefined),
+      vacacionesPeriodosAnteriores: Number(vacacionesPeriodosAnteriores) || undefined,
       vacacionesPeriodoActual: sinVacacionesPendientes ? 99 : undefined,
+      vacacionesPeriodoActualPendientes: sinVacacionesPendientes ? 0 : (vacacionesPendientesActual !== '' ? Number(vacacionesPendientesActual) : undefined),
       comisiones: Number(comisionesHorasExtras) || undefined,
       aguinaldoAnteriorPendiente: Number(aguinaldoAnterior) || undefined,
       embargoJudicial: embargoTopeado > 0 ? embargoTopeado : undefined,
@@ -249,8 +255,95 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
         </select>
       </div>
 
-      {/* Preaviso otorgado / cumplido */}
-      {(motivo === 'despido_sin_causa' || motivo === 'renuncia') && (
+      {/* ── Ventanita de Preaviso para Renuncia ── */}
+      {motivo === 'renuncia' && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: '12px 14px',
+            borderRadius: 10,
+            background: 'rgba(30, 41, 59, 0.75)',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
+          }}
+        >
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#38bdf8', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>📋</span>
+            <span>Preaviso de Renuncia (Arts. 87 y 90 Código del Trabajo):</span>
+          </div>
+
+          {/* Checkbox de Exoneración Patronal */}
+          <div style={{ marginBottom: 10 }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', fontSize: 12, color: '#f8fafc' }}>
+              <input
+                type="checkbox"
+                checked={preavisoExonerado}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setPreavisoExonerado(checked);
+                  if (checked) {
+                    setPreavisoOtorgado(true);
+                  }
+                }}
+                style={{ width: 16, height: 16, marginTop: 2, accentColor: '#059669', cursor: 'pointer' }}
+              />
+              <div>
+                <span style={{ fontWeight: 600 }}>¿En la empresa exoneran el preaviso?</span>
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                  Si la empresa dispensó al trabajador, <strong>no se aplica ningún descuento</strong> y se incluye la constancia legal en la liquidación.
+                </div>
+              </div>
+            </label>
+          </div>
+
+          {/* Si NO está exonerado: Pregunta sobre cumplimiento y cantidad de días */}
+          {!preavisoExonerado && (
+            <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', fontSize: 12, color: '#f8fafc', marginBottom: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={preavisoOtorgado}
+                  onChange={(e) => setPreavisoOtorgado(e.target.checked)}
+                  style={{ width: 16, height: 16, marginTop: 2, accentColor: '#059669', cursor: 'pointer' }}
+                />
+                <div>
+                  <span style={{ fontWeight: 600 }}>¿Cumpliste o estás cumpliendo preaviso?</span>
+                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                    Marcá si ya trabajaste o vas a trabajar los días de preaviso correspondientes.
+                  </div>
+                </div>
+              </label>
+
+              {preavisoOtorgado && (
+                <div style={{ marginTop: 8, marginLeft: 24, padding: '8px 10px', background: 'rgba(15, 23, 42, 0.65)', borderRadius: 8, border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <label style={{ ...labelStyle, fontSize: 11, color: '#cbd5e1', marginBottom: 4 }}>
+                    Cantidad de días de preaviso que sí hiciste / vas a hacer:
+                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="number"
+                      min={0}
+                      placeholder="Total"
+                      value={diasPreavisoCumplidos}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setDiasPreavisoCumplidos(val === '' ? '' : Math.max(0, parseInt(val, 10) || 0));
+                      }}
+                      style={{ ...inputStyle, width: 95, textAlign: 'center', fontWeight: 700 }}
+                    />
+                    <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                      días (vacío = cumplió todo; si es parcial, se descuenta la mitad de los días faltantes).
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Preaviso para Despido sin causa */}
+      {motivo === 'despido_sin_causa' && (
         <div style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
           <input
             type="checkbox"
@@ -260,9 +353,7 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
             style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#059669' }}
           />
           <label htmlFor="chkPreaviso" style={{ fontSize: 12, color: '#e2e8f0', cursor: 'pointer' }}>
-            {motivo === 'renuncia'
-              ? '¿El trabajador cumplió / otorgó el preaviso legal de renuncia? (Sin descuento Art. 90)'
-              : '¿El empleador le dio el preaviso trabajado con antelación?'}
+            ¿El empleador le dio el preaviso trabajado con antelación?
           </label>
         </div>
       )}
@@ -283,35 +374,85 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
           <span>Conceptos Adicionales y Límites Legales (Opcional):</span>
         </div>
 
-        {/* Checkbox para exonerar o declarar vacaciones ya gozadas */}
-        <div style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <input
-            type="checkbox"
-            id="chkSinVacaciones"
-            checked={sinVacacionesPendientes}
-            onChange={(e) => setSinVacacionesPendientes(e.target.checked)}
-            style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#059669' }}
-          />
-          <label htmlFor="chkSinVacaciones" style={{ fontSize: 12, color: '#e2e8f0', cursor: 'pointer' }}>
-            El trabajador <strong>no tiene vacaciones pendientes</strong> (ya gozó todas sus vacaciones)
-          </label>
+        {/* ── SECCIÓN DE VACACIONES CLARA Y DIFERENCIADA ── */}
+        <div
+          style={{
+            marginBottom: 10,
+            padding: '10px 12px',
+            borderRadius: 8,
+            background: 'rgba(15, 23, 42, 0.45)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+          }}
+        >
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: '#a7f3d0', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span>🌴</span>
+            <span>Diferenciación de Vacaciones (Ley N.º 213/93):</span>
+          </div>
+
+          {/* 1. Vacaciones del período actual (causadas último año) */}
+          <div style={{ marginBottom: 10 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12, color: '#f1f5f9' }}>
+              <input
+                type="checkbox"
+                checked={sinVacacionesPendientes}
+                onChange={(e) => setSinVacacionesPendientes(e.target.checked)}
+                style={{ width: 16, height: 16, accentColor: '#059669', cursor: 'pointer' }}
+              />
+              <span>
+                <strong>Período actual:</strong> ¿Ya usó/gozó todas las vacaciones de este año? (0 días pendientes)
+              </span>
+            </label>
+
+            {!sinVacacionesPendientes && (
+              <div style={{ marginTop: 6, marginLeft: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <label style={{ fontSize: 11, color: '#cbd5e1' }}>
+                  Vacaciones pendientes del período actual (Días):
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="Automático"
+                  value={vacacionesPendientesActual}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setVacacionesPendientesActual(val === '' ? '' : Math.max(0, parseInt(val, 10) || 0));
+                  }}
+                  style={{ ...inputStyle, width: 95, textAlign: 'center' }}
+                />
+                <span style={{ fontSize: 10.5, color: '#94a3b8' }}>
+                  (Vacío = calcula según escala legal 12/18/30 días)
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* 2. Vacaciones de períodos anteriores (años vencidos) */}
+          <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+              <div>
+                <label style={{ ...labelStyle, marginBottom: 2 }}>
+                  Vacaciones de períodos anteriores (años vencidos no gozados):
+                </label>
+                <span style={{ fontSize: 10.5, color: '#fcd34d' }}>
+                  ⚠️ Si vencieron hace &gt; 6 meses, se pagan al <strong>doble (x2)</strong> por ley (Arts. 221 y 223 C.T.).
+                </span>
+              </div>
+              <input
+                type="number"
+                min={0}
+                placeholder="0 días"
+                value={vacacionesPeriodosAnteriores}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setVacacionesPeriodosAnteriores(val === '' ? '' : Math.max(0, parseInt(val, 10) || 0));
+                }}
+                style={{ ...inputStyle, width: 90, textAlign: 'center' }}
+              />
+            </div>
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 8, marginBottom: 8 }}>
-          <div>
-            <label style={labelStyle}>Vacaciones pendientes otros períodos (Días)</label>
-            <input
-              type="number"
-              min={0}
-              placeholder="0 días"
-              value={vacacionesPeriodosAnteriores}
-              onChange={(e) => {
-                const val = e.target.value;
-                setVacacionesPeriodosAnteriores(val === '' ? '' : Math.max(0, parseInt(val, 10) || 0));
-              }}
-              style={inputStyle}
-            />
-          </div>
           <div>
             <label style={labelStyle}>Comisiones / Horas Extras pendientes (Gs.)</label>
             <input
@@ -322,6 +463,20 @@ export const TobiSettlementFormCard: React.FC<TobiSettlementFormCardProps> = ({
               onChange={(e) => {
                 const val = e.target.value;
                 setComisionesHorasExtras(val === '' ? '' : Math.max(0, parseInt(val, 10) || 0));
+              }}
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Aguinaldo adeudado año anterior (Gs.)</label>
+            <input
+              type="number"
+              min={0}
+              placeholder="0 Gs."
+              value={aguinaldoAnterior}
+              onChange={(e) => {
+                const val = e.target.value;
+                setAguinaldoAnterior(val === '' ? '' : Math.max(0, parseInt(val, 10) || 0));
               }}
               style={inputStyle}
             />

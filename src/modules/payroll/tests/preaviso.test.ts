@@ -92,6 +92,43 @@ describe('calcularPreaviso — Escenarios Empleador y Trabajador', () => {
     const res = calcularPreaviso(SALARIO, ant, 'despido_con_causa');
     expect(res.conceptos.length).toBe(0);
   });
+
+  it('P06: Renuncia con exoneración patronal → Sin descuento y con alerta informativa', () => {
+    const ant = calcularAntiguedad('2020-01-01', '2024-01-01'); // 4 años -> 45 días
+    const res = calcularPreaviso(SALARIO, ant, 'renuncia', {
+      obligado: 'trabajador',
+      otorgado: false,
+      exonerado: true,
+    });
+    expect(res.conceptos.length).toBe(0);
+    const alerta = res.alertas.find(a => a.id === 'PREAVISO_EXONERADO');
+    expect(alerta).toBeDefined();
+    expect(alerta?.tipo).toBe('info');
+  });
+
+  it('P07: Renuncia con cumplimiento parcial de preaviso → Descuento de la mitad de días omitidos', () => {
+    const ant = calcularAntiguedad('2020-01-01', '2022-01-01'); // 2 años -> 45 días
+    const res = calcularPreaviso(SALARIO, ant, 'renuncia', {
+      obligado: 'trabajador',
+      otorgado: true,
+      diasOtorgados: 15, // faltan 30 días
+    });
+    const concepto = res.conceptos.find(c => c.id === 'descuento_preaviso_renuncia');
+    expect(concepto).toBeDefined();
+    expect(concepto?.dias).toBe(15); // 30 / 2 = 15 días de descuento
+    expect(concepto?.monto).toBe(15 * 150_000);
+    expect(concepto?.esDescuento).toBe(true);
+  });
+
+  it('P08: Renuncia con cumplimiento total de preaviso → Sin descuento', () => {
+    const ant = calcularAntiguedad('2020-01-01', '2022-01-01'); // 45 días
+    const res = calcularPreaviso(SALARIO, ant, 'renuncia', {
+      obligado: 'trabajador',
+      otorgado: true,
+      diasOtorgados: 45,
+    });
+    expect(res.conceptos.length).toBe(0);
+  });
 });
 
 describe('getDiasPreaviso — Escala Trabajo Doméstico Ley 5407/15', () => {

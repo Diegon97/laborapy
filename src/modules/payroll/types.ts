@@ -53,8 +53,10 @@ export interface PreavisoInput {
   obligado: 'empleador' | 'trabajador';
   /** ¿Se otorgó el preaviso? */
   otorgado: boolean;
-  /** Días efectivamente otorgados (si fue parcial) */
+  /** Días efectivamente otorgados o cumplidos (si fue parcial) */
   diasOtorgados?: number;
+  /** ¿La empresa exoneró formalmente al trabajador de cumplir el preaviso de renuncia? */
+  exonerado?: boolean;
 }
 
 export interface LiquidacionInput {
@@ -96,6 +98,8 @@ export interface LiquidacionInput {
   // ── Vacaciones ─────────────────────────────────────────────────────────
   /** Días ya gozados en el período corriente (vacaciones causadas en el período actual) */
   vacacionesPeriodoActual?: number;
+  /** Días pendientes de cobro del período actual (si se especifica directamente, sobreescribe el cálculo de días gozados) */
+  vacacionesPeriodoActualPendientes?: number;
   /** Días pendientes de períodos anteriores (años anteriores no gozados) */
   vacacionesPeriodosAnteriores?: number;
   /**

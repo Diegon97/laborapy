@@ -255,7 +255,9 @@ export interface TobiSettlementActionPayload {
   readonly preavisoOtorgado?: boolean;
   readonly preavisoObligado?: 'empleador' | 'trabajador';
   readonly diasPreavisoOtorgados?: number;
+  readonly preavisoExonerado?: boolean;
   readonly vacacionesPeriodoActual?: number;
+  readonly vacacionesPeriodoActualPendientes?: number;
   readonly vacacionesPeriodosAnteriores?: number;
   readonly salariosPendientes?: number;
   readonly comisiones?: number;

@@ -176,27 +176,66 @@ export function calcularPreaviso(
 
   // ── Renuncia voluntaria ────────────────────────────────────────────────────
   if (motivo === 'renuncia') {
-    // Si el trabajador no preavisó → DESCUENTO: mitad del valor del preaviso
-    const trabajadorNoPreavisó =
-      !preavisoInput || !preavisoInput.otorgado;
-    if (trabajadorNoPreavisó) {
-      const diasDescuento = Math.ceil(diasCorresponden / 2);
-      const monto = Math.round(jornalDiario * diasDescuento);
-      conceptos.push({
-        id: 'descuento_preaviso_renuncia',
-        nombre: `Descuento Preaviso Omitido (${diasDescuento} días)`,
-        monto,
-        dias: diasDescuento,
-        base: jornalDiario,
-        formula:
-          `${diasCorresponden} días de preaviso ÷ 2 = ${diasDescuento} días × ` +
-          `Gs. ${Math.round(jornalDiario).toLocaleString('es-PY')}/día`,
-        fuenteLegal: 'Art. 90 (2do párrafo), Ley N.º 213/93',
-        incertidumbre:
-          'El trabajador debía preavisar y no lo hizo. Se descuenta la mitad del preaviso correspondiente.',
-        esDescuento: true,
+    // 1. Exoneración patronal formal del preaviso
+    if (preavisoInput?.exonerado) {
+      alertas.push({
+        id: 'PREAVISO_EXONERADO',
+        tipo: 'info',
+        mensaje:
+          'Exoneración Patronal de Preaviso: La empresa ha dispensado formalmente al trabajador de la obligación de otorgar o trabajar el preaviso legal de renuncia (Art. 90 C.T.), no aplicándose deducción salarial alguna en la liquidación final.',
+        accion: 'informar',
       });
+      return { conceptos, alertas, diasCorresponden };
     }
+
+    // 2. Preaviso trabajado o cumplido (total o parcial)
+    if (preavisoInput?.otorgado) {
+      const diasCumplidos =
+        preavisoInput.diasOtorgados !== undefined
+          ? Math.max(0, preavisoInput.diasOtorgados)
+          : diasCorresponden;
+
+      // Si el cumplimiento fue parcial
+      if (diasCumplidos < diasCorresponden) {
+        const diasFaltantes = diasCorresponden - diasCumplidos;
+        const diasDescuento = Math.ceil(diasFaltantes / 2);
+        const monto = Math.round(jornalDiario * diasDescuento);
+        conceptos.push({
+          id: 'descuento_preaviso_renuncia',
+          nombre: `Descuento Preaviso Omitido (${diasDescuento} días · Parcial)`,
+          monto,
+          dias: diasDescuento,
+          base: jornalDiario,
+          formula:
+            `${diasCorresponden} días requeridos - ${diasCumplidos} días cumplidos = ` +
+            `${diasFaltantes} días omitidos ÷ 2 = ${diasDescuento} días × ` +
+            `Gs. ${Math.round(jornalDiario).toLocaleString('es-PY')}/día`,
+          fuenteLegal: 'Art. 90 (2do párrafo), Ley N.º 213/93',
+          incertidumbre:
+            `El trabajador cumplió ${diasCumplidos} de ${diasCorresponden} días de preaviso. Se descuenta la mitad de los días omitidos (${diasDescuento} días).`,
+          esDescuento: true,
+        });
+      }
+      return { conceptos, alertas, diasCorresponden };
+    }
+
+    // 3. Omisión total del preaviso
+    const diasDescuento = Math.ceil(diasCorresponden / 2);
+    const monto = Math.round(jornalDiario * diasDescuento);
+    conceptos.push({
+      id: 'descuento_preaviso_renuncia',
+      nombre: `Descuento Preaviso Omitido (${diasDescuento} días)`,
+      monto,
+      dias: diasDescuento,
+      base: jornalDiario,
+      formula:
+        `${diasCorresponden} días de preaviso ÷ 2 = ${diasDescuento} días × ` +
+        `Gs. ${Math.round(jornalDiario).toLocaleString('es-PY')}/día`,
+      fuenteLegal: 'Art. 90 (2do párrafo), Ley N.º 213/93',
+      incertidumbre:
+        'El trabajador debía preavisar y no lo hizo. Se descuenta la mitad del preaviso correspondiente.',
+      esDescuento: true,
+    });
     return { conceptos, alertas, diasCorresponden };
   }
 

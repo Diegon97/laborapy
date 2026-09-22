@@ -117,4 +117,22 @@ describe('calcularVacaciones — Casos por Motivo y Períodos', () => {
     expect(proporcionales?.dias).toBe(2); // 12/12 * 2 = 2 días
     expect(proporcionales?.monto).toBe(2 * 150_000);
   });
+
+  it('V06: vacacionesPeriodoActualPendientes = 0 → 0 días causadas (ya gozó todas)', () => {
+    const ant = calcularAntiguedad('2020-01-01', '2022-01-01'); // 2 años
+    const res = calcularVacaciones(SALARIO, ant, 'renuncia', 0, 0, true, 0);
+
+    const causadas = res.conceptos.find(c => c.id === 'vacaciones_causadas');
+    expect(causadas).toBeUndefined();
+  });
+
+  it('V07: vacacionesPeriodoActualPendientes = 5 → 5 días causadas específicos', () => {
+    const ant = calcularAntiguedad('2020-01-01', '2022-01-01'); // 2 años
+    const res = calcularVacaciones(SALARIO, ant, 'renuncia', 0, 0, true, 5);
+
+    const causadas = res.conceptos.find(c => c.id === 'vacaciones_causadas');
+    expect(causadas).toBeDefined();
+    expect(causadas?.dias).toBe(5);
+    expect(causadas?.monto).toBe(5 * 150_000);
+  });
 });

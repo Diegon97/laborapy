@@ -174,6 +174,7 @@ export function toLiquidacionInput(payload: TobiSettlementActionPayload): Liquid
     cargoEmpleado: payload.cargoEmpleado,
     empresa: payload.empresa,
     vacacionesPeriodoActual: payload.vacacionesPeriodoActual,
+    vacacionesPeriodoActualPendientes: payload.vacacionesPeriodoActualPendientes,
     vacacionesPeriodosAnteriores: payload.vacacionesPeriodosAnteriores,
     salariosPendientes: payload.salariosPendientes,
     aguinaldoAnteriorPendiente: payload.aguinaldoAnteriorPendiente,
@@ -182,13 +183,14 @@ export function toLiquidacionInput(payload: TobiSettlementActionPayload): Liquid
       : undefined,
   };
 
-  if (payload.preavisoOtorgado !== undefined || payload.preavisoObligado !== undefined) {
+  if (payload.preavisoOtorgado !== undefined || payload.preavisoObligado !== undefined || payload.preavisoExonerado !== undefined) {
     const obligadoPorDefecto: 'empleador' | 'trabajador' =
       payload.motivo === 'renuncia' || payload.motivo === 'abandono' ? 'trabajador' : 'empleador';
     input.preaviso = {
       obligado: payload.preavisoObligado ?? obligadoPorDefecto,
       otorgado: payload.preavisoOtorgado ?? false,
       diasOtorgados: payload.diasPreavisoOtorgados,
+      exonerado: payload.preavisoExonerado,
     };
   }
 
@@ -222,6 +224,7 @@ export function toSettlementActionPayload(input: LiquidacionInput): TobiSettleme
     cargoEmpleado: input.cargoEmpleado,
     empresa: input.empresa,
     vacacionesPeriodoActual: input.vacacionesPeriodoActual,
+    vacacionesPeriodoActualPendientes: input.vacacionesPeriodoActualPendientes,
     vacacionesPeriodosAnteriores: input.vacacionesPeriodosAnteriores,
     salariosPendientes: input.salariosPendientes,
     aguinaldoAnteriorPendiente: input.aguinaldoAnteriorPendiente,
@@ -234,6 +237,7 @@ export function toSettlementActionPayload(input: LiquidacionInput): TobiSettleme
       preavisoOtorgado: input.preaviso.otorgado,
       preavisoObligado: input.preaviso.obligado,
       diasPreavisoOtorgados: input.preaviso.diasOtorgados,
+      preavisoExonerado: input.preaviso.exonerado,
     };
   }
 
