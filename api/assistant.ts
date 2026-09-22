@@ -687,6 +687,7 @@ async function callGroq(
           apiKey,
           model,
           messages,
+          maxTokens: 800,
           timeoutMs: Math.min(deadlineAt - Date.now(), PROVIDER_TIMEOUT_MS),
           onDelta,
           externalSignal,
@@ -698,8 +699,8 @@ async function callGroq(
     return null;
   };
 
-  // Solo modelos de alta capacidad: eliminamos 8B/20B para evitar alucinaciones
-  const textModels = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b'];
+  // Solo modelos de alta capacidad: qwen 27b ultra veloz primero, respaldo gpt 120b
+  const textModels = ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b'];
 
   if (images.length <= 1) {
     const isImage = images.length === 1;

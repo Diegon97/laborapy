@@ -138,6 +138,10 @@ export function generateOfflineAnswer(
       `2. No firmar documentos en blanco ni bajo coacción o sin previa revisión legal.\n` +
       `3. Para liquidaciones oficiales o cálculo de haberes, podés emitirlas con las herramientas de LaboraPy.`;
 
+    if (/1[0-9]\s*a[ñn]os|diez a[ñn]os|estabilidad/i.test(trimmed)) {
+      content += `\n\n⚠️ **Protección Especial por Antigüedad (Art. 94 C.T.):**\nAl superar los 10 años continuados de servicio, adquiriste **Estabilidad Laboral Especial**. Tu empleador no puede despedirte de forma directa; cualquier desvinculación exige promover obligatoriamente un Juicio Previo de Justificación de Causales ante el Juzgado en lo Laboral.`;
+    }
+
     if (searchResults.length > 1) {
       content += `\n\n📌 *Artículos y temas relacionados:*\n` +
         searchResults
