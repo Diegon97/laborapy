@@ -16,6 +16,7 @@
  */
 
 import { TOBI_SYSTEM_PROMPT } from '../src/modules/assistant/tobiSystemPrompt.js';
+import { TOBI_CANONICAL_ANSWER_SHEET } from '../src/modules/assistant/tobiCanonicalAnswerSheet.js';
 import { queryFastKnowledge } from '../src/modules/assistant/tobiKnowledgeCatalog.js';
 import { searchKnowledgeBase } from '../src/modules/assistant/hrKnowledgeBase.js';
 import { heuristicTobiPeritaje } from '../src/modules/assistant/systemOne/systemOneEngine.js';
@@ -24,6 +25,15 @@ import type { TobiPeritajeJudgment } from '../src/modules/assistant/systemOne/ty
 
 declare const process: any;
 declare const Buffer: any;
+
+/**
+ * Bloque de sistema COMPLETO: prompt canónico + Ficha Canónica de Respuestas.
+ * La ficha es un bloque estático y determinístico (constantes legales, tabla de
+ * trampas y contratos de salida) que se sirve como PREFIJO CACHEABLE. Al estar
+ * literalmente en el contexto, cualquier IA responde el dato exacto en vez de
+ * re-deducirlo, eliminando la alucinación en la raíz.
+ */
+const TOBI_FULL_SYSTEM_PROMPT: string = `${TOBI_SYSTEM_PROMPT}\n\n${TOBI_CANONICAL_ANSWER_SHEET}`;
 
 export const config = { maxDuration: 60 };
 
@@ -314,16 +324,18 @@ function normalizeGeminiContents(history: ChatTurn[], parts: any[]): any[] {
 }
 
 /**
- * Crea un CachedContent de Gemini para el bloque estático (prompt canónico + conocimiento base).
- * Fallback transparente: si la API falla o expira, devuelve null y se usa inyección inline.
+ * Crea un CachedContent de Gemini con el BLOQUE ESTÁTICO (prompt canónico +
+ * Ficha Canónica de Respuestas). Al cachear solo contenido estático e inmutable,
+ * la caché es reutilizable entre consultas y se sirve a ~10% del costo de tokens.
+ * Fallback transparente: si la API falla o expira, devuelve null y se inyecta
+ * el mismo bloque de forma inline (TOBI_FULL_SYSTEM_PROMPT).
  */
 async function createGeminiContextCache(params: {
   apiKey: string;
   model: string;
-  baseText: string;
   timeoutMs: number;
 }): Promise<string | null> {
-  if (params.timeoutMs <= 0 || params.baseText.length < GEMINI_CACHE_MIN_CHARS) return null;
+  if (params.timeoutMs <= 0) return null;
   const data = await fetchJson<{ name?: string }>(
     `https://generativelanguage.googleapis.com/v1beta/cachedContents?key=${params.apiKey}`,
     {
@@ -333,8 +345,8 @@ async function createGeminiContextCache(params: {
         model: `models/${params.model}`,
         systemInstruction: { parts: [{ text: TOBI_SYSTEM_PROMPT }] },
         contents: [
-          { role: 'user', parts: [{ text: params.baseText }] },
-          { role: 'model', parts: [{ text: 'Contexto normativo interno recibido.' }] },
+          { role: 'user', parts: [{ text: TOBI_CANONICAL_ANSWER_SHEET }] },
+          { role: 'model', parts: [{ text: 'Ficha canónica normativa recibida y fijada como fuente de verdad.' }] },
         ],
         ttl: `${GEMINI_CACHE_TTL_SECONDS}s`,
       }),
@@ -373,7 +385,7 @@ async function streamGeminiModel(params: {
     const requestBody: any = {
       ...(params.cachedContent
         ? { cachedContent: params.cachedContent }
-        : { systemInstruction: { parts: [{ text: TOBI_SYSTEM_PROMPT }] } }),
+        : { systemInstruction: { parts: [{ text: TOBI_FULL_SYSTEM_PROMPT }] } }),
       contents: normalizeGeminiContents(params.history, params.parts),
       generationConfig,
     };
@@ -521,7 +533,7 @@ async function callGranjero(
     url,
     model: mode, // El Granjero interpreta el mode (simple/deep/investigate)
     messages: [
-      { role: 'system', content: TOBI_SYSTEM_PROMPT },
+      { role: 'system', content: TOBI_FULL_SYSTEM_PROMPT },
       ...history,
       { role: 'user', content: prompt },
     ],
@@ -556,7 +568,7 @@ async function callLocalLLM(
     url,
     model,
     messages: [
-      { role: 'system', content: TOBI_SYSTEM_PROMPT },
+      { role: 'system', content: TOBI_FULL_SYSTEM_PROMPT },
       ...history,
       { role: 'user', content: prompt },
     ],
@@ -578,7 +590,7 @@ async function callGemini(
   onDelta: (text: string) => void,
   externalSignal: AbortSignal,
   onError?: (msg: string) => void,
-  opts?: { mode?: TobiEngineMode; cacheBase?: string; thinkingBudget?: number },
+  opts?: { mode?: TobiEngineMode; thinkingBudget?: number },
 ): Promise<{ provider: string; model: string } | null> {
   const apiKey = (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY)?.trim();
   if (!apiKey) return null;
@@ -602,13 +614,13 @@ async function callGemini(
   }
   parts.push({ text: prompt });
 
-  // Context Caching: intento con fallback transparente a inyección inline.
+  // Context Caching del BLOQUE ESTÁTICO (prompt + ficha canónica):
+  // intento con fallback transparente a inyección inline.
   let cachedContent: string | null = null;
-  if (opts?.cacheBase && opts.cacheBase.length >= GEMINI_CACHE_MIN_CHARS) {
+  if (timeoutMs > MIN_ATTEMPT_MS && TOBI_CANONICAL_ANSWER_SHEET.length >= GEMINI_CACHE_MIN_CHARS) {
     cachedContent = await createGeminiContextCache({
       apiKey,
       model: models[0],
-      baseText: opts.cacheBase,
       timeoutMs: Math.min(2000, timeoutMs),
     });
   }
@@ -681,7 +693,7 @@ async function callGroq(
     userContent: any,
   ): Promise<{ provider: string; model: string } | null> => {
     const messages = [
-      { role: 'system', content: TOBI_SYSTEM_PROMPT },
+      { role: 'system', content: TOBI_FULL_SYSTEM_PROMPT },
       ...history,
       { role: 'user', content: userContent },
     ];
@@ -761,7 +773,7 @@ async function callCloudflare(
     url: `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`,
     token,
     messages: [
-      { role: 'system', content: TOBI_SYSTEM_PROMPT },
+      { role: 'system', content: TOBI_FULL_SYSTEM_PROMPT },
       ...history,
       { role: 'user', content: prompt },
     ],
@@ -795,7 +807,7 @@ async function callOpenRouter(
       'X-Title': 'Calculadora RRHH PY',
     },
     messages: [
-      { role: 'system', content: TOBI_SYSTEM_PROMPT },
+      { role: 'system', content: TOBI_FULL_SYSTEM_PROMPT },
       ...history,
       { role: 'user', content: prompt },
     ],
@@ -863,7 +875,7 @@ async function callDeepSeek(
     model,
     omitSampling: reasoner,
     messages: [
-      { role: 'system', content: TOBI_SYSTEM_PROMPT },
+      { role: 'system', content: TOBI_FULL_SYSTEM_PROMPT },
       ...history,
       { role: 'user', content: prompt },
     ],
@@ -1698,7 +1710,6 @@ export default async function handler(req: any, res: any): Promise<void> {
           run: (p, b) =>
             callGemini(p, Math.min(b, 12000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`gemini: ${m}`), {
               mode: 'flash',
-              cacheBase: fastKnowledge,
             }),
         },
         {
