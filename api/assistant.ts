@@ -27,9 +27,9 @@ declare const Buffer: any;
 
 export const config = { maxDuration: 60 };
 
-const PROVIDER_TIMEOUT_MS = 15000;
-const TOTAL_DEADLINE_MS = 32000;
-const ATTACHMENT_DEADLINE_MS = 45000;
+const PROVIDER_TIMEOUT_MS = 18000;
+const TOTAL_DEADLINE_MS = 45000;
+const ATTACHMENT_DEADLINE_MS = 55000;
 const MAX_PROMPT_CHARS = 8000;
 const MAX_HISTORY_TURNS = 8;
 const MAX_HISTORY_TURN_CHARS = 2000;
@@ -241,7 +241,11 @@ async function streamOpenAiCompatible(params: {
       }),
       signal: controller.signal,
     });
-    if (!res.ok) return { committed: false, error: `HTTP ${res.status}` };
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      console.warn(`[OpenAI-Compat Error] ${params.url} (${params.model}) HTTP ${res.status}: ${errText.slice(0, 300)}`);
+      return { committed: false, error: `HTTP ${res.status}` };
+    }
     if (!res.body) return { committed: false, error: 'stream-empty' };
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -447,11 +451,15 @@ async function streamCloudflare(params: {
       body: JSON.stringify({
         stream: true,
         messages: params.messages,
-        max_tokens: 1024,
+        max_tokens: 2048,
       }),
       signal: controller.signal,
     });
-    if (!res.ok) return { committed: false, error: `HTTP ${res.status}` };
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      console.warn(`[Cloudflare Error] HTTP ${res.status}: ${errText.slice(0, 300)}`);
+      return { committed: false, error: `HTTP ${res.status}` };
+    }
     if (!res.body) return { committed: false, error: 'stream-empty' };
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -1695,11 +1703,11 @@ export default async function handler(req: any, res: any): Promise<void> {
         },
         {
           name: 'groq',
-          run: (p, b) => callGroq(p, Math.min(b, 12000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`groq: ${m}`)),
+          run: (p, b) => callGroq(p, Math.min(b, 15000), parsed.attachments, parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`groq: ${m}`)),
         },
         {
           name: 'cloudflare',
-          run: (p, b) => callCloudflare(p, Math.min(b, 10000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`cloudflare: ${m}`), false),
+          run: (p, b) => callCloudflare(p, Math.min(b, 25000), parsed.history, onDelta, abortController.signal, (m) => failedReasons.push(`cloudflare: ${m}`), false),
         },
         {
           name: 'deepseek',
