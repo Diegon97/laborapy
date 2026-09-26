@@ -889,7 +889,7 @@ async function callDeepSeek(
 }
 
 const EMBEDDING_DIMENSIONS = 768;
-const SEMANTIC_MATCH_THRESHOLD = 0.3;
+const SEMANTIC_MATCH_THRESHOLD = 0.4;
 const SEMANTIC_MATCH_COUNT = 4;
 
 interface TobiKnowledgeMatch {

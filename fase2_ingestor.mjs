@@ -7,16 +7,15 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim();
+const SUPABASE_SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 
-// Para capataz, cualquier Bearer token o cpa-local funciona, 
-// usa tu token habitual de capataz.
-const CAPATAZ_TOKEN = "cpa-local-2f1e299d67fe4fbbaa862ef78d418f08047245b8"; 
-const CAPATAZ_URL = "http://127.0.0.1:8317"; // El proxy OpenAI de Capataz
+// Capataz proxy token (se resuelve estrictamente desde variables de entorno - Zero-Leak)
+const CAPATAZ_TOKEN = (process.env.CAPATAZ_TOKEN || process.env.VITE_CAPATAZ_TOKEN || '').trim();
+const CAPATAZ_URL = (process.env.CAPATAZ_URL || 'http://127.0.0.1:8317').trim().replace(/\/+$/, '');
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error("❌ Faltan variables de entorno de Supabase.");
+  console.error("❌ [CISO] Faltan variables de entorno de Supabase (SUPABASE_URL o VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY).");
   process.exit(1);
 }
 

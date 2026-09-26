@@ -69,7 +69,7 @@ GROQ_KEYS = [k for k in GROQ_KEYS if k]
 # 3. CAPATAZ LOCAL (GEMINI 3.8 FLASH)
 # ---------------------------------------------------------------------------
 CAPATAZ_URL = os.environ.get('CAPATAZ_URL', 'http://127.0.0.1:8317/v1/chat/completions')
-CAPATAZ_KEY = os.environ.get('CAPATAZ_API_KEY', 'cpa-local-2f1e299d67fe4fbbaa862ef78d418f08047245b8')
+CAPATAZ_KEY = os.environ.get('CAPATAZ_API_KEY') or os.environ.get('CAPATAZ_TOKEN') or 'cpa-local'
 
 # ---------------------------------------------------------------------------
 # 4. OBJETIVOS: LOS 5 ABOGADOS LABORALISTAS DE PARAGUAY

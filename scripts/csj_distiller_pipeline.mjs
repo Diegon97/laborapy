@@ -99,7 +99,7 @@ Devolvé ÚNICAMENTE un JSON válido con este formato:
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer cpa-local-2f1e299d67fe4fbbaa862ef78d418f08047245b8'
+                'Authorization': `Bearer ${process.env.CAPATAZ_TOKEN || 'cpa-local'}`
             },
             body: JSON.stringify({
                 model: 'gemini-3.8-flash-high', // Usa el worker más rápido y capaz

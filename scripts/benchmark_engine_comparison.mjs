@@ -26,7 +26,7 @@ dotenv.config({ path: path.join(PROJECT_ROOT, '.env') });
 const CF_ACCOUNT_ID = (process.env.CF_ACCOUNT_ID || '').trim();
 const CF_API_TOKEN = (process.env.CF_API_TOKEN || '').trim();
 const GROQ_API_KEY = (process.env.GROQ_API_KEY || '').trim();
-const CAPATAZ_KEY = 'cpa-local-2f1e299d67fe4fbbaa862ef78d418f08047245b8';
+const CAPATAZ_KEY = (process.env.CAPATAZ_TOKEN || 'cpa-local').trim();
 
 // System prompt simplificado y concentrado para no saturar tokens por minuto
 const TOBI_MINI_PROMPT = `Sos Tobi, el Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy en Paraguay, creado por Diego Núñez.

@@ -18,8 +18,8 @@ import re
 import requests
 from pathlib import Path
 
-CAPATAZ_URL = 'http://127.0.0.1:8317/v1/chat/completions'
-CAPATAZ_KEY = 'cpa-local-2f1e299d67fe4fbbaa862ef78d418f08047245b8'
+CAPATAZ_URL = os.environ.get('CAPATAZ_URL', 'http://127.0.0.1:8317/v1/chat/completions')
+CAPATAZ_KEY = os.environ.get('CAPATAZ_API_KEY', os.environ.get('CAPATAZ_TOKEN', 'cpa-local'))
 
 raw_file = Path('datasets/comentarios_crudos_5_abogados.json')
 if not raw_file.exists():

@@ -24,7 +24,7 @@ const PROJECT_ROOT = path.resolve(__dirname, '..');
 const REPORTS_DIR = path.join(PROJECT_ROOT, 'reports');
 
 const CAPATAZ_ENDPOINT = 'http://127.0.0.1:8317/v1/chat/completions';
-const CAPATAZ_KEY = 'cpa-local-2f1e299d67fe4fbbaa862ef78d418f08047245b8';
+const CAPATAZ_KEY = (process.env.CAPATAZ_TOKEN || 'cpa-local').trim();
 
 // Prompt de sistema concentrado y taxativo para Tobi
 const TOBI_PROMPT = `Sos Tobi, Copilot y Asesor Senior de Recursos Humanos y Legislación Laboral de LaboraPy en Paraguay, creado por Diego Núñez.

@@ -59,8 +59,8 @@ GROQ_KEYS = [
 ]
 GROQ_KEYS = [k for k in GROQ_KEYS if k]
 
-CAPATAZ_URL = 'http://127.0.0.1:8317/v1/chat/completions'
-CAPATAZ_KEY = 'cpa-local-2f1e299d67fe4fbbaa862ef78d418f08047245b8'
+CAPATAZ_URL = os.environ.get('CAPATAZ_URL', 'http://127.0.0.1:8317/v1/chat/completions')
+CAPATAZ_KEY = os.environ.get('CAPATAZ_API_KEY') or os.environ.get('CAPATAZ_TOKEN') or 'cpa-local'
 
 # 1. Filtro Heurístico
 TERMINOS_EXTRANJEROS = [

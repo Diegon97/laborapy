@@ -1,3 +1,8 @@
+-- ==============================================================================
+-- [DEPRECADO / LEGACY] ESTE ARCHIVO FUE REEMPLAZADO POR:
+-- supabase/schema_laborapy_tobi_knowledge_canonica.sql
+-- NO EJECUTAR ESTE ARCHIVO: define vector(1536) incompatible con el estándar 768d.
+-- ==============================================================================
 -- ==========================================
 -- FASE 2: PROTOCOLO GRANJERO (pgvector)
 -- ==========================================

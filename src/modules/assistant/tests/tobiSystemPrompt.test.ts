@@ -232,4 +232,10 @@ describe('TOBI_SYSTEM_PROMPT — identidad pedagógica de Profesor y Mentor de R
     expect(TOBI_SYSTEM_PROMPT).toMatch(/Telegrama Colacionado otorgando un plazo de 48 a 72 horas/i);
     expect(TOBI_SYSTEM_PROMPT).toMatch(/Faltar 1 o 2 días en un mes sin justificación NO CONFIGURA causal de despido justificado/i);
   });
+
+  it('incorpora la directiva de resolución de contradicciones jurisprudenciales con derivación a Diego Núñez', () => {
+    expect(TOBI_SYSTEM_PROMPT).toContain('RESOLUCIÓN DE CONTRADICCIONES DOCTRINALES Y JURISPRUDENCIALES');
+    expect(TOBI_SYSTEM_PROMPT).toMatch(/precedentes de la Sala Laboral de la CSJ/i);
+    expect(TOBI_SYSTEM_PROMPT).toMatch(/escribile directamente a Diego Núñez por WhatsApp al \+595 984 469 005/i);
+  });
 });

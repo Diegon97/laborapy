@@ -6,6 +6,7 @@
 *.pem
 *.log
 *.zip
+*.bak
 coverage/
 ingestion_state.json
 audios/

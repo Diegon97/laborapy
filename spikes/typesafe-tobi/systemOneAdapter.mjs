@@ -9,7 +9,7 @@ import { normalizeProbabilities, calculateConfidence } from './systemOneCore.mjs
 export class SystemOneAdapterClient {
   constructor(config = {}) {
     this.baseUrl = config.baseUrl || 'http://127.0.0.1:8317/v1/chat/completions';
-    this.apiKey = config.apiKey || 'cpa-local-2f1e299d67fe4fbbaa862ef78d418f08047245b8';
+    this.apiKey = config.apiKey || process.env.CAPATAZ_TOKEN || 'cpa-local';
     this.model = config.model || 'gemini-3.8-flash-high';
     this.providerName = config.providerName || 'capataz';
   }

@@ -52,7 +52,7 @@ describe('fetchSupabaseJurisprudence — RAG semántico con fallback ILIKE garan
       }
       if (url.includes('/rpc/match_tobi_knowledge')) {
         const payload = JSON.parse(String(init?.body ?? '{}'));
-        expect(payload.match_threshold).toBe(0.3);
+        expect(payload.match_threshold).toBe(0.4);
         expect(payload.match_count).toBe(4);
         expect(payload.query_embedding).toHaveLength(768);
         return jsonResponse([

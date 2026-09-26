@@ -35,7 +35,7 @@ import requests
 # ---------------------------------------------------------------------------
 GROQ_KEY = os.environ.get('GROQ_API_KEY') or os.environ.get('GROQ_API_KEY_1')
 CAPATAZ_URL = os.environ.get('CAPATAZ_URL', 'http://127.0.0.1:8317/v1/chat/completions')
-CAPATAZ_KEY = os.environ.get('CAPATAZ_API_KEY', 'cpa-local-2f1e299d67fe4fbbaa862ef78d418f08047245b8')
+CAPATAZ_KEY = os.environ.get('CAPATAZ_API_KEY') or os.environ.get('CAPATAZ_TOKEN') or 'cpa-local'
 SUPABASE_URL = os.environ.get('VITE_SUPABASE_URL', 'https://wbbcqololvxlnmxajurd.supabase.co').rstrip('/')
 SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
 

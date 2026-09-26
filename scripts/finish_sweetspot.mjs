@@ -12,7 +12,7 @@ const rawPath = path.join(REPORTS_DIR, 'benchmark_gemini_sweetspot_raw.json');
 const raw = JSON.parse(fs.readFileSync(rawPath, 'utf8'));
 
 const CAPATAZ_ENDPOINT = 'http://127.0.0.1:8317/v1/chat/completions';
-const CAPATAZ_KEY = 'cpa-local-2f1e299d67fe4fbbaa862ef78d418f08047245b8';
+const CAPATAZ_KEY = (process.env.CAPATAZ_TOKEN || 'cpa-local').trim();
 
 // Identificar casos faltantes
 const ranIds = new Set(raw.filter(r => r.model === 'gemini-3.5-flash' && r.effort === 'max').map(r => r.caseId));
