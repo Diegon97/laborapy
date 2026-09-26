@@ -164,6 +164,7 @@ export function encodeShortSettlementLink(input: any): string {
       input.vacacionesPeriodosAnteriores ?? 0,
       input.preaviso?.otorgado ? 1 : 0,
       input.nombreEmpleado ? encodeURIComponent(String(input.nombreEmpleado).trim()) : '',
+      input.regimen || 'general',
     ].join('|');
 
     return window
@@ -200,12 +201,14 @@ export function decodeShortSettlementLink(encoded: string): AssistantMessage[] |
       const vacacionesPeriodosAnteriores = Number(parts[4]) || 0;
       const preavisoOtorgado = parts[5] === '1';
       const nombreEmpleado = parts[6] ? decodeURIComponent(parts[6]) : undefined;
+      const regimen = parts[7] === 'factura' || parts[7] === 'especial' ? parts[7] : 'general';
 
       const payload = {
         salarioMensual,
         fechaIngreso,
         fechaEgreso,
         motivo,
+        regimen,
         vacacionesPeriodosAnteriores: vacacionesPeriodosAnteriores > 0 ? vacacionesPeriodosAnteriores : undefined,
         preavisoOtorgado,
         preavisoObligado: motivo === 'renuncia' ? ('trabajador' as const) : ('empleador' as const),
@@ -217,7 +220,7 @@ export function decodeShortSettlementLink(encoded: string): AssistantMessage[] |
       const userMsg: AssistantMessage = {
         id: `shared-u-${Date.now()}`,
         role: 'user',
-        content: `Calculame la liquidación laboral oficial para un salario de Gs. ${salarioMensual.toLocaleString('es-PY')}, ingreso ${fechaIngreso}, egreso ${fechaEgreso}, causal: ${motivo.replace(/_/g, ' ')}${vacacionesPeriodosAnteriores > 0 ? `, con ${vacacionesPeriodosAnteriores} días de vacaciones pendientes` : ''}.`,
+        content: `Calculame la liquidación laboral oficial para un salario de Gs. ${salarioMensual.toLocaleString('es-PY')}, ingreso ${fechaIngreso}, egreso ${fechaEgreso}, causal: ${motivo.replace(/_/g, ' ')}${regimen === 'factura' ? ' (régimen facturación con RUC sin retención IPS / Art. 19 C.T.)' : ''}${vacacionesPeriodosAnteriores > 0 ? `, con ${vacacionesPeriodosAnteriores} días de vacaciones pendientes` : ''}.`,
         createdAt: new Date().toISOString(),
       };
 

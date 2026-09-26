@@ -7,6 +7,12 @@
  * canónico de Tobi (identidad + Ficha Canónica extraída del .ts) y reenvía al
  * Capataz local (CLIProxyAPI), que hace round-robin sobre las cuentas Gemini.
  *
+ * BALANCEO DE NODOS (CAPATAZ_URLS):
+ *   - Sesiones normales: Session Affinity sticky (SHA-1 16 chars del primer
+ *     system + primer user). TTL 1 h renovado en cada acierto; el nodo ganador
+ *     se registra cuando attempt.ok === true (failover actualiza el sticky).
+ *   - Subagentes (marcador <VENTANA_ARRANQUE>): round-robin puro por turno.
+ *
  * NIVELES (mapModel):
  *   "flash"     -> gemini-3.7-flash-high  + reasoning_effort "low"    (consulta rápida)
  *   "deepthink" -> gemini-3.7-flash-high  + reasoning_effort "medium" (peritaje)
@@ -16,18 +22,16 @@
  *
  * VARIABLES DE ENTORNO:
  *   PORT          (default 8319)   Puerto de escucha del granjero.
- *   CAPATAZ_URL   (default http://127.0.0.1:8317/v1/chat/completions)
+ *   CAPATAZ_URL   (default http://127.0.0.1:9317/v1/chat/completions)
+ *   CAPATAZ_URLS  (default CAPATAZ_URL + http://127.0.0.1:9327/v1/chat/completions)
+ *                 Lista separada por comas de nodos Capataz para el balanceo.
  *   CAPATAZ_KEY   (default clave local del capataz)
  *   GRANJERO_TOKEN (opcional)      Si se define, exige Authorization: Bearer <token>.
- *
- * USO RÁPIDO (desde Termux o cualquier shell):
- *   curl -s http://<ip-pc>:8319/v1/chat/completions \
- *     -H 'Content-Type: application/json' \
- *     -d '{"model":"deepthink","messages":[{"role":"user","content":"...consulta..."}]}'
  * ============================================================================
  */
 
 import http from 'node:http';
+import crypto from 'node:crypto';
 import { buildTobiSystemPrompt, getAnswerSheetVersion } from '../lib/tobi_context_builder.mjs';
 
 const PORT = Number(process.env.PORT || 8319);
@@ -37,13 +41,16 @@ const CAPATAZ_URLS = (process.env.CAPATAZ_URLS || `${CAPATAZ_URL},http://127.0.0
   .map((u) => u.trim())
   .filter((u, i, arr) => u && arr.indexOf(u) === i);
 let roundRobinNodeIdx = 0;
+
+// Session Affinity sticky: mapa sessionKey -> { nodeUrl, ts }. TTL 1 h.
+const SESSION_AFFINITY_TTL_MS = 60 * 60 * 1000;
+const SESSION_AFFINITY_MAX_ENTRIES = 500;
+const sessionAffinityMap = new Map();
+
 const CAPATAZ_KEY =
   process.env.CAPATAZ_KEY || 'cpa-nodo-b348c415de9419898e7bd43852592a4a4dd3c1db';
 const GRANJERO_TOKEN = (process.env.GRANJERO_TOKEN || '').trim();
 
-// El system prompt canónico se extrae una sola vez al arrancar (la ficha es
-// estática). Si el archivo no está disponible, el granjero arranca igual y
-// reporta el error en /health sin bloquear el servicio.
 let SYSTEM_PROMPT = '';
 let SYSTEM_PROMPT_ERROR = null;
 try {
@@ -54,17 +61,9 @@ try {
 
 const ANSWER_SHEET_VERSION = getAnswerSheetVersion();
 
-/**
- * Resuelve el nivel solicitado a una CADENA de candidatos (modelo, effort) del
- * Capataz. Si el primero devuelve 429/5xx (cooldown o saturación), el granjero
- * pasa al siguiente, garantizando que la consulta nunca se caiga.
- * @param {string|undefined} requested Nivel o ID de modelo pedido por el cliente.
- * @returns {Array<{ model: string, reasoningEffort: string|null, level: string }>}
- */
 export function resolveLevels(requested) {
   const key = String(requested || 'flash').trim().toLowerCase();
 
-  // Passthrough explícito: si ya viene un ID de modelo del capataz, se respeta.
   if (key.startsWith('gemini-') || key.startsWith('capataz/')) {
     return [{ model: key.replace(/^capataz\//, ''), reasoningEffort: null, level: 'passthrough' }];
   }
@@ -108,12 +107,43 @@ export function resolveLevels(requested) {
   }
 }
 
-/**
- * Inyecta el system prompt canónico si el cliente no proveyó uno propio.
- * @param {Array} messages
- * @param {boolean} force Inyectar incluso si ya existe un role system.
- * @returns {Array}
- */
+function pruneSessions(now = Date.now()) {
+  if (sessionAffinityMap.size <= SESSION_AFFINITY_MAX_ENTRIES) return;
+  for (const [key, entry] of sessionAffinityMap) {
+    if (!entry || now - entry.ts > SESSION_AFFINITY_TTL_MS) sessionAffinityMap.delete(key);
+  }
+}
+
+function rotateNodes() {
+  const startIdx = roundRobinNodeIdx++ % CAPATAZ_URLS.length;
+  return CAPATAZ_URLS.map((_, idx) => CAPATAZ_URLS[(startIdx + idx) % CAPATAZ_URLS.length]);
+}
+
+export function resolveOrderedNodes(messages) {
+  pruneSessions();
+  const list = Array.isArray(messages) ? messages : [];
+
+  const isSubagent = list.some(
+    (m) => m && m.role !== 'system' && typeof m.content === 'string' && m.content.includes('<VENTANA_ARRANQUE>'),
+  );
+  if (isSubagent) {
+    return { sessionKey: null, orderedNodes: rotateNodes() };
+  }
+
+  const systemMsg = list.find((m) => m && m.role === 'system');
+  const userMsg = list.find((m) => m && m.role === 'user');
+  const seed = `${String(systemMsg?.content || '').slice(0, 256)}\n${String(userMsg?.content || '').slice(0, 512)}`;
+  const sessionKey = crypto.createHash('sha1').update(seed).digest('hex').slice(0, 16);
+
+  const cached = sessionAffinityMap.get(sessionKey);
+  const vigente = cached && Date.now() - cached.ts <= SESSION_AFFINITY_TTL_MS;
+  const stickyUrl = vigente && CAPATAZ_URLS.includes(cached.nodeUrl) ? cached.nodeUrl : null;
+  if (stickyUrl) {
+    return { sessionKey, orderedNodes: [stickyUrl, ...CAPATAZ_URLS.filter((u) => u !== stickyUrl)] };
+  }
+  return { sessionKey, orderedNodes: rotateNodes() };
+}
+
 function injectSystemPrompt(messages, force = false) {
   const list = Array.isArray(messages) ? [...messages] : [];
   const hasSystem = list.some((m) => m && m.role === 'system');
@@ -156,8 +186,7 @@ async function handleChat(body, res) {
   const attempted = [];
   let lastErrorDetail = '';
 
-  const startIdx = roundRobinNodeIdx++ % CAPATAZ_URLS.length;
-  const orderedNodes = CAPATAZ_URLS.map((_, idx) => CAPATAZ_URLS[(startIdx + idx) % CAPATAZ_URLS.length]);
+  const { sessionKey, orderedNodes } = resolveOrderedNodes(finalMessages);
 
   for (const candidate of candidates) {
     const reasoningEffort = reasoning_effort || candidate.reasoningEffort;
@@ -197,6 +226,7 @@ async function handleChat(body, res) {
       if (attempt.ok) {
         upstream = attempt;
         chosen = { ...candidate, reasoningEffort, node: nodeLabel };
+        if (sessionKey) sessionAffinityMap.set(sessionKey, { nodeUrl: targetUrl, ts: Date.now() });
         break;
       }
 
@@ -243,6 +273,7 @@ async function handleChat(body, res) {
         level: chosen.level,
         model: chosen.model,
         reasoningEffort: chosen.reasoningEffort,
+        node: chosen.node,
         fallbackFrom: attempted.length > 0 ? attempted : null,
       };
     }
@@ -292,6 +323,8 @@ const server = http.createServer((req, res) => {
       systemPromptChars: SYSTEM_PROMPT.length,
       systemPromptError: SYSTEM_PROMPT_ERROR,
       capatazUrl: CAPATAZ_URL,
+      capatazUrls: CAPATAZ_URLS,
+      sessionAffinity: { ttlMs: SESSION_AFFINITY_TTL_MS, activeSessions: sessionAffinityMap.size },
       levels: {
         flash: ['gemini-3.7-flash-high (low)', 'gemini-3.5-flash-lite (low)'],
         deepthink: ['gemini-3.7-flash-high (medium)', 'gemini-3.5-flash-lite (medium)', 'gemini-3.8-flash-high (medium)'],
@@ -344,11 +377,11 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log('🌾 Granjero Middleware v2 iniciado.');
-  console.log(`🔌 Capataz destino: ${CAPATAZ_URL}`);
+server.listen(PORT, '127.0.0.1', () => {
+  console.log('🌾 Granjero Middleware v2 iniciado (Blindado en 127.0.0.1).');
+  console.log(`🔌 Capataz destinos: ${CAPATAZ_URLS.join(' | ')}`);
   console.log(`📖 Ficha canónica: v${ANSWER_SHEET_VERSION} (${SYSTEM_PROMPT.length} chars)`);
   if (SYSTEM_PROMPT_ERROR) console.warn(`⚠️ Ficha no cargada: ${SYSTEM_PROMPT_ERROR}`);
   console.log(`🎚️  Niveles: flash (3.7 low) · deepthink (3.7 medium) · max (3.8 high) · pro`);
-  console.log(`🌐 Escuchando en http://0.0.0.0:${PORT}/v1/chat/completions`);
+  console.log(`🌐 Escuchando en http://127.0.0.1:${PORT}/v1/chat/completions`);
 });

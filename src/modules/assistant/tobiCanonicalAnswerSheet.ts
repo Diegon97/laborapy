@@ -90,6 +90,8 @@ const LINEAS: string[] = [
   ':::liquidacion_action',
   '{"salarioMensual":3044000,"fechaIngreso":"AAAA-MM-DD","fechaEgreso":"AAAA-MM-DD","motivo":"despido_sin_causa"}',
   ':::',
+  'E1b. Si el trabajador facturaba con RUC, emitía recibo sin seguro o solicita no descontar IPS (Art. 19 C.T.):',
+  'incluir obligatoriamente en el JSON "regimen":"factura" para que el descuento de IPS sea exactamente Gs. 0.',
   'E2. Redacción de documento o nota -> emitir al final, exacto:',
   ':::documento_action',
   '{"tipo":"amonestacion","nombreEmpleado":"Nombre","ciEmpleado":"1.234.567","empresa":"Empresa","cargoEmpleado":"Cargo","hechosOcurridos":"Hechos","fundamentoLegal":"Art. 81"}',

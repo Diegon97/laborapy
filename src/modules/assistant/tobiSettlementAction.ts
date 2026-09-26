@@ -47,6 +47,8 @@ function parseSettlementJsonOrFallback(rawJson: string): TobiSettlementActionPay
       const egr = typeof parsed.fechaEgreso === 'string' ? parsed.fechaEgreso.trim() : null;
       const motRaw = typeof parsed.motivo === 'string' ? parsed.motivo.trim() : 'despido_sin_causa';
       const mot = ALIAS_MOTIVO[motRaw] ?? (motRaw as MotivoEgreso);
+      const regRaw = typeof parsed.regimen === 'string' ? parsed.regimen.trim().toLowerCase() : undefined;
+      const regimen = regRaw === 'factura' || regRaw === 'especial' || regRaw === 'general' ? regRaw : undefined;
 
       if (sal > 0 && ing && egr && (MOTIVOS_VALIDOS as readonly string[]).includes(mot)) {
         return {
@@ -55,6 +57,7 @@ function parseSettlementJsonOrFallback(rawJson: string): TobiSettlementActionPay
           fechaIngreso: ing,
           fechaEgreso: egr,
           motivo: mot,
+          regimen: regimen ?? parsed.regimen,
         } as TobiSettlementActionPayload;
       }
     }
@@ -72,6 +75,7 @@ function parseSettlementJsonOrFallback(rawJson: string): TobiSettlementActionPay
   const ingresoRaw = getMatch(/(?:fechaIngreso|ingreso)["']?\s*:\s*["']?(\d{4}-\d{2}-\d{2}|\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})["']?/i);
   const egresoRaw = getMatch(/(?:fechaEgreso|egreso)["']?\s*:\s*["']?(\d{4}-\d{2}-\d{2}|\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})["']?/i);
   const motivoRaw = getMatch(/(?:motivo)["']?\s*:\s*["']?([a-zA-Z_]+)["']?/i) || 'despido_sin_causa';
+  const regimenRaw = getMatch(/(?:regimen|regimenIps)["']?\s*:\s*["']?([a-zA-Z_]+)["']?/i);
   const vacAntStr = getMatch(/(?:vacacionesPeriodosAnteriores)["']?\s*:\s*(\d+)/i);
   const vacActStr = getMatch(/(?:vacacionesPeriodoActual)["']?\s*:\s*(\d+)/i);
   const preavisoOtStr = getMatch(/(?:preavisoOtorgado)["']?\s*:\s*(true|false)/i);
@@ -106,11 +110,15 @@ function parseSettlementJsonOrFallback(rawJson: string): TobiSettlementActionPay
     return null;
   }
 
+  const regParsed = regimenRaw ? regimenRaw.toLowerCase() : undefined;
+  const regimen = regParsed === 'factura' || regParsed === 'especial' || regParsed === 'general' ? regParsed : undefined;
+
   return {
     salarioMensual,
     fechaIngreso,
     fechaEgreso,
     motivo: motivoNormalizado,
+    regimen,
     vacacionesPeriodosAnteriores: vacAntStr ? Number(vacAntStr) : undefined,
     vacacionesPeriodoActual: vacActStr ? Number(vacActStr) : undefined,
     preavisoOtorgado: preavisoOtStr ? preavisoOtStr.toLowerCase() === 'true' : false,
@@ -139,6 +147,13 @@ export function extractSettlementAction(text: string): {
   if (match) {
     const rawJson = match[1].trim();
     payload = parseSettlementJsonOrFallback(rawJson);
+    if (payload && (!payload.regimen || payload.regimen === 'general')) {
+      // Detección contextual defensiva (Art. 19 C.T. / Primacía de la Realidad):
+      // Si el texto del mensaje o del bloque menciona facturación, honorarios, sin IPS o no descontar IPS:
+      if (/factur|honorario|sin\s+ips|no\s+(?:descontar|descuentes?|corresponde\s+descontar)\s+ips|art(?:\.|\s+)19/i.test(text)) {
+        payload = { ...payload, regimen: 'factura' };
+      }
+    }
   }
 
   const cleanedText = text
@@ -347,15 +362,17 @@ export function applyAgenticSettlementAdjustment(
     }
   }
 
-  // 3. Corrección de fecha de egreso
-  const isEgresoIntent = /(?:egreso|sal[ií]|despidieron|cese)/i.test(raw);
+  // 3. Corrección de fecha de egreso (tolerante a typos como "fecjha", "esa no es mi fecha", "fecha de salida", etc.)
+  const isEgresoIntent =
+    /(?:egreso|sal[ií]|despid|cese|termin|fe[cjhx]{2,4}a|no\s+es\s+(?:mi\s+)?[a-z]+)/i.test(norm) &&
+    !isIngresoIntent;
   if (isEgresoIntent) {
-    const dmyMatch = /(?:egreso|sal[ií]|despidieron|cese)[^\d]{0,25}(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/i.exec(raw);
+    const dmyMatch = /(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/.exec(raw);
     if (dmyMatch) {
       const iso = parseDateComponents(dmyMatch[1], dmyMatch[2], dmyMatch[3]);
       if (iso) adjustments.fechaEgreso = iso;
     } else {
-      const isoMatch = /(?:egreso|sal[ií]|despidieron|cese)[^\d]{0,25}(\d{4})-(\d{1,2})-(\d{1,2})/i.exec(raw);
+      const isoMatch = /(\d{4})-(\d{1,2})-(\d{1,2})/.exec(raw);
       if (isoMatch) {
         const iso = parseDateComponents(isoMatch[3], isoMatch[2], isoMatch[1]);
         if (iso) adjustments.fechaEgreso = iso;
@@ -387,6 +404,16 @@ export function applyAgenticSettlementAdjustment(
         adjustments.tieneVariables = true;
       }
     }
+  }
+
+  // 6. Régimen de contratación: Facturación con RUC / Sin IPS / No descontar IPS (Art. 19 C.T.)
+  // Ejemplos: "yo facturaba", "era con factura", "no me descuentes ips", "sin ips", "art 19"
+  const isFacturaIntent =
+    /factur|honorario|sin\s+ips|no\s+(?:descontar|descuentes?|corresponde\s+descontar)\s+ips|art(?:\.|\s+)19/i.test(norm);
+  if (isFacturaIntent) {
+    adjustments.regimen = 'factura';
+  } else if (/con\s+ips|en\s+planilla|regimen\s+general|descontar\s+ips/i.test(norm)) {
+    adjustments.regimen = 'general';
   }
 
   if (Object.keys(adjustments).length === 0) return null;

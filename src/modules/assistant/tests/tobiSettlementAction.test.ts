@@ -4,6 +4,7 @@ import {
   executeSettlementAction,
   toLiquidacionInput,
   extractSettlementFromUserPrompt,
+  applyAgenticSettlementAdjustment,
 } from '../tobiSettlementAction';
 
 describe('tobiSettlementAction — extracción y cálculo', () => {
@@ -155,5 +156,61 @@ Recuerda que la liquidación debe ser pagada el mismo día.`;
     expect(result.totalNetoEstimado).toBeGreaterThan(7000000);
     expect(cleanedText).not.toContain('Bloque de acción');
     expect(cleanedText).not.toContain(':::');
+  });
+
+  it('respeta regimen factura (Art. 19 C.T.) y NO aplica descuento de IPS (9%)', () => {
+    const textWithFactura = `:::liquidacion_action
+{"salarioMensual":4400000,"fechaIngreso":"2023-02-01","fechaEgreso":"2026-09-25","motivo":"despido_sin_causa","regimen":"factura"}
+:::`;
+    const { payload } = extractSettlementAction(textWithFactura);
+    expect(payload).not.toBeNull();
+    expect(payload?.regimen).toBe('factura');
+
+    const { result } = executeSettlementAction(payload!);
+    const ipsConcept = result.conceptos.find((c) => c.id === 'ips_trabajador');
+    expect(ipsConcept).toBeUndefined();
+    // Al no descontar IPS, el neto a cobrar es mayor
+    expect(result.totalDescuentos).toBe(0);
+  });
+
+  it('activa regimen factura defensivo cuando el contexto menciona facturacion o sin IPS', () => {
+    const textContextFactura = `Como facturabas tu salario bajo el Art. 19 C.T. sin IPS:
+:::liquidacion_action
+{"salarioMensual":4400000,"fechaIngreso":"2023-02-01","fechaEgreso":"2026-09-25","motivo":"despido_sin_causa"}
+:::`;
+    const { payload } = extractSettlementAction(textContextFactura);
+    expect(payload).not.toBeNull();
+    expect(payload?.regimen).toBe('factura');
+
+    const { result } = executeSettlementAction(payload!);
+    const ipsConcept = result.conceptos.find((c) => c.id === 'ips_trabajador');
+    expect(ipsConcept).toBeUndefined();
+  });
+
+  it('ajusta dinamicamente fecha con typo y elimina descuento IPS ante reclamo del usuario', () => {
+    const basePayload = {
+      salarioMensual: 4400000,
+      fechaIngreso: '2023-02-01',
+      fechaEgreso: '2026-09-20',
+      motivo: 'despido_sin_causa' as const,
+      regimen: 'general' as const,
+    };
+
+    // 1. Usuario corrige fecha con typo "esa no es mi fecjha, fue el 25/09/2026"
+    const adjustedDate = applyAgenticSettlementAdjustment(
+      basePayload,
+      'esa no es mi fecjha, fue el 25/09/2026',
+    );
+    expect(adjustedDate?.fechaEgreso).toBe('2026-09-25');
+
+    // 2. Usuario reclama que facturaba y no corresponde descontar IPS
+    const adjustedIps = applyAgenticSettlementAdjustment(
+      adjustedDate!,
+      'yo facturaba con RUC hace 3 años, no corresponde descontar IPS',
+    );
+    expect(adjustedIps?.regimen).toBe('factura');
+
+    const { result } = executeSettlementAction(adjustedIps!);
+    expect(result.conceptos.find((c) => c.id === 'ips_trabajador')).toBeUndefined();
   });
 });
