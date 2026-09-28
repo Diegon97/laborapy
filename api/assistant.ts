@@ -1654,8 +1654,20 @@ export default async function handler(req: any, res: any): Promise<void> {
 
   // Cascada dual según el modo: 'deepthink' (razonamiento profundo) vs 'flash' (velocidad y caché)
   const isDeepThink = parsed.mode === 'deepthink';
+  const isLocalOnly = process.env.TOBI_LOCAL_ONLY === 'true';
 
-  const steps: Array<{ name: string; run: (p: string, b: number) => Promise<{ provider: string; model: string } | null> }> = isDeepThink
+  const localSteps: Array<{ name: string; run: (p: string, b: number) => Promise<{ provider: string; model: string } | null> }> = [
+    ...(process.env.GRANJERO_URL?.trim()
+      ? [{ name: 'granjero', run: (p: string, b: number) => callGranjero(p, Math.min(b, 45000), isDeepThink ? 'deep' : 'simple', parsed.history, onDelta, abortController.signal, (m: string) => failedReasons.push(`granjero: ${m}`)) }]
+      : []),
+    ...(process.env.TOBI_LOCAL_LLM_URL?.trim()
+      ? [{ name: 'local', run: (p: string, b: number) => callLocalLLM(p, Math.min(b, 45000), parsed.history, onDelta, abortController.signal, (m: string) => failedReasons.push(`local: ${m}`)) }]
+      : []),
+  ];
+
+  const steps: Array<{ name: string; run: (p: string, b: number) => Promise<{ provider: string; model: string } | null> }> = isLocalOnly
+    ? localSteps
+    : isDeepThink
     ? [
         // Modo DeepThink: 1) DeepSeek Reasoner, 2) Gemini Thinking, 3) Cloudflare Reasoner (DeepSeek R1), 4) Groq 120B, 5) DeepSeek V3, 6) Gemini Flash, 7) OpenAI
         {
@@ -1699,12 +1711,7 @@ export default async function handler(req: any, res: any): Promise<void> {
       ]
     : [
         // Modo Flash: 1) Granjero/Local (dev), 2) Gemini Flash con Context Cache, 3) Groq (120B ultra veloz), 4) Cloudflare (70B), 5) DeepSeek V3, 6) OpenAI, 7) OpenRouter
-        ...(process.env.GRANJERO_URL?.trim()
-          ? [{ name: 'granjero', run: (p: string, b: number) => callGranjero(p, Math.min(b, 45000), 'simple', parsed.history, onDelta, abortController.signal, (m: string) => failedReasons.push(`granjero: ${m}`)) }]
-          : []),
-        ...(process.env.TOBI_LOCAL_LLM_URL?.trim()
-          ? [{ name: 'local', run: (p: string, b: number) => callLocalLLM(p, Math.min(b, 45000), parsed.history, onDelta, abortController.signal, (m: string) => failedReasons.push(`local: ${m}`)) }]
-          : []),
+        ...localSteps,
         {
           name: 'gemini',
           run: (p, b) =>

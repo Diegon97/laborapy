@@ -76,7 +76,7 @@ else
   echo -e "${GREEN}✓ Node.js $(node -v) ya disponible.${NC}"
 fi
 
-echo -e "${YELLOW}[6/8] Instalando Ollama y modelo nomic-embed-text para Tobi...${NC}"
+echo -e "${YELLOW}[6/8] Instalando Ollama y modelo local para el GRANJERO TOBI...${NC}"
 if ! command -v ollama &> /dev/null; then
   curl -fsSL https://ollama.com/install.sh | sh
 fi
@@ -86,12 +86,17 @@ sudo mkdir -p /etc/systemd/system/ollama.service.d
 cat << 'OLLAMA_CONF' | sudo tee /etc/systemd/system/ollama.service.d/override.conf > /dev/null
 [Service]
 Environment="OLLAMA_HOST=0.0.0.0:11434"
+Environment="OLLAMA_ORIGINS=*"
 OLLAMA_CONF
 sudo systemctl daemon-reload
 sudo systemctl restart ollama
-echo "Descargando modelo de embeddings nomic-embed-text..."
+
+echo "Descargando modelo de embeddings nomic-embed-text (para búsqueda de jurisprudencia)..."
 ollama pull nomic-embed-text || true
-echo -e "${GREEN}✓ Ollama y nomic-embed-text listos en puerto 11434.${NC}"
+
+echo "Descargando modelo LLM local Qwen 2.5 7B (Inferencia 100% soberana para Tobi)..."
+ollama pull qwen2.5:7b || ollama pull qwen2.5:3b || true
+echo -e "${GREEN}✓ Motor de inferencia local del Granjero listo en puerto 11434.${NC}"
 
 echo -e "${YELLOW}[7/8] Instalando OpenCode CLI y configurando OpenCode Server 24/7...${NC}"
 curl -fsSL https://opencode.ai/install.sh | bash || true
