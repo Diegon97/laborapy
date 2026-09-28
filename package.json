@@ -8,7 +8,8 @@
     "build": "node scripts/check-no-sensitive-data.mjs && tsc -b && vite build",
     "lint": "oxlint",
     "test": "vitest run",
-    "preview": "vite preview --host 0.0.0.0 --port 5173"
+    "preview": "vite preview --host 0.0.0.0 --port 5173",
+    "supabase:ping": "node scripts/keep-supabase-alive.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.115.0",

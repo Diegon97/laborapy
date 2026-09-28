@@ -4,7 +4,7 @@
   "crons": [
     {
       "path": "/api/keep-alive",
-      "schedule": "0 9 * * 1,4"
+      "schedule": "0 6 * * *"
     },
     {
       "path": "/api/tobi-curator",

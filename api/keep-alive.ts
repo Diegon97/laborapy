@@ -4,7 +4,9 @@ declare const process: any;
 
 export const config = { maxDuration: 15 };
 
-const TABLE_NAME = 'laborapy_leads';
+// Tablas accesibles con lectura pública (RLS anon) para garantizar que la consulta
+// toque físicamente el motor PostgreSQL y registre actividad de base de datos
+const READABLE_TABLES = ['autores_laborales', 'jurisprudencia_multimedia', 'laborapy_leads'];
 const FALLBACK_PATH = '/rest/v1/';
 
 export default async function handler(req: any, res: any): Promise<void> {
@@ -23,7 +25,7 @@ export default async function handler(req: any, res: any): Promise<void> {
     return;
   }
 
-  // Validación opcional de Vercel Cron Secret si está configurado
+  // Validación opcional de Vercel Cron Secret si está configurado en el entorno
   const cronSecret = (process.env.CRON_SECRET || '').trim();
   if (cronSecret) {
     const auth = String(req.headers?.authorization || '');
@@ -34,15 +36,16 @@ export default async function handler(req: any, res: any): Promise<void> {
   }
 
   const rawUrl = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').trim();
-  const rawKey = (process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '').trim();
+  const rawAnonKey = (process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '').trim();
+  const rawServiceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 
   const supabaseUrl = rawUrl.replace(/\/+$/, '');
-  const supabaseAnonKey = rawKey;
+  const supabaseKey = rawServiceKey || rawAnonKey;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabaseUrl || !supabaseKey) {
     res.status(500).json({
       success: false,
-      error: 'Supabase credentials missing on serverless environment',
+      error: 'Supabase credentials missing on serverless environment (SUPABASE_URL / ANON_KEY)',
     });
     return;
   }
@@ -50,29 +53,52 @@ export default async function handler(req: any, res: any): Promise<void> {
   const timestamp = new Date().toISOString();
 
   try {
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    const supabase = createClient(supabaseUrl, supabaseKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
     const start = Date.now();
-    const { error } = await supabase.from(TABLE_NAME).select('id').limit(1);
-    const latencyMs = Date.now() - start;
+    let querySuccess = false;
+    let queriedTable = '';
+    let lastError: any = null;
 
-    if (error) {
-      const restRes = await fetch(`${supabaseUrl}${FALLBACK_PATH}`, {
-        headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
-        },
-      });
-      if (!restRes.ok && restRes.status >= 500) {
-        throw new Error(`REST fallback failed with status ${restRes.status}`);
+    // Intentar consulta real a nivel de tabla en PostgreSQL para activar telemetría
+    for (const table of READABLE_TABLES) {
+      try {
+        const { error } = await supabase.from(table).select('id').limit(1);
+        if (!error) {
+          querySuccess = true;
+          queriedTable = table;
+          break;
+        } else {
+          lastError = error;
+        }
+      } catch (err) {
+        lastError = err;
       }
     }
 
+    // Fallback a endpoint REST si las tablas fallan
+    if (!querySuccess) {
+      const restRes = await fetch(`${supabaseUrl}${FALLBACK_PATH}`, {
+        headers: {
+          apikey: rawAnonKey || supabaseKey,
+          Authorization: `Bearer ${rawAnonKey || supabaseKey}`,
+        },
+      });
+      if (!restRes.ok && restRes.status >= 500) {
+        throw new Error(`REST fallback failed with status ${restRes.status} (last table error: ${lastError?.message || 'unknown'})`);
+      }
+      queriedTable = 'rest_openapi_fallback';
+    }
+
+    const latencyMs = Date.now() - start;
+
     res.status(200).json({
       success: true,
-      message: 'Supabase keep-alive ping exitoso',
+      message: 'Supabase keep-alive anti-pause ping exitoso',
+      target: queriedTable,
+      usingServiceRole: Boolean(rawServiceKey),
       timestamp,
       latencyMs,
     });

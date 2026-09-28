@@ -1,9 +1,9 @@
-name: Keep Supabase Project Alive
+name: Keep Supabase Project Alive (Anti-Pause)
 
 on:
   schedule:
-    - cron: '0 6 * * 1,4'
-  workflow_dispatch:
+    - cron: '30 4 * * *' # Ejecuta todos los días a las 04:30 UTC
+  workflow_dispatch: # Permite ejecución manual bajo demanda
 
 permissions:
   contents: read
@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   ping:
-    name: Ping Supabase REST (/rest/v1/)
+    name: Ping Supabase PostgreSQL & PostgREST
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -31,7 +31,7 @@ jobs:
             exit 1
           fi
 
-      - name: Ping liviano a Supabase
+      - name: Ping a tablas reales de PostgreSQL (Actividad de Base de Datos)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
@@ -39,14 +39,40 @@ jobs:
         run: |
           set -uo pipefail
           CLEAN_URL="$(printf '%s' "${SUPABASE_URL}" | tr -d '[:space:]' | sed 's:/*$::')"
+          
+          echo "Ejecutando ping a Supabase PostgREST table /rest/v1/autores_laborales..."
           HTTP_STATUS=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 \
-            --retry 3 --retry-delay 5 \
+            --retry 3 --retry-delay 3 \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
-            "${CLEAN_URL}/rest/v1/")
+            "${CLEAN_URL}/rest/v1/autores_laborales?select=id&limit=1")
           CURL_EXIT=$?
-          echo "Status: ${HTTP_STATUS} (curl exit: ${CURL_EXIT})"
+          echo "Status autores_laborales: ${HTTP_STATUS} (curl exit: ${CURL_EXIT})"
+
+          if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 400 ]; then
+            echo "Probando fallback a /rest/v1/..."
+            HTTP_STATUS=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 \
+              --retry 2 --retry-delay 2 \
+              -H "apikey: ${SUPABASE_ANON_KEY}" \
+              -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+              "${CLEAN_URL}/rest/v1/")
+            CURL_EXIT=$?
+            echo "Status fallback /rest/v1/: ${HTTP_STATUS} (curl exit: ${CURL_EXIT})"
+          fi
+
           if [ "${CURL_EXIT}" -ne 0 ] || [ "${HTTP_STATUS}" = "000" ] || [ "${HTTP_STATUS}" -ge 500 ]; then
             echo "::error::Fallo ping a Supabase (HTTP ${HTTP_STATUS}, exit code ${CURL_EXIT})"
             exit 1
+          fi
+          echo "✅ Supabase ping exitoso contra ${CLEAN_URL}"
+
+      - name: Ping opcional a Vercel Serverless keep-alive
+        env:
+          VERCEL_APP_URL: ${{ secrets.VERCEL_APP_URL }}
+        shell: bash
+        run: |
+          if [ -n "${VERCEL_APP_URL:-}" ]; then
+            CLEAN_VERCEL="$(printf '%s' "${VERCEL_APP_URL}" | tr -d '[:space:]' | sed 's:/*$::')"
+            echo "Pinging ${CLEAN_VERCEL}/api/keep-alive..."
+            curl -sS -f --max-time 15 "${CLEAN_VERCEL}/api/keep-alive" || true
           fi
