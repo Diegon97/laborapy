@@ -21,8 +21,8 @@ jobs:
     steps:
       - name: Validar secretos requeridos
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
         shell: bash
         run: |
           set -euo pipefail
@@ -33,14 +33,14 @@ jobs:
 
       - name: Ping a tablas reales de PostgreSQL (Actividad de Base de Datos)
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
         shell: bash
         run: |
           set -uo pipefail
           CLEAN_URL="$(printf '%s' "${SUPABASE_URL}" | tr -d '[:space:]' | sed 's:/*$::')"
           
-          echo "Ejecutando ping a Supabase PostgREST table /rest/v1/autores_laborales..."
+          echo "Ejecutando ping primario a PostgREST (/rest/v1/autores_laborales)..."
           HTTP_STATUS=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 \
             --retry 3 --retry-delay 3 \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
@@ -50,21 +50,31 @@ jobs:
           echo "Status autores_laborales: ${HTTP_STATUS} (curl exit: ${CURL_EXIT})"
 
           if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 400 ]; then
-            echo "Probando fallback a /rest/v1/..."
+            echo "Probando fallback secundario a PostgREST (/rest/v1/jurisprudencia_multimedia)..."
             HTTP_STATUS=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 \
               --retry 2 --retry-delay 2 \
               -H "apikey: ${SUPABASE_ANON_KEY}" \
               -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
-              "${CLEAN_URL}/rest/v1/")
+              "${CLEAN_URL}/rest/v1/jurisprudencia_multimedia?select=id&limit=1")
             CURL_EXIT=$?
-            echo "Status fallback /rest/v1/: ${HTTP_STATUS} (curl exit: ${CURL_EXIT})"
+            echo "Status jurisprudencia_multimedia: ${HTTP_STATUS} (curl exit: ${CURL_EXIT})"
+          fi
+
+          if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 400 ]; then
+            echo "Probando fallback terciario a GoTrue Health (/auth/v1/health)..."
+            HTTP_STATUS=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 \
+              --retry 2 --retry-delay 2 \
+              -H "apikey: ${SUPABASE_ANON_KEY}" \
+              "${CLEAN_URL}/auth/v1/health")
+            CURL_EXIT=$?
+            echo "Status /auth/v1/health: ${HTTP_STATUS} (curl exit: ${CURL_EXIT})"
           fi
 
           if [ "${CURL_EXIT}" -ne 0 ] || [ "${HTTP_STATUS}" = "000" ] || [ "${HTTP_STATUS}" -ge 500 ]; then
             echo "::error::Fallo ping a Supabase (HTTP ${HTTP_STATUS}, exit code ${CURL_EXIT})"
             exit 1
           fi
-          echo "✅ Supabase ping exitoso contra ${CLEAN_URL}"
+          echo "✅ Supabase ping exitoso contra ${CLEAN_URL} (HTTP ${HTTP_STATUS})"
 
       - name: Ping opcional a Vercel Serverless keep-alive
         env:

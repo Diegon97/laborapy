@@ -69,7 +69,7 @@ console.log(`📡 [Anti-Pause] Conectando a Supabase (${maskedUrl})...`);
 const candidateEndpoints = [
   `${supabaseUrl}/rest/v1/autores_laborales?select=id&limit=1`,
   `${supabaseUrl}/rest/v1/jurisprudencia_multimedia?select=id&limit=1`,
-  `${supabaseUrl}/rest/v1/`,
+  `${supabaseUrl}/auth/v1/health`,
 ];
 
 async function ping() {

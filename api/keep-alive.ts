@@ -7,7 +7,7 @@ export const config = { maxDuration: 15 };
 // Tablas accesibles con lectura pública (RLS anon) para garantizar que la consulta
 // toque físicamente el motor PostgreSQL y registre actividad de base de datos
 const READABLE_TABLES = ['autores_laborales', 'jurisprudencia_multimedia', 'laborapy_leads'];
-const FALLBACK_PATH = '/rest/v1/';
+const FALLBACK_PATH = '/auth/v1/health';
 
 export default async function handler(req: any, res: any): Promise<void> {
   res.setHeader('Access-Control-Allow-Origin', '*');
